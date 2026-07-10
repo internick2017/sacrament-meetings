@@ -12,7 +12,7 @@ export default function Header() {
   });
 
   return (
-    <header className="bg-slate-800 text-white">
+    <header className="no-print bg-slate-800 text-white">
       <div className="mx-auto flex max-w-4xl flex-col gap-2 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
         <Link href="/" className="text-lg font-semibold">
           {WARD_NAME}
