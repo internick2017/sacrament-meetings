@@ -24,3 +24,16 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+h1, h2, h3, h4 {
+  font-family: var(--font-lora), serif;
+}
+
+@media print {
+  header, footer, nav {
+    display: none !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
