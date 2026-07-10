@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400" role="img" aria-labelledby="meetinghouseTitle meetinghouseDesc">
+  <title id="meetinghouseTitle">Ward meetinghouse illustration</title>
+  <desc id="meetinghouseDesc">A simple flat illustration of a church meetinghouse with a steeple.</desc>
+  <rect width="640" height="400" fill="#eef2f7" />
+  <polygon points="300,20 320,60 280,60" fill="#94a3b8" stroke="#334155" stroke-width="3" />
+  <rect x="285" y="60" width="30" height="60" fill="#ffffff" stroke="#334155" stroke-width="3" />
+  <polygon points="120,200 320,90 520,200" fill="#94a3b8" stroke="#334155" stroke-width="4" />
+  <rect x="120" y="200" width="400" height="140" fill="#ffffff" stroke="#334155" stroke-width="4" />
+  <rect x="290" y="250" width="60" height="90" fill="#334155" />
+  <rect x="165" y="230" width="45" height="50" fill="#bfdbfe" stroke="#334155" stroke-width="3" />
+  <rect x="430" y="230" width="45" height="50" fill="#bfdbfe" stroke="#334155" stroke-width="3" />
+</svg>
