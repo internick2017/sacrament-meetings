@@ -7,6 +7,7 @@ const meetingTypeLabel: Record<SacramentMeeting['meetingType'], string> = {
   regular: t('meetingType.regular'),
   stake: t('meetingType.stake'),
   general: t('meetingType.general'),
+  special: t('meetingType.special'),
 };
 
 export default function MeetingCard({ meeting }: { meeting: SacramentMeeting }) {

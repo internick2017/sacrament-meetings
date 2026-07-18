@@ -7,6 +7,7 @@ const meetingTypeLabel: Record<SacramentMeeting['meetingType'], string> = {
   regular: t('meetingType.regular'),
   stake: t('meetingType.stake'),
   general: t('meetingType.general'),
+  special: t('meetingType.special'),
 };
 
 export default function MeetingDetail({ meeting }: { meeting: SacramentMeeting }) {
@@ -49,7 +50,7 @@ export default function MeetingDetail({ meeting }: { meeting: SacramentMeeting }
 
       <section>
         <h2 className="font-semibold">{t('meeting.openingHymn')}</h2>
-        <p>#{meeting.openingHymn.number} &mdash; {meeting.openingHymn.title}</p>
+        <p>#{meeting.openingHymn.number} - {meeting.openingHymn.title}</p>
       </section>
 
       <section>
@@ -74,7 +75,7 @@ export default function MeetingDetail({ meeting }: { meeting: SacramentMeeting }
 
       <section>
         <h2 className="font-semibold">{t('meeting.sacramentHymn')}</h2>
-        <p>#{meeting.sacramentHymn.number} &mdash; {meeting.sacramentHymn.title}</p>
+        <p>#{meeting.sacramentHymn.number} - {meeting.sacramentHymn.title}</p>
       </section>
 
       {meeting.program.length > 0 && (
@@ -84,12 +85,12 @@ export default function MeetingDetail({ meeting }: { meeting: SacramentMeeting }
             {meeting.program.map((item, index) =>
               item.type === 'speaker' ? (
                 <li key={index}>
-                  {t('meeting.speaker')}: {item.name} &mdash; {item.topic}
+                  {t('meeting.speaker')}: {item.name} - {item.topic}
                 </li>
               ) : (
                 <li key={index}>
                   {t('meeting.musicalNumber')}: {item.performer}
-                  {item.title ? ` — ${item.title}` : ''}
+                  {item.title ? ` - ${item.title}` : ''}
                 </li>
               )
             )}
@@ -99,7 +100,7 @@ export default function MeetingDetail({ meeting }: { meeting: SacramentMeeting }
 
       <section>
         <h2 className="font-semibold">{t('meeting.closingHymn')}</h2>
-        <p>#{meeting.closingHymn.number} &mdash; {meeting.closingHymn.title}</p>
+        <p>#{meeting.closingHymn.number} - {meeting.closingHymn.title}</p>
       </section>
 
       <section>

@@ -1,135 +1,172 @@
+import { neon } from '@neondatabase/serverless';
 import type { SacramentMeeting } from './types';
 
-// Async on purpose: swapping this for a real database later only means
-// changing this file — every caller already awaits these functions.
+// One Neon client for the whole module. neon() only builds the client; it does
+// not open a connection until a query actually runs, so importing this file is
+// cheap. DATABASE_URL comes from .env.local locally and from Vercel in deploys.
+const sql = neon(process.env.DATABASE_URL!);
 
-const meetings: SacramentMeeting[] = [
-  {
-    id: 1,
-    date: '2026-06-14',
-    meetingType: 'regular',
-    presiding: 'Bishop Daniel Reyes',
-    conducting: 'First Counselor Mark Ito',
-    announcements: [
-      'Ward campout moved to July 25',
-      'Temple recommend interviews this week',
-    ],
-    openingHymn: { number: 19, title: 'We Thank Thee, O God, for a Prophet' },
-    openingPrayer: 'Sister Alvarez',
-    wardBusiness: [
-      { description: 'Sustaining of Brother Kim as Elders Quorum secretary' },
-    ],
-    stakeBusiness: false,
-    sacramentHymn: { number: 173, title: 'While of These Emblems We Partake' },
-    program: [
-      { type: 'speaker', name: 'Sister Johnson', topic: 'Faith in Jesus Christ' },
-      { type: 'musical-number', performer: 'Primary Children', title: 'I Am a Child of God' },
-      { type: 'speaker', name: 'Brother Lee', topic: 'Enduring to the End' },
-    ],
-    closingHymn: { number: 85, title: 'How Firm a Foundation' },
-    closingPrayer: 'Brother Nguyen',
-  },
-  {
-    id: 2,
-    date: '2026-06-21',
-    meetingType: 'testimony',
-    presiding: 'Bishop Daniel Reyes',
-    conducting: 'Second Counselor Priya Patel',
-    announcements: ['Fast offerings due to the bishop by Friday'],
-    openingHymn: { number: 30, title: 'Come, Come, Ye Saints' },
-    openingPrayer: 'Brother Osei',
-    wardBusiness: [],
-    stakeBusiness: false,
-    sacramentHymn: { number: 169, title: "'Tis Sweet to Sing the Matchless Love" },
-    program: [],
-    closingHymn: { number: 152, title: 'God Be with You Till We Meet Again' },
-    closingPrayer: 'Sister Marsh',
-  },
-  {
-    id: 3,
-    date: '2026-06-28',
-    meetingType: 'general',
-    presiding: 'Bishop Daniel Reyes',
-    conducting: 'First Counselor Mark Ito',
-    announcements: ['Building closed for cleaning Monday'],
-    openingHymn: { number: 2, title: 'The Spirit of God' },
-    openingPrayer: 'Sister Choi',
-    wardBusiness: [],
-    stakeBusiness: false,
-    sacramentHymn: { number: 175, title: 'O God, the Eternal Father' },
-    program: [{ type: 'speaker', name: 'General Conference broadcast', topic: 'N/A' }],
-    closingHymn: { number: 5, title: 'High on the Mountain Top' },
-    closingPrayer: 'Brother Wallace',
-  },
-  {
-    id: 4,
-    date: '2026-07-05',
-    meetingType: 'regular',
-    presiding: 'Bishop Daniel Reyes',
-    conducting: 'First Counselor Mark Ito',
-    announcements: [
-      'Youth activity Wednesday at 6pm',
-      'New family moving in on Birch St, meals sign-up in foyer',
-    ],
-    openingHymn: { number: 7, title: 'Israel, Israel, God Is Calling' },
-    openingPrayer: 'Brother Kim',
-    wardBusiness: [
-      { description: 'Release of Sister Tran as Relief Society secretary' },
-      { description: 'Sustaining of Sister Ford as Relief Society secretary' },
-    ],
-    stakeBusiness: false,
-    sacramentHymn: { number: 193, title: 'In Humility, Our Savior' },
-    program: [
-      { type: 'speaker', name: 'Brother Alvarez', topic: 'The Atonement of Jesus Christ' },
-      { type: 'musical-number', performer: 'Sister Ford', title: 'Love One Another' },
-      { type: 'speaker', name: 'Sister Wallace', topic: 'Ministering to One Another' },
-    ],
-    closingHymn: { number: 301, title: 'I Am a Child of God' },
-    closingPrayer: 'Sister Patel',
-  },
-  {
-    id: 5,
-    date: '2026-07-12',
-    meetingType: 'stake',
-    presiding: 'Stake President Harold Ferreira',
-    conducting: 'Stake President Harold Ferreira',
-    announcements: ['Stake conference broadcast to all wards'],
-    openingHymn: { number: 19, title: 'We Thank Thee, O God, for a Prophet' },
-    openingPrayer: 'Sister Nguyen',
-    wardBusiness: [],
-    stakeBusiness: true,
-    sacramentHymn: { number: 169, title: "'Tis Sweet to Sing the Matchless Love" },
-    program: [
-      { type: 'speaker', name: 'Stake President Harold Ferreira', topic: 'Building Zion Together' },
-    ],
-    closingHymn: { number: 152, title: 'God Be with You Till We Meet Again' },
-    closingPrayer: 'Brother Choi',
-  },
-];
+// The meetings list shows this many meetings per page.
+export const PAGE_SIZE = 5;
 
-export async function getMeetings(date?: string): Promise<SacramentMeeting[]> {
-  const sorted = [...meetings].sort((a, b) => a.date.localeCompare(b.date));
-  if (date) {
-    return sorted.filter((meeting) => meeting.date === date);
+// Shape of a raw database row: snake_case columns, exactly as Postgres returns
+// them. The Neon driver already parses JSONB columns (opening_hymn, speakers, …)
+// into JS objects/arrays, and TEXT[] (announcements) into a JS string array, so
+// there is no JSON.parse to do here.
+interface MeetingRow {
+  id: number;
+  date: string; // forced to 'YYYY-MM-DD' text by to_char() in the SELECT
+  meeting_type: SacramentMeeting['meetingType'];
+  presiding: string;
+  conducting: string;
+  announcements: string[] | null;
+  opening_hymn: SacramentMeeting['openingHymn'];
+  opening_prayer: string;
+  ward_business: SacramentMeeting['wardBusiness'] | null;
+  stake_business: boolean;
+  sacrament_hymn: SacramentMeeting['sacramentHymn'];
+  speakers: SacramentMeeting['program'] | null;
+  closing_hymn: SacramentMeeting['closingHymn'];
+  closing_prayer: string;
+}
+
+// Translate one snake_case DB row into the camelCase shape the UI expects.
+// Two deliberate bridges live here:
+//   - column `speakers` maps to field `program` (our ordered speaker / musical-
+//     number list), keeping the richer Week 02 type while using the assignment's
+//     column name.
+//   - a null JSON array falls back to [] so components can .map() safely.
+function mapRow(row: MeetingRow): SacramentMeeting {
+  return {
+    id: row.id,
+    date: row.date,
+    meetingType: row.meeting_type,
+    presiding: row.presiding,
+    conducting: row.conducting,
+    announcements: row.announcements ?? [],
+    openingHymn: row.opening_hymn,
+    openingPrayer: row.opening_prayer,
+    wardBusiness: row.ward_business ?? [],
+    stakeBusiness: row.stake_business,
+    sacramentHymn: row.sacrament_hymn,
+    program: row.speakers ?? [],
+    closingHymn: row.closing_hymn,
+    closingPrayer: row.closing_prayer,
+  };
+}
+
+// Every SELECT pulls the same columns. to_char() turns the DATE into a plain
+// 'YYYY-MM-DD' string so it never arrives as a timezone-sensitive Date object
+// (the exact class of bug that breaks a `date === string` comparison).
+const SELECT_COLUMNS = `
+  id,
+  to_char(date, 'YYYY-MM-DD') AS date,
+  meeting_type,
+  presiding,
+  conducting,
+  announcements,
+  opening_hymn,
+  opening_prayer,
+  ward_business,
+  stake_business,
+  sacrament_hymn,
+  speakers,
+  closing_hymn,
+  closing_prayer
+`;
+
+// Shared text-search filter (used by getMeetings and countMeetings). A NULL
+// search term ($1) disables the filter, so everything matches.
+const SEARCH_FILTER = `
+  ($1::text IS NULL
+   OR presiding ILIKE $1
+   OR conducting ILIKE $1
+   OR meeting_type ILIKE $1
+   OR speakers::text ILIKE $1)
+`;
+
+// Read a list of meetings. Every argument is optional:
+//   - date:  exact-date filter (used by the /api/meetings?date= route)
+//   - query: free-text search over presiding / conducting / type / speakers
+//   - page:  1-based page number; when present, results are limited to PAGE_SIZE
+export async function getMeetings(
+  params: { date?: string; query?: string; page?: number } = {}
+): Promise<SacramentMeeting[]> {
+  const { date, query, page } = params;
+  const search = query ? `%${query}%` : null;
+  const paginate = typeof page === 'number';
+  const limit = paginate ? PAGE_SIZE : null; // LIMIT NULL = no limit (all rows)
+  const offset = paginate && page > 1 ? (page - 1) * PAGE_SIZE : 0;
+
+  const rows = (await sql.query(
+    `SELECT ${SELECT_COLUMNS}
+       FROM meetings
+      WHERE ($2::date IS NULL OR date = $2::date)
+        AND ${SEARCH_FILTER}
+      ORDER BY date DESC
+      LIMIT $3::int OFFSET $4::int`,
+    [search, date ?? null, limit, offset]
+  )) as MeetingRow[];
+
+  return rows.map(mapRow);
+}
+
+// Count how many meetings match a search term. Used to compute the page count.
+export async function countMeetings(
+  params: { query?: string } = {}
+): Promise<number> {
+  const search = params.query ? `%${params.query}%` : null;
+  const rows = (await sql.query(
+    `SELECT COUNT(*)::int AS count FROM meetings WHERE ${SEARCH_FILTER}`,
+    [search]
+  )) as { count: number }[];
+  return rows[0]?.count ?? 0;
+}
+
+// Read a single meeting by id. Returns undefined for a missing or non-integer id.
+export async function getMeetingById(
+  id: number
+): Promise<SacramentMeeting | undefined> {
+  if (!Number.isInteger(id)) {
+    return undefined;
   }
-  return sorted;
+  const rows = (await sql.query(
+    `SELECT ${SELECT_COLUMNS} FROM meetings WHERE id = $1`,
+    [id]
+  )) as MeetingRow[];
+  return rows[0] ? mapRow(rows[0]) : undefined;
 }
 
-export async function getMeetingById(id: number): Promise<SacramentMeeting | undefined> {
-  return meetings.find((meeting) => meeting.id === id);
-}
-
-// "Current" = the most recent meeting on or before today, falling back to the
-// earliest meeting if every seed date is still in the future. With this static
-// seed data, once real time passes the last seed date (2026-07-12), this will
-// keep returning that last meeting -- expected for temporary in-memory data,
-// not a bug (a real database would just have new rows added weekly).
+// "Current" = the most recent meeting on or before today. If every meeting is
+// still in the future, fall back to the earliest one.
 export async function getCurrentMeeting(): Promise<SacramentMeeting | undefined> {
-  const all = await getMeetings();
-  const todayISO = new Date().toISOString().slice(0, 10);
-  const pastOrToday = all.filter((meeting) => meeting.date <= todayISO);
-  if (pastOrToday.length > 0) {
-    return pastOrToday[pastOrToday.length - 1];
+  const past = (await sql.query(
+    `SELECT ${SELECT_COLUMNS} FROM meetings
+      WHERE date <= CURRENT_DATE
+      ORDER BY date DESC
+      LIMIT 1`
+  )) as MeetingRow[];
+  if (past[0]) {
+    return mapRow(past[0]);
   }
-  return all[0];
+
+  const upcoming = (await sql.query(
+    `SELECT ${SELECT_COLUMNS} FROM meetings ORDER BY date ASC LIMIT 1`
+  )) as MeetingRow[];
+  return upcoming[0] ? mapRow(upcoming[0]) : undefined;
+}
+
+// --- Mutation stubs -------------------------------------------------------
+// Wired to the database in Week 04 when the create/edit forms are built. They
+// exist now so the API and admin routes have stable imports to depend on.
+export async function addMeeting(): Promise<never> {
+  throw new Error('addMeeting will be implemented in Week 04.');
+}
+
+export async function updateMeeting(): Promise<never> {
+  throw new Error('updateMeeting will be implemented in Week 04.');
+}
+
+export async function deleteMeeting(): Promise<never> {
+  throw new Error('deleteMeeting will be implemented in Week 04.');
 }
