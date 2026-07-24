@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import MeetingCard from '@/components/MeetingCard';
 import MeetingSearch from '@/components/MeetingSearch';
 import Pagination from '@/components/Pagination';
@@ -22,7 +23,15 @@ export default async function MeetingsPage({
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold">{t('list.title')}</h1>
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">{t('list.title')}</h1>
+        <Link
+          href="/meetings/new"
+          className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+        >
+          New meeting
+        </Link>
+      </div>
 
       <MeetingSearch />
 

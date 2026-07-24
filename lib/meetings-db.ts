@@ -156,17 +156,75 @@ export async function getCurrentMeeting(): Promise<SacramentMeeting | undefined>
   return upcoming[0] ? mapRow(upcoming[0]) : undefined;
 }
 
-// --- Mutation stubs -------------------------------------------------------
-// Wired to the database in Week 04 when the create/edit forms are built. They
-// exist now so the API and admin routes have stable imports to depend on.
-export async function addMeeting(): Promise<never> {
-  throw new Error('addMeeting will be implemented in Week 04.');
+// --- Mutations (Week 04) --------------------------------------------------
+
+// Everything needed to insert or update a meeting: a full meeting minus the id
+// (the database assigns the id on insert).
+export type MeetingInput = Omit<SacramentMeeting, 'id'>;
+
+// The 13 column values, in the same order every mutation uses. JSONB columns
+// (the hymns, ward_business, speakers) are stringified and cast ::jsonb in the
+// SQL; announcements is a real text[] so it goes as a JS array cast ::text[].
+function columnValues(m: MeetingInput): unknown[] {
+  return [
+    m.date,
+    m.meetingType,
+    m.presiding,
+    m.conducting,
+    m.announcements ?? [],
+    JSON.stringify(m.openingHymn),
+    m.openingPrayer,
+    JSON.stringify(m.wardBusiness ?? []),
+    m.stakeBusiness,
+    JSON.stringify(m.sacramentHymn),
+    JSON.stringify(m.program ?? []),
+    JSON.stringify(m.closingHymn),
+    m.closingPrayer,
+  ];
 }
 
-export async function updateMeeting(): Promise<never> {
-  throw new Error('updateMeeting will be implemented in Week 04.');
+// Insert a new meeting and return its generated id.
+export async function addMeeting(input: MeetingInput): Promise<number> {
+  const rows = (await sql.query(
+    `INSERT INTO meetings
+       (date, meeting_type, presiding, conducting, announcements,
+        opening_hymn, opening_prayer, ward_business, stake_business,
+        sacrament_hymn, speakers, closing_hymn, closing_prayer)
+     VALUES
+       ($1::date, $2, $3, $4, $5::text[],
+        $6::jsonb, $7, $8::jsonb, $9::boolean,
+        $10::jsonb, $11::jsonb, $12::jsonb, $13)
+     RETURNING id`,
+    columnValues(input)
+  )) as { id: number }[];
+  return rows[0].id;
 }
 
-export async function deleteMeeting(): Promise<never> {
-  throw new Error('deleteMeeting will be implemented in Week 04.');
+// Overwrite every column of an existing meeting. Returns false if no row had
+// that id (so the caller can surface a "not found" instead of a silent no-op).
+export async function updateMeeting(
+  id: number,
+  input: MeetingInput
+): Promise<boolean> {
+  const rows = (await sql.query(
+    `UPDATE meetings SET
+        date = $1::date, meeting_type = $2, presiding = $3, conducting = $4,
+        announcements = $5::text[], opening_hymn = $6::jsonb, opening_prayer = $7,
+        ward_business = $8::jsonb, stake_business = $9::boolean,
+        sacrament_hymn = $10::jsonb, speakers = $11::jsonb,
+        closing_hymn = $12::jsonb, closing_prayer = $13
+      WHERE id = $14
+      RETURNING id`,
+    [...columnValues(input), id]
+  )) as { id: number }[];
+  return rows.length > 0;
+}
+
+// Delete a meeting by id. Returns false if no row matched.
+export async function deleteMeeting(id: number): Promise<boolean> {
+  const rows = (await sql.query(
+    `DELETE FROM meetings WHERE id = $1 RETURNING id`,
+    [id]
+  )) as { id: number }[];
+  return rows.length > 0;
 }

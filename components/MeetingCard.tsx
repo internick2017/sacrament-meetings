@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { SacramentMeeting } from '@/lib/types';
 import { t } from '@/lib/i18n/en';
+import DeleteMeetingButton from './DeleteMeetingButton';
 
 const meetingTypeLabel: Record<SacramentMeeting['meetingType'], string> = {
   testimony: t('meetingType.testimony'),
@@ -27,9 +28,15 @@ export default function MeetingCard({ meeting }: { meeting: SacramentMeeting }) 
       <p className="text-sm text-slate-600">
         {t('meeting.presiding')}: {meeting.presiding}
       </p>
-      <Link href={`/meetings/${meeting.id}`} className="mt-2 inline-block text-slate-800 underline">
-        {t('list.viewDetails')}
-      </Link>
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <Link href={`/meetings/${meeting.id}`} className="text-slate-800 underline">
+          {t('list.viewDetails')}
+        </Link>
+        <Link href={`/meetings/${meeting.id}/edit`} className="text-slate-800 underline">
+          Edit
+        </Link>
+        <DeleteMeetingButton id={meeting.id} />
+      </div>
     </li>
   );
 }
