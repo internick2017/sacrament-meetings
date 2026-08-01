@@ -10,6 +10,7 @@ import {
   type MeetingInput,
 } from './meetings-db';
 import type { ProgramItem, WardBusinessItem } from './types';
+import { auth } from './auth';
 
 const MEETING_TYPES = ['testimony', 'regular', 'stake', 'general', 'special'] as const;
 
@@ -140,6 +141,11 @@ export async function createMeeting(
   _prevState: MeetingFormState,
   formData: FormData
 ): Promise<MeetingFormState> {
+  const session = await auth();
+  if (!session) {
+    redirect('/login');
+  }
+
   const parsed = MeetingFormSchema.safeParse(rawValues(formData));
   if (!parsed.success) {
     return {
@@ -169,6 +175,11 @@ export async function updateMeeting(
   _prevState: MeetingFormState,
   formData: FormData
 ): Promise<MeetingFormState> {
+  const session = await auth();
+  if (!session) {
+    redirect('/login');
+  }
+
   const parsed = MeetingFormSchema.safeParse(rawValues(formData));
   if (!parsed.success) {
     return {
@@ -198,6 +209,11 @@ export async function updateMeeting(
 }
 
 export async function deleteMeeting(formData: FormData): Promise<void> {
+  const session = await auth();
+  if (!session) {
+    redirect('/login');
+  }
+
   const id = Number(formData.get('id'));
   if (!Number.isInteger(id)) {
     throw new Error('Invalid meeting id.');
