@@ -1,10 +1,5 @@
-import { neon } from '@neondatabase/serverless';
+import { sql } from './db';
 import type { SacramentMeeting } from './types';
-
-// One Neon client for the whole module. neon() only builds the client; it does
-// not open a connection until a query actually runs, so importing this file is
-// cheap. DATABASE_URL comes from .env.local locally and from Vercel in deploys.
-const sql = neon(process.env.DATABASE_URL!);
 
 // The meetings list shows this many meetings per page.
 export const PAGE_SIZE = 5;
