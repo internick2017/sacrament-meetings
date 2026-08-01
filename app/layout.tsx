@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Lora } from 'next/font/google';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { getBaseUrl } from '@/lib/get-base-url';
 import './globals.css';
 
 const lora = Lora({
@@ -10,6 +11,7 @@ const lora = Lora({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getBaseUrl()),
   title: 'Sacrament Meeting Planner',
   description: 'Plan, manage, and print sacrament meeting programs.',
 };
