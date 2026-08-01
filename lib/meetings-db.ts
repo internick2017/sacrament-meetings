@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { sql } from './db';
 import type { SacramentMeeting } from './types';
 
@@ -119,7 +120,9 @@ export async function countMeetings(
 }
 
 // Read a single meeting by id. Returns undefined for a missing or non-integer id.
-export async function getMeetingById(
+// Wrapped in cache() so generateMetadata() and the page component (which both
+// need the same meeting) share one query per request instead of two.
+export const getMeetingById = cache(async function getMeetingById(
   id: number
 ): Promise<SacramentMeeting | undefined> {
   if (!Number.isInteger(id)) {
@@ -130,7 +133,7 @@ export async function getMeetingById(
     [id]
   )) as MeetingRow[];
   return rows[0] ? mapRow(rows[0]) : undefined;
-}
+});
 
 // "Current" = the most recent meeting on or before today. If every meeting is
 // still in the future, fall back to the earliest one.
