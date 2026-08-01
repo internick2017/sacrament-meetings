@@ -11,7 +11,13 @@ const meetingTypeLabel: Record<SacramentMeeting['meetingType'], string> = {
   special: t('meetingType.special'),
 };
 
-export default function MeetingCard({ meeting }: { meeting: SacramentMeeting }) {
+export default function MeetingCard({
+  meeting,
+  isAdmin,
+}: {
+  meeting: SacramentMeeting;
+  isAdmin: boolean;
+}) {
   const formattedDate = new Date(`${meeting.date}T00:00:00`).toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -32,10 +38,14 @@ export default function MeetingCard({ meeting }: { meeting: SacramentMeeting }) 
         <Link href={`/meetings/${meeting.id}`} className="text-slate-800 underline">
           {t('list.viewDetails')}
         </Link>
-        <Link href={`/meetings/${meeting.id}/edit`} className="text-slate-800 underline">
-          Edit
-        </Link>
-        <DeleteMeetingButton id={meeting.id} />
+        {isAdmin ? (
+          <>
+            <Link href={`/meetings/${meeting.id}/edit`} className="text-slate-800 underline">
+              Edit
+            </Link>
+            <DeleteMeetingButton id={meeting.id} />
+          </>
+        ) : null}
       </div>
     </li>
   );
