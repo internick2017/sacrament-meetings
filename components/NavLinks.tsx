@@ -10,13 +10,14 @@ const links = [
   { href: '/meetings/current', label: t('nav.current') },
 ];
 
-export default function NavLinks() {
+export default function NavLinks({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
+  const allLinks = isAdmin ? links : [...links, { href: '/login', label: 'Sign in' }];
 
   return (
     <nav className="bg-slate-900">
       <ul className="mx-auto flex max-w-4xl gap-4 px-4 py-2 text-sm">
-        {links.map((link) => {
+        {allLinks.map((link) => {
           const isActive = pathname === link.href;
           return (
             <li key={link.href}>

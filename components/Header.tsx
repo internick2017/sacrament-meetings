@@ -1,15 +1,17 @@
 import Link from 'next/link';
 import NavLinks from './NavLinks';
+import { auth } from '@/lib/auth';
 
 const WARD_NAME = 'Riverside Ward';
 
-export default function Header() {
+export default async function Header() {
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
+  const session = await auth();
 
   return (
     <header className="no-print bg-slate-800 text-white">
@@ -19,7 +21,7 @@ export default function Header() {
         </Link>
         <p className="text-sm text-slate-300">{today}</p>
       </div>
-      <NavLinks />
+      <NavLinks isAdmin={!!session} />
     </header>
   );
 }
