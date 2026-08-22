@@ -4,7 +4,7 @@ import MeetingSearch from '@/components/MeetingSearch';
 import Pagination from '@/components/Pagination';
 import { getMeetings, countMeetings, PAGE_SIZE } from '@/lib/meetings-db';
 import { auth } from '@/lib/auth';
-import { t } from '@/lib/i18n/en';
+import { getT } from '@/lib/i18n/server';
 
 export default async function MeetingsPage({
   searchParams,
@@ -17,6 +17,7 @@ export default async function MeetingsPage({
 
   // Fetch the current page of results, the total count, and the session in
   // parallel.
+  const t = await getT();
   const [meetings, total, session] = await Promise.all([
     getMeetings({ query, page: currentPage }),
     countMeetings({ query }),
@@ -34,7 +35,7 @@ export default async function MeetingsPage({
             href="/meetings/new"
             className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
           >
-            New meeting
+            {t('list.new')}
           </Link>
         ) : null}
       </div>

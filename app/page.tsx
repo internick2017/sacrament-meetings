@@ -1,13 +1,15 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { t } from '@/lib/i18n/en';
+import { getT } from '@/lib/i18n/server';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const t = await getT();
+
   return (
     <section className="flex flex-col items-center gap-6 text-center">
       <Image
         src="/meetinghouse.svg"
-        alt="Illustration of a church meetinghouse with a steeple"
+        alt={t('home.imageAlt')}
         width={640}
         height={400}
         priority

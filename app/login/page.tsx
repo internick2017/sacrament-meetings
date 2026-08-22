@@ -1,11 +1,14 @@
 import { Suspense } from 'react';
 import LoginForm from '@/components/LoginForm';
+import { getT } from '@/lib/i18n/server';
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const t = await getT();
+
   return (
     <div className="mx-auto max-w-sm">
-      <h1 className="mb-4 text-2xl font-bold">Sign in</h1>
-      <Suspense fallback={<p className="text-sm text-slate-500">Loading…</p>}>
+      <h1 className="mb-4 text-2xl font-bold">{t('login.title')}</h1>
+      <Suspense fallback={<p className="text-sm text-slate-500">{t('login.loading')}</p>}>
         <LoginForm />
       </Suspense>
     </div>

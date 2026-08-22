@@ -1,12 +1,14 @@
 import { notFound } from 'next/navigation';
 import { getMeetingById } from '@/lib/meetings-db';
 import EditMeetingForm from './EditMeetingForm';
+import { getT } from '@/lib/i18n/server';
 
 export default async function EditMeetingPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const t = await getT();
   const { id } = await params;
   const numericId = Number(id);
 
@@ -22,7 +24,7 @@ export default async function EditMeetingPage({
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold">Edit Meeting</h1>
+      <h1 className="mb-4 text-2xl font-bold">{t('form.editTitle')}</h1>
       <EditMeetingForm meeting={meeting} />
     </div>
   );

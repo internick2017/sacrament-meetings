@@ -2,17 +2,23 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { t } from '@/lib/i18n/en';
+import { useT } from '@/lib/i18n/client';
+import type { DictionaryKey } from '@/lib/i18n';
 
-const links = [
-  { href: '/', label: t('nav.home') },
-  { href: '/meetings', label: t('nav.meetings') },
-  { href: '/meetings/current', label: t('nav.current') },
+// Labels are resolved at render time (not module load) so they follow the
+// active language.
+const links: { href: string; label: DictionaryKey }[] = [
+  { href: '/', label: 'nav.home' },
+  { href: '/meetings', label: 'nav.meetings' },
+  { href: '/meetings/current', label: 'nav.current' },
 ];
 
 export default function NavLinks({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
-  const allLinks = isAdmin ? links : [...links, { href: '/login', label: 'Sign in' }];
+  const t = useT();
+  const allLinks = isAdmin
+    ? links
+    : [...links, { href: '/login', label: 'nav.signIn' as DictionaryKey }];
 
   return (
     <nav className="bg-slate-900">
@@ -29,7 +35,7 @@ export default function NavLinks({ isAdmin }: { isAdmin: boolean }) {
                     : 'text-slate-300 hover:text-white'
                 }
               >
-                {link.label}
+                {t(link.label)}
               </Link>
             </li>
           );

@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { t } from '@/lib/i18n/en';
+import { useT } from '@/lib/i18n/client';
 
 export default function Pagination({ totalPages }: { totalPages: number }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const t = useT();
   const currentPage = Math.max(1, Number(searchParams.get('page')) || 1);
 
   // Build a link to another page while preserving the active search query.

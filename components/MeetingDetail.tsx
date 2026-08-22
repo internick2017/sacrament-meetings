@@ -1,29 +1,25 @@
 import type { SacramentMeeting } from '@/lib/types';
-import { t } from '@/lib/i18n/en';
+import { formatMeetingDate } from '@/lib/i18n';
+import { localizeHymn } from '@/lib/hymns';
+import { getLocale, getT } from '@/lib/i18n/server';
+import { MEETING_TYPE_KEY } from './MeetingCard';
 import PrintButton from './PrintButton';
 
-const meetingTypeLabel: Record<SacramentMeeting['meetingType'], string> = {
-  testimony: t('meetingType.testimony'),
-  regular: t('meetingType.regular'),
-  stake: t('meetingType.stake'),
-  general: t('meetingType.general'),
-  special: t('meetingType.special'),
-};
+export default async function MeetingDetail({ meeting }: { meeting: SacramentMeeting }) {
+  const [locale, t] = await Promise.all([getLocale(), getT()]);
+  const formattedDate = formatMeetingDate(meeting.date, locale);
 
-export default function MeetingDetail({ meeting }: { meeting: SacramentMeeting }) {
-  const formattedDate = new Date(`${meeting.date}T00:00:00`).toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  // Hymn titles and numbers come from the hymnbook of the active language.
+  const openingHymn = localizeHymn(meeting.openingHymn, locale);
+  const sacramentHymn = localizeHymn(meeting.sacramentHymn, locale);
+  const closingHymn = localizeHymn(meeting.closingHymn, locale);
 
   return (
     <article className="space-y-4">
       <header className="flex items-center justify-between">
         <div>
           <p className="text-sm uppercase tracking-wide text-slate-500">
-            {meetingTypeLabel[meeting.meetingType]}
+            {t(MEETING_TYPE_KEY[meeting.meetingType])}
           </p>
           <h1 className="text-2xl font-bold">{formattedDate}</h1>
         </div>
@@ -50,7 +46,7 @@ export default function MeetingDetail({ meeting }: { meeting: SacramentMeeting }
 
       <section>
         <h2 className="font-semibold">{t('meeting.openingHymn')}</h2>
-        <p>#{meeting.openingHymn.number} - {meeting.openingHymn.title}</p>
+        <p>#{openingHymn.number} - {openingHymn.title}</p>
       </section>
 
       <section>
@@ -75,7 +71,7 @@ export default function MeetingDetail({ meeting }: { meeting: SacramentMeeting }
 
       <section>
         <h2 className="font-semibold">{t('meeting.sacramentHymn')}</h2>
-        <p>#{meeting.sacramentHymn.number} - {meeting.sacramentHymn.title}</p>
+        <p>#{sacramentHymn.number} - {sacramentHymn.title}</p>
       </section>
 
       {meeting.program.length > 0 && (
@@ -100,7 +96,7 @@ export default function MeetingDetail({ meeting }: { meeting: SacramentMeeting }
 
       <section>
         <h2 className="font-semibold">{t('meeting.closingHymn')}</h2>
-        <p>#{meeting.closingHymn.number} - {meeting.closingHymn.title}</p>
+        <p>#{closingHymn.number} - {closingHymn.title}</p>
       </section>
 
       <section>

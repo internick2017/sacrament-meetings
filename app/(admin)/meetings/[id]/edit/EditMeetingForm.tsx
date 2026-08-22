@@ -18,7 +18,7 @@ export default function EditMeetingForm({ meeting }: { meeting: SacramentMeeting
       action={formAction}
       state={state}
       isPending={isPending}
-      submitLabel="Save changes"
+      submitLabel="form.editSubmit"
       defaultMeeting={meeting}
     />
   );

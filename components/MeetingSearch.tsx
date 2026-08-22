@@ -2,12 +2,13 @@
 
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import { useDebouncedCallback } from 'use-debounce';
-import { t } from '@/lib/i18n/en';
+import { useT } from '@/lib/i18n/client';
 
 export default function MeetingSearch() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { replace } = useRouter();
+  const t = useT();
 
   // Debounce so we only rewrite the URL 300ms after the user stops typing,
   // instead of on every keystroke (which would hit the database each time).

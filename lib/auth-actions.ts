@@ -2,6 +2,7 @@
 
 import { AuthError } from 'next-auth';
 import { signIn, signOut } from './auth';
+import { getT } from './i18n/server';
 
 export interface LoginFormState {
   error?: string;
@@ -33,7 +34,8 @@ export async function loginAction(
     // treat actual AuthError instances as a failed login, and let anything
     // else (like that redirect) propagate.
     if (error instanceof AuthError) {
-      return { error: 'Invalid username or password.' };
+      const t = await getT();
+      return { error: t('login.invalid') };
     }
     throw error;
   }

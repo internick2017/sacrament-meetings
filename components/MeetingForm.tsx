@@ -1,23 +1,29 @@
 import Link from 'next/link';
 import type { ProgramItem, SacramentMeeting } from '@/lib/types';
 import type { MeetingFormState } from '@/lib/actions';
+import { useT } from '@/lib/i18n/client';
+import type { DictionaryKey } from '@/lib/i18n';
 
 interface MeetingFormProps {
   // The formAction returned by useActionState in the parent client component.
   action: (formData: FormData) => void;
   state: MeetingFormState;
   isPending: boolean;
-  submitLabel: string;
+  // Dictionary key for the submit button, so the label follows the language.
+  submitLabel: DictionaryKey;
   // Present when editing: pre-fills every field.
   defaultMeeting?: SacramentMeeting;
 }
 
-const MEETING_TYPE_OPTIONS: { value: SacramentMeeting['meetingType']; label: string }[] = [
-  { value: 'regular', label: 'Regular Sacrament Meeting' },
-  { value: 'testimony', label: 'Fast & Testimony Meeting' },
-  { value: 'stake', label: 'Stake Conference' },
-  { value: 'general', label: 'General Conference' },
-  { value: 'special', label: 'Special Meeting' },
+const MEETING_TYPE_OPTIONS: {
+  value: SacramentMeeting['meetingType'];
+  label: DictionaryKey;
+}[] = [
+  { value: 'regular', label: 'meetingType.regular' },
+  { value: 'testimony', label: 'meetingType.testimony' },
+  { value: 'stake', label: 'meetingType.stake' },
+  { value: 'general', label: 'meetingType.general' },
+  { value: 'special', label: 'meetingType.special' },
 ];
 
 // Turn the stored program back into the textarea format the form accepts:
@@ -42,6 +48,7 @@ export default function MeetingForm({
   submitLabel,
   defaultMeeting,
 }: MeetingFormProps) {
+  const t = useT();
   const errors = state.errors ?? {};
   const m = defaultMeeting;
 
@@ -64,16 +71,16 @@ export default function MeetingForm({
       )}
 
       <div>
-        <label htmlFor="date" className="mb-1 block text-sm font-semibold">Date</label>
+        <label htmlFor="date" className="mb-1 block text-sm font-semibold">{t('form.date')}</label>
         <input id="date" name="date" type="date" defaultValue={m?.date} aria-describedby="date-error" className={inputClass} />
         {fieldError('date')}
       </div>
 
       <div>
-        <label htmlFor="meetingType" className="mb-1 block text-sm font-semibold">Meeting type</label>
+        <label htmlFor="meetingType" className="mb-1 block text-sm font-semibold">{t('form.meetingType')}</label>
         <select id="meetingType" name="meetingType" defaultValue={m?.meetingType ?? 'regular'} aria-describedby="meetingType-error" className={inputClass}>
           {MEETING_TYPE_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>{option.label}</option>
+            <option key={option.value} value={option.value}>{t(option.label)}</option>
           ))}
         </select>
         {fieldError('meetingType')}
@@ -81,27 +88,27 @@ export default function MeetingForm({
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
-          <label htmlFor="presiding" className="mb-1 block text-sm font-semibold">Presiding</label>
+          <label htmlFor="presiding" className="mb-1 block text-sm font-semibold">{t('form.presiding')}</label>
           <input id="presiding" name="presiding" type="text" defaultValue={m?.presiding} aria-describedby="presiding-error" className={inputClass} />
           {fieldError('presiding')}
         </div>
         <div>
-          <label htmlFor="conducting" className="mb-1 block text-sm font-semibold">Conducting</label>
+          <label htmlFor="conducting" className="mb-1 block text-sm font-semibold">{t('form.conducting')}</label>
           <input id="conducting" name="conducting" type="text" defaultValue={m?.conducting} aria-describedby="conducting-error" className={inputClass} />
           {fieldError('conducting')}
         </div>
       </div>
 
       <fieldset className="space-y-3 rounded border border-slate-200 p-4">
-        <legend className="px-1 text-sm font-semibold">Opening hymn</legend>
+        <legend className="px-1 text-sm font-semibold">{t('form.openingHymn')}</legend>
         <div className="grid gap-5 sm:grid-cols-[8rem_1fr]">
           <div>
-            <label htmlFor="openingHymnNumber" className="mb-1 block text-sm font-semibold">Number</label>
+            <label htmlFor="openingHymnNumber" className="mb-1 block text-sm font-semibold">{t('form.hymnNumber')}</label>
             <input id="openingHymnNumber" name="openingHymnNumber" type="number" min={1} defaultValue={m?.openingHymn.number} aria-describedby="openingHymnNumber-error" className={inputClass} />
             {fieldError('openingHymnNumber')}
           </div>
           <div>
-            <label htmlFor="openingHymnTitle" className="mb-1 block text-sm font-semibold">Title</label>
+            <label htmlFor="openingHymnTitle" className="mb-1 block text-sm font-semibold">{t('form.hymnTitle')}</label>
             <input id="openingHymnTitle" name="openingHymnTitle" type="text" defaultValue={m?.openingHymn.title} aria-describedby="openingHymnTitle-error" className={inputClass} />
             {fieldError('openingHymnTitle')}
           </div>
@@ -109,21 +116,21 @@ export default function MeetingForm({
       </fieldset>
 
       <div>
-        <label htmlFor="openingPrayer" className="mb-1 block text-sm font-semibold">Opening prayer</label>
+        <label htmlFor="openingPrayer" className="mb-1 block text-sm font-semibold">{t('form.openingPrayer')}</label>
         <input id="openingPrayer" name="openingPrayer" type="text" defaultValue={m?.openingPrayer} aria-describedby="openingPrayer-error" className={inputClass} />
         {fieldError('openingPrayer')}
       </div>
 
       <fieldset className="space-y-3 rounded border border-slate-200 p-4">
-        <legend className="px-1 text-sm font-semibold">Sacrament hymn</legend>
+        <legend className="px-1 text-sm font-semibold">{t('form.sacramentHymn')}</legend>
         <div className="grid gap-5 sm:grid-cols-[8rem_1fr]">
           <div>
-            <label htmlFor="sacramentHymnNumber" className="mb-1 block text-sm font-semibold">Number</label>
+            <label htmlFor="sacramentHymnNumber" className="mb-1 block text-sm font-semibold">{t('form.hymnNumber')}</label>
             <input id="sacramentHymnNumber" name="sacramentHymnNumber" type="number" min={1} defaultValue={m?.sacramentHymn.number} aria-describedby="sacramentHymnNumber-error" className={inputClass} />
             {fieldError('sacramentHymnNumber')}
           </div>
           <div>
-            <label htmlFor="sacramentHymnTitle" className="mb-1 block text-sm font-semibold">Title</label>
+            <label htmlFor="sacramentHymnTitle" className="mb-1 block text-sm font-semibold">{t('form.hymnTitle')}</label>
             <input id="sacramentHymnTitle" name="sacramentHymnTitle" type="text" defaultValue={m?.sacramentHymn.title} aria-describedby="sacramentHymnTitle-error" className={inputClass} />
             {fieldError('sacramentHymnTitle')}
           </div>
@@ -131,15 +138,15 @@ export default function MeetingForm({
       </fieldset>
 
       <fieldset className="space-y-3 rounded border border-slate-200 p-4">
-        <legend className="px-1 text-sm font-semibold">Closing hymn</legend>
+        <legend className="px-1 text-sm font-semibold">{t('form.closingHymn')}</legend>
         <div className="grid gap-5 sm:grid-cols-[8rem_1fr]">
           <div>
-            <label htmlFor="closingHymnNumber" className="mb-1 block text-sm font-semibold">Number</label>
+            <label htmlFor="closingHymnNumber" className="mb-1 block text-sm font-semibold">{t('form.hymnNumber')}</label>
             <input id="closingHymnNumber" name="closingHymnNumber" type="number" min={1} defaultValue={m?.closingHymn.number} aria-describedby="closingHymnNumber-error" className={inputClass} />
             {fieldError('closingHymnNumber')}
           </div>
           <div>
-            <label htmlFor="closingHymnTitle" className="mb-1 block text-sm font-semibold">Title</label>
+            <label htmlFor="closingHymnTitle" className="mb-1 block text-sm font-semibold">{t('form.hymnTitle')}</label>
             <input id="closingHymnTitle" name="closingHymnTitle" type="text" defaultValue={m?.closingHymn.title} aria-describedby="closingHymnTitle-error" className={inputClass} />
             {fieldError('closingHymnTitle')}
           </div>
@@ -147,41 +154,42 @@ export default function MeetingForm({
       </fieldset>
 
       <div>
-        <label htmlFor="closingPrayer" className="mb-1 block text-sm font-semibold">Closing prayer</label>
+        <label htmlFor="closingPrayer" className="mb-1 block text-sm font-semibold">{t('form.closingPrayer')}</label>
         <input id="closingPrayer" name="closingPrayer" type="text" defaultValue={m?.closingPrayer} aria-describedby="closingPrayer-error" className={inputClass} />
         {fieldError('closingPrayer')}
       </div>
 
       <div className="flex items-center gap-2">
         <input id="stakeBusiness" name="stakeBusiness" type="checkbox" defaultChecked={m?.stakeBusiness} className="h-4 w-4" />
-        <label htmlFor="stakeBusiness" className="text-sm font-semibold">Stake business was conducted</label>
+        <label htmlFor="stakeBusiness" className="text-sm font-semibold">{t('form.stakeBusiness')}</label>
       </div>
 
       <div>
-        <label htmlFor="announcements" className="mb-1 block text-sm font-semibold">Announcements</label>
+        <label htmlFor="announcements" className="mb-1 block text-sm font-semibold">{t('form.announcements')}</label>
         <textarea id="announcements" name="announcements" rows={3} defaultValue={m?.announcements?.join('\n')} className={inputClass} />
-        <p className="mt-1 text-xs text-slate-500">One announcement per line. Leave blank for none.</p>
+        <p className="mt-1 text-xs text-slate-500">{t('form.announcementsHint')}</p>
       </div>
 
       <div>
-        <label htmlFor="wardBusiness" className="mb-1 block text-sm font-semibold">Ward business</label>
+        <label htmlFor="wardBusiness" className="mb-1 block text-sm font-semibold">{t('form.wardBusiness')}</label>
         <textarea id="wardBusiness" name="wardBusiness" rows={3} defaultValue={m?.wardBusiness.map((item) => item.description).join('\n')} className={inputClass} />
-        <p className="mt-1 text-xs text-slate-500">One item per line. Leave blank for none.</p>
+        <p className="mt-1 text-xs text-slate-500">{t('form.wardBusinessHint')}</p>
       </div>
 
       <div>
-        <label htmlFor="speakers" className="mb-1 block text-sm font-semibold">Speakers &amp; musical numbers</label>
+        <label htmlFor="speakers" className="mb-1 block text-sm font-semibold">{t('form.speakers')}</label>
         <textarea id="speakers" name="speakers" rows={4} defaultValue={m ? programToText(m.program) : ''} className={inputClass} />
         <p className="mt-1 text-xs text-slate-500">
-          One per line. Speaker: <code>Name | Topic</code>. Musical number: <code>M: Performer | Title</code>.
+          {t('form.speakersHintPrefix')} <code>Name | Topic</code>. {t('form.speakersHintMusical')}{' '}
+          <code>M: Performer | Title</code>.
         </p>
       </div>
 
       <div className="flex items-center gap-3">
         <button type="submit" disabled={isPending} className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-60">
-          {isPending ? 'Saving…' : submitLabel}
+          {isPending ? t('form.saving') : t(submitLabel)}
         </button>
-        <Link href="/meetings" className="text-sm text-slate-600 underline">Cancel</Link>
+        <Link href="/meetings" className="text-sm text-slate-600 underline">{t('form.cancel')}</Link>
       </div>
     </form>
   );

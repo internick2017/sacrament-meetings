@@ -1,8 +1,10 @@
 'use client';
 
-import { t } from '@/lib/i18n/en';
+import { useT } from '@/lib/i18n/client';
 
 export default function PrintButton() {
+  const t = useT();
+
   return (
     <button
       type="button"

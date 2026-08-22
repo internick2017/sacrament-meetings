@@ -1,25 +1,10 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import MeetingDetail from '@/components/MeetingDetail';
+import { MEETING_TYPE_KEY } from '@/components/MeetingCard';
 import { getMeetingById } from '@/lib/meetings-db';
-import type { SacramentMeeting } from '@/lib/types';
-
-const MEETING_TYPE_LABEL: Record<SacramentMeeting['meetingType'], string> = {
-  testimony: 'Fast & Testimony Meeting',
-  regular: 'Sacrament Meeting',
-  stake: 'Stake Conference',
-  general: 'General Conference',
-  special: 'Special Meeting',
-};
-
-function formatMeetingDate(date: string): string {
-  return new Date(`${date}T00:00:00`).toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-}
+import { formatMeetingDate } from '@/lib/i18n';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export async function generateMetadata({
   params,
@@ -27,22 +12,28 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
+  const [locale, t] = await Promise.all([getLocale(), getT()]);
   const numericId = Number(id);
   if (!Number.isInteger(numericId)) {
-    return { title: 'Meeting not found' };
+    return { title: t('meeting.notFoundTitle') };
   }
 
   const meeting = await getMeetingById(numericId);
   if (!meeting) {
-    return { title: 'Meeting not found' };
+    return { title: t('meeting.notFoundTitle') };
   }
 
-  const typeLabel = MEETING_TYPE_LABEL[meeting.meetingType];
-  const formattedDate = formatMeetingDate(meeting.date);
+  const typeLabel = t(MEETING_TYPE_KEY[meeting.meetingType]);
+  const formattedDate = formatMeetingDate(meeting.date, locale);
 
   return {
-    title: `${typeLabel} — ${formattedDate}`,
-    description: `${typeLabel} on ${formattedDate}, presided by ${meeting.presiding} and conducted by ${meeting.conducting}.`,
+    title: `${typeLabel} - ${formattedDate}`,
+    description: t('meeting.metaDescription', {
+      type: typeLabel,
+      date: formattedDate,
+      presiding: meeting.presiding,
+      conducting: meeting.conducting,
+    }),
   };
 }
 

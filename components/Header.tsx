@@ -1,17 +1,21 @@
 import Link from 'next/link';
 import NavLinks from './NavLinks';
+import LocaleSwitcher from './LocaleSwitcher';
 import { auth } from '@/lib/auth';
+import { DATE_LOCALES } from '@/lib/i18n/config';
+import { getLocale } from '@/lib/i18n/server';
 
 const WARD_NAME = 'Riverside Ward';
 
 export default async function Header() {
-  const today = new Date().toLocaleDateString('en-US', {
+  const [locale, session] = await Promise.all([getLocale(), auth()]);
+
+  const today = new Date().toLocaleDateString(DATE_LOCALES[locale], {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
-  const session = await auth();
 
   return (
     <header className="no-print bg-slate-800 text-white">
@@ -19,7 +23,10 @@ export default async function Header() {
         <Link href="/" className="text-lg font-semibold">
           {WARD_NAME}
         </Link>
-        <p className="text-sm text-slate-300">{today}</p>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          <p className="text-sm text-slate-300">{today}</p>
+          <LocaleSwitcher />
+        </div>
       </div>
       <NavLinks isAdmin={!!session} />
     </header>

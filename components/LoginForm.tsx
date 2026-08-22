@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { loginAction, type LoginFormState } from '@/lib/auth-actions';
+import { useT } from '@/lib/i18n/client';
 
 const initialState: LoginFormState = {};
 
@@ -11,6 +12,7 @@ const inputClass =
 
 export default function LoginForm() {
   const searchParams = useSearchParams();
+  const t = useT();
   const callbackUrl = searchParams.get('callbackUrl') ?? '/meetings';
   const [state, formAction, isPending] = useActionState(loginAction, initialState);
 
@@ -19,13 +21,13 @@ export default function LoginForm() {
       <input type="hidden" name="callbackUrl" value={callbackUrl} />
       <div>
         <label htmlFor="username" className="block text-sm font-medium">
-          Username
+          {t('login.username')}
         </label>
         <input id="username" name="username" type="text" required className={inputClass} />
       </div>
       <div>
         <label htmlFor="password" className="block text-sm font-medium">
-          Password
+          {t('login.password')}
         </label>
         <input id="password" name="password" type="password" required className={inputClass} />
       </div>
@@ -37,7 +39,7 @@ export default function LoginForm() {
         disabled={isPending}
         className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-50"
       >
-        {isPending ? 'Signing in…' : 'Sign in'}
+        {isPending ? t('login.submitting') : t('login.submit')}
       </button>
     </form>
   );

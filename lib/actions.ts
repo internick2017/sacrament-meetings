@@ -11,37 +11,47 @@ import {
 } from './meetings-db';
 import type { ProgramItem, WardBusinessItem } from './types';
 import { auth } from './auth';
+import { getT } from './i18n/server';
+import type { Translator } from './i18n';
 
 const MEETING_TYPES = ['testimony', 'regular', 'stake', 'general', 'special'] as const;
 
 // --- Validation -----------------------------------------------------------
 
-const requiredText = (label: string) => z.string().trim().min(1, `${label} is required.`);
+// The schema is built per request instead of at module load, because every
+// message has to come from the visitor's dictionary.
+function meetingFormSchema(t: Translator) {
+  // Each field carries its own complete sentence rather than a
+  // "{field} is required" template: Spanish and Portuguese need the adjective
+  // to agree in gender, which a single template cannot do.
+  const requiredText = (messageKey: Parameters<Translator>[0]) =>
+    z.string().trim().min(1, t(messageKey));
 
-// Hymn numbers arrive from the form as strings, so coerce before validating.
-const hymnNumber = z.coerce
-  .number()
-  .int('Hymn number must be a whole number.')
-  .min(1, 'Enter a hymn number.')
-  .max(1000, 'That hymn number looks too large.');
+  // Hymn numbers arrive from the form as strings, so coerce before validating.
+  const hymnNumber = z.coerce
+    .number()
+    .int(t('validation.hymnInt'))
+    .min(1, t('validation.hymnMin'))
+    .max(1000, t('validation.hymnMax'));
 
-// Only the required, single-value fields are validated here. The optional list
-// fields (announcements, ward business, speakers) are free-form textareas and
-// are parsed separately below.
-const MeetingFormSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Choose a valid date.'),
-  meetingType: z.enum(MEETING_TYPES),
-  presiding: requiredText('Presiding'),
-  conducting: requiredText('Conducting'),
-  openingHymnNumber: hymnNumber,
-  openingHymnTitle: requiredText('Opening hymn title'),
-  openingPrayer: requiredText('Opening prayer'),
-  sacramentHymnNumber: hymnNumber,
-  sacramentHymnTitle: requiredText('Sacrament hymn title'),
-  closingHymnNumber: hymnNumber,
-  closingHymnTitle: requiredText('Closing hymn title'),
-  closingPrayer: requiredText('Closing prayer'),
-});
+  // Only the required, single-value fields are validated here. The optional
+  // list fields (announcements, ward business, speakers) are free-form
+  // textareas and are parsed separately below.
+  return z.object({
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, t('validation.date')),
+    meetingType: z.enum(MEETING_TYPES),
+    presiding: requiredText('validation.required.presiding'),
+    conducting: requiredText('validation.required.conducting'),
+    openingHymnNumber: hymnNumber,
+    openingHymnTitle: requiredText('validation.required.openingHymnTitle'),
+    openingPrayer: requiredText('validation.required.openingPrayer'),
+    sacramentHymnNumber: hymnNumber,
+    sacramentHymnTitle: requiredText('validation.required.sacramentHymnTitle'),
+    closingHymnNumber: hymnNumber,
+    closingHymnTitle: requiredText('validation.required.closingHymnTitle'),
+    closingPrayer: requiredText('validation.required.closingPrayer'),
+  });
+}
 
 // What each create/edit form action returns to useActionState: a general
 // message and per-field error arrays keyed by the input's name.
@@ -62,10 +72,12 @@ function isDuplicateDateError(error: unknown): boolean {
   );
 }
 
-const DUPLICATE_DATE_STATE: MeetingFormState = {
-  message: 'Please fix the highlighted fields.',
-  errors: { date: ['A meeting already exists on this date. Choose a different date.'] },
-};
+function duplicateDateState(t: Translator): MeetingFormState {
+  return {
+    message: t('validation.fixFields'),
+    errors: { date: [t('validation.duplicateDate')] },
+  };
+}
 
 // --- Free-form list parsing ------------------------------------------------
 
@@ -115,7 +127,7 @@ function rawValues(formData: FormData) {
 // Combine the validated scalar fields with the parsed list fields into the
 // full record the database layer expects.
 function buildInput(
-  data: z.infer<typeof MeetingFormSchema>,
+  data: z.infer<ReturnType<typeof meetingFormSchema>>,
   formData: FormData
 ): MeetingInput {
   return {
@@ -146,10 +158,11 @@ export async function createMeeting(
     redirect('/login');
   }
 
-  const parsed = MeetingFormSchema.safeParse(rawValues(formData));
+  const t = await getT();
+  const parsed = meetingFormSchema(t).safeParse(rawValues(formData));
   if (!parsed.success) {
     return {
-      message: 'Please fix the highlighted fields.',
+      message: t('validation.fixFields'),
       errors: z.flattenError(parsed.error).fieldErrors,
     };
   }
@@ -160,10 +173,10 @@ export async function createMeeting(
     await dbAddMeeting(buildInput(parsed.data, formData));
   } catch (error) {
     if (isDuplicateDateError(error)) {
-      return DUPLICATE_DATE_STATE;
+      return duplicateDateState(t);
     }
     console.error('createMeeting failed:', error);
-    throw new Error('The meeting could not be saved. Please try again.');
+    throw new Error(t('validation.saveFailed'));
   }
 
   revalidatePath('/meetings');
@@ -180,10 +193,11 @@ export async function updateMeeting(
     redirect('/login');
   }
 
-  const parsed = MeetingFormSchema.safeParse(rawValues(formData));
+  const t = await getT();
+  const parsed = meetingFormSchema(t).safeParse(rawValues(formData));
   if (!parsed.success) {
     return {
-      message: 'Please fix the highlighted fields.',
+      message: t('validation.fixFields'),
       errors: z.flattenError(parsed.error).fieldErrors,
     };
   }
@@ -193,10 +207,10 @@ export async function updateMeeting(
     updated = await dbUpdateMeeting(id, buildInput(parsed.data, formData));
   } catch (error) {
     if (isDuplicateDateError(error)) {
-      return DUPLICATE_DATE_STATE;
+      return duplicateDateState(t);
     }
     console.error('updateMeeting failed:', error);
-    throw new Error('The meeting could not be updated. Please try again.');
+    throw new Error(t('validation.updateFailed'));
   }
 
   if (!updated) {
@@ -214,16 +228,17 @@ export async function deleteMeeting(formData: FormData): Promise<void> {
     redirect('/login');
   }
 
+  const t = await getT();
   const id = Number(formData.get('id'));
   if (!Number.isInteger(id)) {
-    throw new Error('Invalid meeting id.');
+    throw new Error(t('validation.invalidId'));
   }
 
   try {
     await dbDeleteMeeting(id);
   } catch (error) {
     console.error('deleteMeeting failed:', error);
-    throw new Error('The meeting could not be deleted. Please try again.');
+    throw new Error(t('validation.deleteFailed'));
   }
 
   revalidatePath('/meetings');

@@ -1,0 +1,126 @@
+// English dictionary. This object defines the key set: es.ts and pt.ts are
+// typed against it, so a missing or misspelled key is a compile-time error.
+export const en = {
+  'nav.home': 'Home',
+  'nav.meetings': 'Meetings',
+  'nav.current': "This Week's Meeting",
+  'nav.signIn': 'Sign in',
+
+  'locale.label': 'Language',
+
+  'footer.text': 'Sacrament Meeting Planner, built for WDD 430',
+
+  'home.heading': 'Plan and Review Sacrament Meetings',
+  'home.subheading':
+    'Manage agendas, track speakers and hymns, and print programs for your ward.',
+  'home.cta': 'View Meetings',
+  'home.imageAlt': 'Illustration of a church meetinghouse with a steeple',
+
+  'meeting.announcements': 'Announcements',
+  'meeting.openingHymn': 'Opening Hymn',
+  'meeting.openingPrayer': 'Opening Prayer',
+  'meeting.wardBusiness': 'Ward Business',
+  'meeting.stakeBusiness': 'Stake business was conducted in this meeting.',
+  'meeting.sacramentHymn': 'Sacrament Hymn',
+  'meeting.program': 'Speakers & Musical Numbers',
+  'meeting.closingHymn': 'Closing Hymn',
+  'meeting.closingPrayer': 'Closing Prayer',
+  'meeting.presiding': 'Presiding',
+  'meeting.conducting': 'Conducting',
+  'meeting.print': 'Print Program',
+  'meeting.speaker': 'Speaker',
+  'meeting.musicalNumber': 'Musical Number',
+  'meeting.notFoundTitle': 'Meeting not found',
+  'meeting.metaDescription':
+    '{type} on {date}, presided by {presiding} and conducted by {conducting}.',
+
+  'meetingType.testimony': 'Fast & Testimony Meeting',
+  'meetingType.regular': 'Regular Sacrament Meeting',
+  'meetingType.stake': 'Stake Conference',
+  'meetingType.general': 'General Conference',
+  'meetingType.special': 'Special Meeting',
+
+  'list.title': 'All Meetings',
+  'list.viewDetails': 'View Program',
+  'list.empty': 'No meetings match your search.',
+  'list.loading': 'Loading meetings…',
+  'list.new': 'New meeting',
+  'list.edit': 'Edit',
+  'list.delete': 'Delete',
+  'list.deleteConfirm': 'Delete this meeting? This cannot be undone.',
+
+  'search.label': 'Search meetings',
+  'search.placeholder': 'Search by speaker, presiding, conducting, or type',
+
+  'pagination.label': 'Meetings pagination',
+  'pagination.previous': 'Previous',
+  'pagination.next': 'Next',
+  'pagination.page': 'Page',
+
+  'login.title': 'Sign in',
+  'login.username': 'Username',
+  'login.password': 'Password',
+  'login.submit': 'Sign in',
+  'login.submitting': 'Signing in…',
+  'login.loading': 'Loading…',
+  'login.invalid': 'Invalid username or password.',
+
+  'admin.area': 'Admin area',
+  'admin.signedInAs': 'signed in as {name}',
+  'admin.signOut': 'Sign out',
+
+  'form.createTitle': 'Create a Meeting',
+  'form.editTitle': 'Edit Meeting',
+  'form.createSubmit': 'Create meeting',
+  'form.editSubmit': 'Save changes',
+  'form.saving': 'Saving…',
+  'form.cancel': 'Cancel',
+  'form.date': 'Date',
+  'form.meetingType': 'Meeting type',
+  'form.presiding': 'Presiding',
+  'form.conducting': 'Conducting',
+  'form.openingHymn': 'Opening hymn',
+  'form.sacramentHymn': 'Sacrament hymn',
+  'form.closingHymn': 'Closing hymn',
+  'form.hymnNumber': 'Number',
+  'form.hymnTitle': 'Title',
+  'form.openingPrayer': 'Opening prayer',
+  'form.closingPrayer': 'Closing prayer',
+  'form.stakeBusiness': 'Stake business was conducted',
+  'form.announcements': 'Announcements',
+  'form.announcementsHint': 'One announcement per line. Leave blank for none.',
+  'form.wardBusiness': 'Ward business',
+  'form.wardBusinessHint': 'One item per line. Leave blank for none.',
+  'form.speakers': 'Speakers & musical numbers',
+  'form.speakersHintPrefix': 'One per line. Speaker:',
+  'form.speakersHintMusical': 'Musical number:',
+
+  'error.title': 'Something went wrong',
+  'error.generic': 'An unexpected error occurred while loading meetings.',
+  'error.tryAgain': 'Try Again',
+  'error.back': 'Back to meetings',
+  'error.notFoundBody':
+    'We could not find a meeting with that id. It may have been deleted.',
+
+  'validation.required.presiding': 'Presiding is required.',
+  'validation.required.conducting': 'Conducting is required.',
+  'validation.required.openingHymnTitle': 'The opening hymn title is required.',
+  'validation.required.sacramentHymnTitle': 'The sacrament hymn title is required.',
+  'validation.required.closingHymnTitle': 'The closing hymn title is required.',
+  'validation.required.openingPrayer': 'The opening prayer is required.',
+  'validation.required.closingPrayer': 'The closing prayer is required.',
+  'validation.date': 'Choose a valid date.',
+  'validation.hymnInt': 'Hymn number must be a whole number.',
+  'validation.hymnMin': 'Enter a hymn number.',
+  'validation.hymnMax': 'That hymn number looks too large.',
+  'validation.fixFields': 'Please fix the highlighted fields.',
+  'validation.duplicateDate':
+    'A meeting already exists on this date. Choose a different date.',
+  'validation.saveFailed': 'The meeting could not be saved. Please try again.',
+  'validation.updateFailed': 'The meeting could not be updated. Please try again.',
+  'validation.deleteFailed': 'The meeting could not be deleted. Please try again.',
+  'validation.invalidId': 'Invalid meeting id.',
+} as const;
+
+export type DictionaryKey = keyof typeof en;
+export type Dictionary = Record<DictionaryKey, string>;
