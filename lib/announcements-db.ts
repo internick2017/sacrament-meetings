@@ -56,6 +56,12 @@ const SELECT_ROWS = `
       ON o.id = a.organization_id
 `;
 
+// Default is "in force only": every public-facing list of announcements must
+// not surface expired or not-yet-started ones by default, because that is
+// the whole point of the validity window. A caller opts into expired rows
+// explicitly (includeExpired: true) rather than the filter being opt-in,
+// so a forgetful call site fails safe (shows nothing stale) instead of
+// failing open (leaking an expired notice).
 export const getAnnouncements = cache(async function getAnnouncements({
   signedIn,
   organizationId,
@@ -84,12 +90,30 @@ export const getAnnouncements = cache(async function getAnnouncements({
   return rows.map(mapRow);
 });
 
-export const getAnnouncementById = cache(async function getAnnouncementById(
-  id: number,
-  signedIn: boolean
-): Promise<Announcement | undefined> {
+// Same default as getAnnouncements, and for the same reason: a caller that
+// says nothing should only ever see an announcement that is currently in
+// force. The administration screen is the one caller that MUST pass
+// includeExpired: true, because clearing out expired notices (editing or
+// deleting them) is precisely what that screen is for, and it cannot act on
+// a row it cannot load. Do not "fix" this back to an unconditional lookup:
+// that would let an expired announcement leak into a public detail view.
+export const getAnnouncementById = cache(async function getAnnouncementById({
+  id,
+  signedIn,
+  includeExpired,
+}: {
+  id: number;
+  signedIn: boolean;
+  includeExpired?: boolean;
+}): Promise<Announcement | undefined> {
+  const conditions = [`a.id = $1`, audienceFilter(signedIn)];
+
+  if (includeExpired !== true) {
+    conditions.push(currentFilter());
+  }
+
   const rows = (await sql.query(
-    `${SELECT_ROWS} WHERE a.id = $1 AND ${audienceFilter(signedIn)}`,
+    `${SELECT_ROWS} WHERE ${conditions.join(' AND ')}`,
     [id]
   )) as AnnouncementRow[];
   return rows[0] ? mapRow(rows[0]) : undefined;
