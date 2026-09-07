@@ -43,4 +43,60 @@ describe('zonedLocalToInstant', () => {
     const instant = zonedLocalToInstant('2026-10-02T00:00', 'America/Sao_Paulo');
     expect(instant).toBe('2026-10-02T03:00:00.000Z');
   });
+
+  // The single-pass version sampled the offset at the naive
+  // local-time-as-UTC guess, which can be up to |offset| hours away from the
+  // true instant. That is wrong not just inside a DST transition but for
+  // EVERY local time within roughly |offset| hours after midnight on a
+  // transition day. These cases (found in whole-branch review) pin the
+  // two-pass fix plus the explicit gap/overlap conventions documented next
+  // to zonedLocalToInstant.
+  describe('daylight saving transitions', () => {
+    it('resolves an ordinary time shortly after a spring-forward transition correctly (not just inside the gap)', () => {
+      // America/Denver springs forward 2026-03-08: 02:00 MST -> 03:00 MDT.
+      // 03:30 is a completely normal MDT morning time, not inside the gap,
+      // yet the single-pass guess (sampled at 03:30-as-UTC, which falls
+      // BEFORE the real transition instant of 09:00Z) used the pre-transition
+      // offset (-7h) and produced 10:30Z instead of the correct 09:30Z.
+      const instant = zonedLocalToInstant('2026-03-08T03:30', 'America/Denver');
+      expect(instant).toBe('2026-03-08T09:30:00.000Z');
+
+      const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Denver',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }).formatToParts(new Date(instant));
+      const get = (type: string) => parts.find((part) => part.type === type)?.value ?? '00';
+      expect(`${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`).toBe(
+        '2026-03-08T03:30'
+      );
+    });
+
+    it('resolves a local time inside the spring-forward GAP using the documented convention (push forward through the skipped hour)', () => {
+      // 02:30 does not exist in America/Denver on 2026-03-08 (clocks jump
+      // from 02:00 straight to 03:00). The documented convention resolves a
+      // gap as if the wall clock kept advancing at the pre-transition rate,
+      // landing on 03:30 MDT, i.e. the same instant as the ordinary 03:30
+      // case above.
+      const instant = zonedLocalToInstant('2026-03-08T02:30', 'America/Denver');
+      expect(instant).toBe('2026-03-08T09:30:00.000Z');
+    });
+
+    it('resolves a local time inside the spring-forward GAP for a positive-offset zone the same way', () => {
+      // Europe/Madrid springs forward 2026-03-29: 02:00 CET -> 03:00 CEST.
+      // 02:30 does not exist; pushed forward through the gap it lands on
+      // 03:30 CEST, which is 01:30Z.
+      const instant = zonedLocalToInstant('2026-03-29T02:30', 'Europe/Madrid');
+      expect(instant).toBe('2026-03-29T01:30:00.000Z');
+    });
+
+    it('still converts a stable, no-DST zone correctly (America/Sao_Paulo has had no DST since 2019)', () => {
+      const instant = zonedLocalToInstant('2026-03-08T02:30', 'America/Sao_Paulo');
+      expect(instant).toBe('2026-03-08T05:30:00.000Z');
+    });
+  });
 });

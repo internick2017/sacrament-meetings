@@ -12,24 +12,77 @@
 //
 // Kept as a small, pure, exported function (no I/O) specifically so the
 // round trip can be tested without a database.
+// A day, in milliseconds. Used to sample the zone's offset safely away from
+// any DST transition that might fall on the target date itself.
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 export function zonedLocalToInstant(local: string, timeZone: string): string {
   const [datePart, timePart] = local.split('T');
   const [year, month, day] = datePart.split('-').map(Number);
   const [hour, minute] = timePart.split(':').map(Number);
 
-  // First guess: treat the wall-clock numbers as if they were already UTC.
+  // Treat the wall-clock numbers as if they were already UTC. This is not
+  // the answer (it ignores the zone entirely) but it is a stable reference
+  // point: a real DST transition never moves the clock by more than a few
+  // hours, so it can never span a full calendar day.
   const utcGuess = Date.UTC(year, month - 1, day, hour, minute, 0);
 
-  // Find out what that guess instant reads as when displayed in the target
-  // zone. The difference between that reading and the guess is the zone's
-  // offset from UTC at (approximately) this moment.
-  const offsetMs = wallTimeMsInZone(utcGuess, timeZone) - utcGuess;
+  // Sample the zone's offset a full day before and a full day after the
+  // guess. Those two instants cannot themselves be inside whatever
+  // transition (if any) falls on the target date, so offsetBefore and
+  // offsetAfter are trustworthy readings of "the offset in effect just
+  // before this date's transition" and "...just after" it.
+  const offsetBefore = offsetAt(utcGuess - DAY_MS, timeZone);
+  const offsetAfter = offsetAt(utcGuess + DAY_MS, timeZone);
 
-  // Subtracting the offset turns "wall clock in the zone" back into the
-  // actual UTC instant: e.g. 19:00 in America/Sao_Paulo (UTC-3, offset
-  // -180min) guesses 19:00Z, reads as 16:00Z-equivalent wall time (offset
-  // -3h), so we subtract -3h (i.e. add 3h) to land on the correct 22:00Z.
-  return new Date(utcGuess - offsetMs).toISOString();
+  const candidateBefore = utcGuess - offsetBefore;
+  const candidateAfter = utcGuess - offsetAfter;
+
+  if (offsetBefore === offsetAfter) {
+    // No transition on this calendar date in this zone: both readings agree,
+    // and (since a transition can't span a whole day) that shared offset is
+    // exactly the offset in effect at the requested local time too.
+    return new Date(candidateBefore).toISOString();
+  }
+
+  // There IS a transition on this date. Check whether resolving with each
+  // candidate offset actually reproduces that same offset at the resulting
+  // instant — i.e. whether the candidate is self-consistent.
+  const consistentBefore = offsetAt(candidateBefore, timeZone) === offsetBefore;
+  const consistentAfter = offsetAt(candidateAfter, timeZone) === offsetAfter;
+
+  if (consistentBefore && consistentAfter) {
+    // FALL-BACK OVERLAP: the local time occurs twice (once under each
+    // offset), both resolutions are valid instants that display back as the
+    // requested wall time. Convention: pick the earlier occurrence (the
+    // first time the clock reads this wall time that day).
+    return new Date(Math.min(candidateBefore, candidateAfter)).toISOString();
+  }
+
+  if (consistentAfter && !consistentBefore) {
+    return new Date(candidateAfter).toISOString();
+  }
+
+  if (consistentBefore && !consistentAfter) {
+    return new Date(candidateBefore).toISOString();
+  }
+
+  // SPRING-FORWARD GAP: neither candidate is self-consistent, because this
+  // local time was skipped entirely (e.g. 02:30 on a "02:00 -> 03:00" jump)
+  // and does not exist. Convention: resolve it as if the wall clock kept
+  // advancing through the skipped hour at the pre-transition rate, which is
+  // equivalent to applying the pre-transition offset directly to the
+  // unmodified wall-clock numbers (candidateBefore) — e.g. 02:30 becomes
+  // 03:30 in the post-transition zone, the same instant a leader would land
+  // on by typing 03:30 directly.
+  return new Date(candidateBefore).toISOString();
+}
+
+// What UTC offset (in ms, defined so that `instant - offset` turns a
+// UTC-instant reading of the zone's wall clock at `instant` back into
+// `instant` itself) is in effect in `timeZone` at a given UTC instant.
+function offsetAt(utcMs: number, timeZone: string): number {
+  return wallTimeMsInZone(utcMs, timeZone) - utcMs;
 }
 
 // What wall-clock time (expressed as a UTC millisecond value, i.e. ignoring

@@ -61,14 +61,22 @@ const SELECT_ROWS = `
       ON o.id = e.organization_id
 `;
 
+// The past list has no natural bound (a congregation accumulates activities
+// forever), unlike the upcoming list, which shrinks to nothing on its own as
+// activities happen. Without a cap, /activities would render every activity
+// the congregation has ever held on every request.
+export const PAST_EVENTS_LIMIT = 50;
+
 export const getEvents = cache(async function getEvents({
   signedIn,
   organizationId,
   upcoming,
+  limit,
 }: {
   signedIn: boolean;
   organizationId?: number;
   upcoming?: boolean;
+  limit?: number;
 }): Promise<EventItem[]> {
   const conditions = [audienceFilter(signedIn)];
   const params: unknown[] = [];
@@ -86,10 +94,13 @@ export const getEvents = cache(async function getEvents({
 
   const orderBy = upcoming === true ? 'ASC' : 'DESC';
 
-  const rows = (await sql.query(
-    `${SELECT_ROWS} WHERE ${conditions.join(' AND ')} ORDER BY e.starts_at ${orderBy}`,
-    params
-  )) as EventRow[];
+  let query = `${SELECT_ROWS} WHERE ${conditions.join(' AND ')} ORDER BY e.starts_at ${orderBy}`;
+  if (limit !== undefined) {
+    params.push(limit);
+    query += ` LIMIT $${params.length}`;
+  }
+
+  const rows = (await sql.query(query, params)) as EventRow[];
 
   return rows.map(mapRow);
 });

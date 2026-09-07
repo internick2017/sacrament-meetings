@@ -39,6 +39,7 @@ vi.mock('./events-db', () => ({
 // carry-forward/replace/remove decision, independent of @vercel/blob.
 vi.mock('./blob', () => ({
   uploadCover: vi.fn().mockResolvedValue(null),
+  deleteCover: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
@@ -71,7 +72,7 @@ import {
   getEventCoverUrl,
 } from './events-db';
 import { redirect } from 'next/navigation';
-import { uploadCover } from './blob';
+import { uploadCover, deleteCover } from './blob';
 import { addEventAction, updateEventAction, deleteEventAction } from './events-actions';
 
 const mockRequireLeaderOf = vi.mocked(requireLeaderOf);
@@ -83,6 +84,7 @@ const mockGetEventOrganizationId = vi.mocked(getEventOrganizationId);
 const mockGetEventCoverUrl = vi.mocked(getEventCoverUrl);
 const mockRedirect = vi.mocked(redirect);
 const mockUploadCover = vi.mocked(uploadCover);
+const mockDeleteCover = vi.mocked(deleteCover);
 
 function formWithId(id: number): FormData {
   const fd = new FormData();
@@ -122,6 +124,9 @@ beforeEach(() => {
   mockGetEventCoverUrl.mockReset();
   mockUploadCover.mockReset();
   mockUploadCover.mockResolvedValue(null);
+  mockDeleteCover.mockReset();
+  mockDeleteCover.mockResolvedValue(undefined);
+  mockGetEventCoverUrl.mockResolvedValue(null);
 });
 
 describe('addEventAction', () => {
@@ -165,6 +170,16 @@ describe('addEventAction', () => {
     expect(result.message).toBe('admin.notAllowed');
     expect(mockAddEvent).not.toHaveBeenCalled();
   });
+
+  it('redirects to the new activity, using the id addEvent returns, so a leader who just created it can see it', async () => {
+    mockGetOrganizationIdByKey.mockResolvedValue(60);
+    mockRequireLeaderOf.mockResolvedValue({ id: '1', role: 'leader', organizationId: 60 });
+    mockAddEvent.mockResolvedValue(42);
+
+    await addEventAction({}, formWithValues(baseValues));
+
+    expect(mockRedirect).toHaveBeenCalledWith('/activities/42');
+  });
 });
 
 describe('deleteEventAction', () => {
@@ -202,6 +217,17 @@ describe('deleteEventAction', () => {
 
     await expect(deleteEventAction(formWithId(5))).resolves.toBeUndefined();
     expect(mockDeleteEvent).not.toHaveBeenCalled();
+  });
+
+  it('deletes the cover from Blob storage when the activity is deleted', async () => {
+    mockGetEventOrganizationId.mockResolvedValue(30);
+    mockRequireLeaderOf.mockResolvedValue({ id: '1', role: 'leader', organizationId: 30 });
+    mockGetEventCoverUrl.mockResolvedValue('https://example.public.blob.vercel-storage.com/old.jpg');
+
+    await deleteEventAction(formWithId(5));
+
+    expect(mockDeleteEvent).toHaveBeenCalledWith(5);
+    expect(mockDeleteCover).toHaveBeenCalledWith('https://example.public.blob.vercel-storage.com/old.jpg');
   });
 });
 
@@ -350,36 +376,40 @@ describe('updateEventAction', () => {
       7,
       expect.objectContaining({ coverUrl: 'https://example.public.blob.vercel-storage.com/old.jpg' })
     );
+    // The cover carried forward unchanged: nothing to delete.
+    expect(mockDeleteCover).not.toHaveBeenCalled();
   });
 
-  it('replaces the cover when uploadCover returns a new url, without consulting the old one', async () => {
+  it('replaces the cover when uploadCover returns a new url, and deletes the old file from Blob storage', async () => {
     mockGetEventOrganizationId.mockResolvedValue(10);
     mockGetOrganizationIdByKey.mockResolvedValue(10);
     mockRequireLeaderOf.mockResolvedValue({ id: '1', role: 'leader', organizationId: 10 });
     mockUploadCover.mockResolvedValue('https://example.public.blob.vercel-storage.com/new.jpg');
+    mockGetEventCoverUrl.mockResolvedValue('https://example.public.blob.vercel-storage.com/old.jpg');
 
     await updateEventAction({}, formWithValues(baseValues, 7));
 
-    expect(mockGetEventCoverUrl).not.toHaveBeenCalled();
     expect(mockUpdateEvent).toHaveBeenCalledWith(
       7,
       expect.objectContaining({ coverUrl: 'https://example.public.blob.vercel-storage.com/new.jpg' })
     );
+    expect(mockDeleteCover).toHaveBeenCalledWith('https://example.public.blob.vercel-storage.com/old.jpg');
   });
 
-  it('clears the cover when removeCover is checked and no new file is chosen', async () => {
+  it('clears the cover when removeCover is checked and no new file is chosen, deleting the old file', async () => {
     mockGetEventOrganizationId.mockResolvedValue(10);
     mockGetOrganizationIdByKey.mockResolvedValue(10);
     mockRequireLeaderOf.mockResolvedValue({ id: '1', role: 'leader', organizationId: 10 });
     mockUploadCover.mockResolvedValue(null);
+    mockGetEventCoverUrl.mockResolvedValue('https://example.public.blob.vercel-storage.com/old.jpg');
 
     await updateEventAction(
       {},
       formWithValues({ ...baseValues, removeCover: 'on' }, 7)
     );
 
-    expect(mockGetEventCoverUrl).not.toHaveBeenCalled();
     expect(mockUpdateEvent).toHaveBeenCalledWith(7, expect.objectContaining({ coverUrl: null }));
+    expect(mockDeleteCover).toHaveBeenCalledWith('https://example.public.blob.vercel-storage.com/old.jpg');
   });
 
   it('calls uploadCover only after permission is granted, never spending an upload on a rejected request', async () => {

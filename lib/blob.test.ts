@@ -5,8 +5,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 // have one, and coverUploadEnabled is read at module load, from
 // process.env, so it is set with vi.stubEnv before each dynamic import.
 const mockPut = vi.fn();
+const mockDel = vi.fn();
 vi.mock('@vercel/blob', () => ({
   put: mockPut,
+  del: mockDel,
 }));
 
 function makeFile(name: string, type: string, sizeBytes: number): File {
@@ -20,6 +22,7 @@ function makeFile(name: string, type: string, sizeBytes: number): File {
 beforeEach(() => {
   vi.resetModules();
   mockPut.mockReset();
+  mockDel.mockReset();
 });
 
 afterEach(() => {
@@ -97,5 +100,51 @@ describe('uploadCover', () => {
       file,
       expect.objectContaining({ access: 'public', contentType: 'image/jpeg' })
     );
+  });
+});
+
+describe('deleteCover', () => {
+  it('does nothing and never calls del() when the url is null', async () => {
+    vi.stubEnv('BLOB_READ_WRITE_TOKEN', 'fake-token');
+    const { deleteCover } = await import('./blob');
+
+    await deleteCover(null);
+
+    expect(mockDel).not.toHaveBeenCalled();
+  });
+
+  it('does nothing when there is no upload credential, even with a url', async () => {
+    vi.stubEnv('BLOB_READ_WRITE_TOKEN', '');
+    const { deleteCover } = await import('./blob');
+
+    await deleteCover('https://example.public.blob.vercel-storage.com/cover.jpg');
+
+    expect(mockDel).not.toHaveBeenCalled();
+  });
+
+  it('calls del() with the given url when enabled', async () => {
+    vi.stubEnv('BLOB_READ_WRITE_TOKEN', 'fake-token');
+    mockDel.mockResolvedValue(undefined);
+    const { deleteCover } = await import('./blob');
+
+    await deleteCover('https://example.public.blob.vercel-storage.com/cover.jpg');
+
+    expect(mockDel).toHaveBeenCalledWith('https://example.public.blob.vercel-storage.com/cover.jpg');
+  });
+
+  // The whole point of deleteCover: a failure to remove the old file must
+  // never surface as a thrown error, which would fail the leader's edit or
+  // delete action.
+  it('never throws when del() rejects', async () => {
+    vi.stubEnv('BLOB_READ_WRITE_TOKEN', 'fake-token');
+    mockDel.mockRejectedValue(new Error('network error'));
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { deleteCover } = await import('./blob');
+
+    await expect(
+      deleteCover('https://example.public.blob.vercel-storage.com/cover.jpg')
+    ).resolves.toBeUndefined();
+
+    consoleSpy.mockRestore();
   });
 });

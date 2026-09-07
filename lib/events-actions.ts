@@ -16,7 +16,7 @@ import {
 import { getOrganizationIdByKey } from './organizations-db';
 import { getUnit } from './unit-db';
 import { zonedLocalToInstant } from './timezone';
-import { uploadCover } from './blob';
+import { uploadCover, deleteCover } from './blob';
 
 export interface EventFormState {
   message?: string;
@@ -45,7 +45,10 @@ function rawValuesFromForm(formData: FormData): EventFormState['values'] & objec
     startsAt: String(formData.get('startsAt') ?? ''),
     endsAt: String(formData.get('endsAt') ?? ''),
     allDay: formData.get('allDay') ? 'on' : 'off',
-    audience: String(formData.get('audience') ?? 'public'),
+    // A privacy-bearing field must never default to the more exposed value:
+    // match the database column's own default (see db/migrations/006_events.sql)
+    // rather than assuming public.
+    audience: String(formData.get('audience') ?? 'private'),
     removeCover: formData.get('removeCover') ? 'on' : 'off',
   };
 }
@@ -120,7 +123,7 @@ export async function addEventAction(
   const endsAt =
     parsed.data.endsAt === '' ? null : zonedLocalToInstant(parsed.data.endsAt, unit.timezone);
 
-  await addEvent(
+  const id = await addEvent(
     {
       organizationId,
       title: parsed.data.title,
@@ -135,8 +138,12 @@ export async function addEventAction(
     createdByFromUser(user)
   );
 
+  // Redirect to the new activity's own page, matching updateEventAction:
+  // otherwise a leader who just created their first activity never sees it
+  // and has no link to it.
   revalidatePath('/activities');
-  return { message: t('activities.saved') };
+  revalidatePath(`/activities/${id}`);
+  redirect(`/activities/${id}`);
 }
 
 // `user.id` is a string from the session; Number(user.id) on a malformed or
@@ -223,13 +230,21 @@ export async function updateEventAction(
   const coverFile = formData.get('cover');
   const uploadedCoverUrl = await uploadCover(coverFile instanceof File ? coverFile : null);
   const removeCover = rawValues.removeCover === 'on';
+  const existingCoverUrl = (await getEventCoverUrl(id)) ?? null;
   let coverUrl: string | null;
   if (uploadedCoverUrl) {
     coverUrl = uploadedCoverUrl;
   } else if (removeCover) {
     coverUrl = null;
   } else {
-    coverUrl = (await getEventCoverUrl(id)) ?? null;
+    coverUrl = existingCoverUrl;
+  }
+
+  // A replaced or removed cover leaves its old file orphaned in Blob storage
+  // unless it is explicitly deleted here. Never blocks the save: deleteCover
+  // never throws.
+  if (existingCoverUrl && existingCoverUrl !== coverUrl) {
+    await deleteCover(existingCoverUrl);
   }
 
   // See addEventAction for why the naive local values must be converted
@@ -289,6 +304,11 @@ export async function deleteEventAction(formData: FormData): Promise<void> {
     throw error;
   }
 
+  // Look up the cover before the row is gone, so the file can be cleaned up
+  // from Blob storage too; deleteCover never throws, so a missing or
+  // already-gone file never blocks the deletion.
+  const coverUrl = await getEventCoverUrl(id);
   await deleteEvent(id);
+  await deleteCover(coverUrl);
   revalidatePath('/activities');
 }

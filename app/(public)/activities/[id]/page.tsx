@@ -67,8 +67,12 @@ export default async function ActivityDetailPage({
             <dd>{endFormatted}</dd>
           </>
         )}
-        <dt className="font-semibold">{t('activities.where')}</dt>
-        <dd>{event.location}</dd>
+        {event.location && (
+          <>
+            <dt className="font-semibold">{t('activities.where')}</dt>
+            <dd>{event.location}</dd>
+          </>
+        )}
       </dl>
 
       {event.description && <p className="whitespace-pre-line">{event.description}</p>}

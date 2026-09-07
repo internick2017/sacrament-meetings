@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import EventCard from '@/components/EventCard';
 import { getSessionUser, canEditOrganization } from '@/lib/authz';
-import { getEvents } from '@/lib/events-db';
+import { getEvents, PAST_EVENTS_LIMIT } from '@/lib/events-db';
 import { getUnit } from '@/lib/unit-db';
 import { getLocale, getT } from '@/lib/i18n/server';
 
@@ -23,7 +23,7 @@ export default async function ActivitiesPage() {
 
   const [upcoming, past] = await Promise.all([
     getEvents({ signedIn, upcoming: true }),
-    getEvents({ signedIn, upcoming: false }),
+    getEvents({ signedIn, upcoming: false, limit: PAST_EVENTS_LIMIT }),
   ]);
 
   return (
