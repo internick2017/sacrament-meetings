@@ -29,3 +29,21 @@ export interface SacramentMeeting {
   closingHymn: Hymn;
   closingPrayer: string;
 }
+
+export type UnitType = 'ward' | 'branch';
+
+// The single unit (ward or branch) this site belongs to. Contact details of
+// members never live here: only the unit's own public information plus links
+// out to the official Church tools.
+export interface Unit {
+  id: number;
+  name: string;
+  unitType: UnitType;
+  stakeName: string;
+  address: string;
+  meetingTimes: string;
+  timezone: string;
+  calendarUrl: string;
+  directoryUrl: string;
+  contactNote: string;
+}
