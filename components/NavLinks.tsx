@@ -30,6 +30,7 @@ export default function NavLinks({ role }: { role: Role | null }) {
       ? [
           { href: '/unit', label: 'unit.title' as const },
           { href: '/users', label: 'users.title' as const },
+          { href: '/photos', label: 'photos.pendingQueue' as const },
         ]
       : []),
     ...(role === 'admin' || role === 'leader'

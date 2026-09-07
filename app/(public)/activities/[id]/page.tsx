@@ -1,9 +1,13 @@
 import { notFound } from 'next/navigation';
-import { getSessionUser } from '@/lib/authz';
+import { getSessionUser, canEditOrganization } from '@/lib/authz';
 import { getEventById } from '@/lib/events-db';
+import { getEventPhotos } from '@/lib/event-photos-db';
 import { getUnit } from '@/lib/unit-db';
+import { needsApproval } from '@/lib/photo-rules';
+import { photoUploadEnabled } from '@/lib/blob';
 import { getLocale, getT } from '@/lib/i18n/server';
 import { formatEventDateTime, type DictionaryKey } from '@/lib/i18n';
+import EventGallery from '@/components/EventGallery';
 
 export default async function ActivityDetailPage({
   params,
@@ -46,6 +50,14 @@ export default async function ActivityDetailPage({
     ? formatEventDateTime(event.endsAt, event.allDay, locale, unit.timezone)
     : null;
 
+  // The gallery is private, full stop: an anonymous visitor sees no photos
+  // at all, not even on an otherwise-public activity. Everything below is
+  // skipped entirely when there is no session, rather than computed and
+  // then hidden, so a signed-out request never even queries event_photos.
+  const canEdit = canEditOrganization(sessionUser, event.organizationId);
+  const photos = signedIn ? await getEventPhotos(event.id, { includeUnapproved: canEdit }) : [];
+  const willNeedApproval = needsApproval(event.organizationKey);
+
   return (
     <article className="space-y-4">
       <header>
@@ -76,6 +88,17 @@ export default async function ActivityDetailPage({
       </dl>
 
       {event.description && <p className="whitespace-pre-line">{event.description}</p>}
+
+      {signedIn && (
+        <EventGallery
+          eventId={event.id}
+          photos={photos}
+          canEdit={canEdit}
+          photoUploadEnabled={photoUploadEnabled}
+          willNeedApproval={willNeedApproval}
+          t={t}
+        />
+      )}
     </article>
   );
 }
