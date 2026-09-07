@@ -101,6 +101,21 @@ export async function getOrganizationIdByKey(key: string): Promise<number | unde
   return rows[0]?.id;
 }
 
+// The inverse lookup: an organization's own key from its id. Needed by the
+// photo-approval flow, which must derive the approval rule (needsApproval,
+// in lib/photo-rules.ts) from the activity's organization on the server,
+// never from anything a form submits. `undefined` means no such
+// organization.
+export async function getOrganizationKeyById(
+  id: number
+): Promise<OrganizationKey | undefined> {
+  const rows = (await sql.query(
+    `SELECT org_key FROM organizations WHERE id = $1`,
+    [id]
+  )) as { org_key: OrganizationKey }[];
+  return rows[0]?.org_key;
+}
+
 // Which organization a calling belongs to. Needed before ending or deleting
 // one, so a leader cannot act on another organization's calling by guessing an
 // id.

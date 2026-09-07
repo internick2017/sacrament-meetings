@@ -281,6 +281,23 @@ export const en = {
   'validation.announcement.required.endsOn': 'The end date is required.',
   'validation.announcement.endBeforeStart': 'The end must not be before the start.',
   'validation.announcement.invalidDate': 'Choose a valid date.',
+
+  'photos.title': 'Photos',
+  'photos.empty': 'No photos yet.',
+  'photos.add': 'Add photo',
+  'photos.caption': 'Caption',
+  'photos.delete': 'Delete',
+  'photos.confirmDelete': 'Delete this photo permanently?',
+  'photos.pending': 'Pending approval',
+  'photos.approve': 'Approve',
+  'photos.approved': 'Approved',
+  'photos.pendingQueue': 'Photos pending approval',
+  'photos.pendingQueueEmpty': 'No photos are waiting for approval.',
+  'photos.uploadDisabled': 'Photo uploads are not available on this site yet.',
+
+  'validation.photo.invalidId': 'Invalid photo id.',
+  'validation.photo.invalidType': 'Choose a JPEG, PNG, or WebP image.',
+  'validation.photo.tooLarge': 'That image is too large.',
 } as const;
 
 export type DictionaryKey = keyof typeof en;

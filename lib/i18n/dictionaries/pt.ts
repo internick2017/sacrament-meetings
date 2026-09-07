@@ -283,4 +283,21 @@ export const pt: Dictionary = {
   'validation.announcement.required.endsOn': 'A data de fim é obrigatória.',
   'validation.announcement.endBeforeStart': 'O fim não pode ser antes do início.',
   'validation.announcement.invalidDate': 'Escolha uma data válida.',
+
+  'photos.title': 'Fotos',
+  'photos.empty': 'Ainda não há fotos.',
+  'photos.add': 'Adicionar foto',
+  'photos.caption': 'Legenda',
+  'photos.delete': 'Excluir',
+  'photos.confirmDelete': 'Excluir esta foto permanentemente?',
+  'photos.pending': 'Pendente de aprovação',
+  'photos.approve': 'Aprovar',
+  'photos.approved': 'Aprovada',
+  'photos.pendingQueue': 'Fotos pendentes de aprovação',
+  'photos.pendingQueueEmpty': 'Nenhuma foto esperando aprovação.',
+  'photos.uploadDisabled': 'O envio de fotos ainda não está disponível neste site.',
+
+  'validation.photo.invalidId': 'Id de foto inválido.',
+  'validation.photo.invalidType': 'Escolha uma imagem JPEG, PNG ou WebP.',
+  'validation.photo.tooLarge': 'Essa imagem é grande demais.',
 };

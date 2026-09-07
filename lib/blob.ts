@@ -6,15 +6,24 @@ import { put, del } from '@vercel/blob';
 // a degraded one.
 export const coverUploadEnabled = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 
+// Same underlying credential as covers: both are Vercel Blob uploads, so
+// there is only one thing to have or not have. Kept as a separate export
+// (rather than reusing coverUploadEnabled directly at call sites) so a
+// screen that only cares about photos never has to know the name of an
+// activity-cover concept.
+export const photoUploadEnabled = coverUploadEnabled;
+
 const MAX_BYTES = 4 * 1024 * 1024;
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 // Returns the public URL of the stored image, or null when there is nothing to
 // store, no credential to store it with, or the file is not an acceptable
-// image. Never throws: losing a picture must never cost the leader the text
-// they wrote.
-export async function uploadCover(file: File | null): Promise<string | null> {
+// image. Never throws: losing a picture must never cost the caller the rest
+// of what they submitted. `prefix` is the Blob path segment (e.g.
+// 'activities' or 'event-photos') so different kinds of uploads don't share
+// one flat namespace.
+export async function uploadImage(file: File | null, prefix: string): Promise<string | null> {
   if (!file || file.size === 0 || !coverUploadEnabled) {
     return null;
   }
@@ -23,8 +32,8 @@ export async function uploadCover(file: File | null): Promise<string | null> {
   }
 
   try {
-    // DESIGN NOTE (not resolved by this fix): `access: 'public'` means a
-    // cover's URL requires no session or credential to fetch — the UUID in
+    // DESIGN NOTE (not resolved by this fix): `access: 'public'` means an
+    // image's URL requires no session or credential to fetch — the UUID in
     // the path is the ONLY thing keeping a private activity's picture from
     // an anonymous visitor who happens to have (or guesses) the link.
     // Vercel Blob's private access needs signed URLs and a different
@@ -32,32 +41,43 @@ export async function uploadCover(file: File | null): Promise<string | null> {
     // not a one-line fix, so it is deliberately left for whoever wires up
     // the BLOB_READ_WRITE_TOKEN credential to decide on purpose rather than
     // discover by accident.
-    const blob = await put(`activities/${crypto.randomUUID()}`, file, {
+    const blob = await put(`${prefix}/${crypto.randomUUID()}`, file, {
       access: 'public',
       contentType: file.type,
     });
     return blob.url;
   } catch (error) {
-    console.error('Cover upload failed, saving the activity without it', error);
+    console.error(`Image upload failed for prefix "${prefix}"`, error);
     return null;
   }
 }
 
-// Deletes a previously stored cover from Blob storage. Called whenever a
-// cover is replaced, removed, or its activity is deleted, so an old image
+// Deletes a previously stored image from Blob storage. Called whenever an
+// image is replaced, removed, or its owning row is deleted, so an old file
 // does not stay reachable forever at its unguessable-but-public URL.
 //
-// Never throws: a leader's edit or delete must always succeed even if the
+// Never throws: a caller's edit or delete must always succeed even if the
 // old file is already gone, the credential is missing, or Blob is
 // unreachable. Losing track of one orphaned file is an acceptable outcome;
 // failing the user's action over it is not.
-export async function deleteCover(url: string | null | undefined): Promise<void> {
+export async function deleteImage(url: string | null | undefined): Promise<void> {
   if (!url || !coverUploadEnabled) {
     return;
   }
   try {
     await del(url);
   } catch (error) {
-    console.error('Cover delete failed, leaving the old file in place', error);
+    console.error('Image delete failed, leaving the old file in place', error);
   }
+}
+
+// Thin wrapper kept so the activities feature (phase 3) never has to change:
+// same signature and behaviour as before this file was generalised.
+export async function uploadCover(file: File | null): Promise<string | null> {
+  return uploadImage(file, 'activities');
+}
+
+// Thin wrapper kept so the activities feature (phase 3) never has to change.
+export async function deleteCover(url: string | null | undefined): Promise<void> {
+  return deleteImage(url);
 }
