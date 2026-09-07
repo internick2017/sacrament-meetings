@@ -32,6 +32,8 @@ Create a `.env.local` file with:
 | -------------- | -------------------------------------------------- |
 | `DATABASE_URL` | Neon Postgres connection string                    |
 | `AUTH_SECRET`  | Secret used by NextAuth to sign the session cookie |
+| `AUTH_RESEND_KEY` | API key for Resend. **Optional**: without it the magic-link option is not offered and password sign-in keeps working. |
+| `AUTH_EMAIL_FROM` | Sender address for magic links. |
 
 `AUTH_SECRET` can be generated with `yarn dlx auth secret`.
 
