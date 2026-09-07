@@ -2,11 +2,11 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { auth } from './auth';
+import { requireLeaderOf, NotAuthorizedError } from './authz';
 import { getT } from './i18n/server';
 import { callingFormSchema } from './callings-schema';
 import { addCalling, deleteCalling, endCalling } from './people-db';
-import { getOrganizationIdByKey } from './organizations-db';
+import { getOrganizationIdByKey, getCallingOrganizationId } from './organizations-db';
 
 export interface CallingFormState {
   message?: string;
@@ -21,22 +21,11 @@ export interface CallingFormState {
   };
 }
 
-// Authorisation is checked here, on the server, in every action. Hiding a
-// button is not security: anyone can POST to a Server Action. Phase 2 replaces
-// these session checks with requireAdmin().
-async function requireSession(): Promise<boolean> {
-  const session = await auth();
-  return !!session;
-}
-
 export async function addCallingAction(
   _prevState: CallingFormState,
   formData: FormData
 ): Promise<CallingFormState> {
   const t = await getT();
-  if (!(await requireSession())) {
-    return { message: t('admin.notAllowed') };
-  }
 
   const rawValues = {
     organizationKey: String(formData.get('organizationKey') ?? ''),
@@ -62,6 +51,18 @@ export async function addCallingAction(
     return { message: t('validation.fixFields'), values: rawValues };
   }
 
+  // The organization the write targets is resolved first; permission is then
+  // asked for that specific organization. Asking first would let a leader
+  // probe another organization's key before we even know which one it is.
+  try {
+    await requireLeaderOf(organizationId);
+  } catch (error) {
+    if (error instanceof NotAuthorizedError) {
+      return { message: t('admin.notAllowed'), values: rawValues };
+    }
+    throw error;
+  }
+
   await addCalling({
     organizationId,
     personName: parsed.data.personName,
@@ -75,28 +76,60 @@ export async function addCallingAction(
 }
 
 // Ending a calling keeps the row as history. Deleting removes it, for
-// correcting a typo. Both take the id from the form and check the session
-// first.
+// correcting a typo. Both take only the id from the form, so the organization
+// the calling belongs to must be looked up before permission can be checked:
+// asking permission first and resolving the target afterwards would let a
+// leader act on another organization's calling by guessing its id.
+//
+// Neither action has form state to report an error into, and both return
+// void, so a NotAuthorizedError is caught and swallowed rather than left to
+// surface as an unexplained 500.
 export async function endCallingAction(formData: FormData): Promise<void> {
-  if (!(await requireSession())) {
+  const id = Number(formData.get('id'));
+  if (!Number.isInteger(id)) {
     return;
   }
-  const id = Number(formData.get('id'));
-  if (Number.isInteger(id)) {
-    await endCalling(id);
-    revalidatePath('/organizations');
-    revalidatePath('/callings');
+
+  const organizationId = await getCallingOrganizationId(id);
+  if (organizationId === undefined) {
+    return;
   }
+
+  try {
+    await requireLeaderOf(organizationId);
+  } catch (error) {
+    if (error instanceof NotAuthorizedError) {
+      return;
+    }
+    throw error;
+  }
+
+  await endCalling(id);
+  revalidatePath('/organizations');
+  revalidatePath('/callings');
 }
 
 export async function deleteCallingAction(formData: FormData): Promise<void> {
-  if (!(await requireSession())) {
+  const id = Number(formData.get('id'));
+  if (!Number.isInteger(id)) {
     return;
   }
-  const id = Number(formData.get('id'));
-  if (Number.isInteger(id)) {
-    await deleteCalling(id);
-    revalidatePath('/organizations');
-    revalidatePath('/callings');
+
+  const organizationId = await getCallingOrganizationId(id);
+  if (organizationId === undefined) {
+    return;
   }
+
+  try {
+    await requireLeaderOf(organizationId);
+  } catch (error) {
+    if (error instanceof NotAuthorizedError) {
+      return;
+    }
+    throw error;
+  }
+
+  await deleteCalling(id);
+  revalidatePath('/organizations');
+  revalidatePath('/callings');
 }

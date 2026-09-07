@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { auth } from './auth';
+import { requireAdmin, NotAuthorizedError } from './authz';
 import { getT } from './i18n/server';
 import { unitFormSchema } from './unit-schema';
 import { updateUnit } from './unit-db';
@@ -12,16 +12,20 @@ export interface UnitFormState {
   errors?: Record<string, string[] | undefined>;
 }
 
-// Authorisation is checked here, on the server, and not by hiding the menu
-// item: anyone can POST to a Server Action. Phase 2 replaces this session check
-// with requireAdmin(), once roles exist.
+// The unit's own settings are congregation-wide, not per-organization, so
+// only an admin may change them.
 export async function updateUnitAction(
   _prevState: UnitFormState,
   formData: FormData
 ): Promise<UnitFormState> {
-  const [session, t] = await Promise.all([auth(), getT()]);
-  if (!session) {
-    return { message: t('admin.notAllowed') };
+  const t = await getT();
+  try {
+    await requireAdmin();
+  } catch (error) {
+    if (error instanceof NotAuthorizedError) {
+      return { message: t('admin.notAllowed') };
+    }
+    throw error;
   }
 
   const parsed = unitFormSchema(t).safeParse({

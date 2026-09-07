@@ -10,7 +10,7 @@ import {
   type MeetingInput,
 } from './meetings-db';
 import type { ProgramItem, WardBusinessItem } from './types';
-import { auth } from './auth';
+import { requireAdmin, NotAuthorizedError } from './authz';
 import { getT } from './i18n/server';
 import type { Translator } from './i18n';
 
@@ -153,12 +153,16 @@ export async function createMeeting(
   _prevState: MeetingFormState,
   formData: FormData
 ): Promise<MeetingFormState> {
-  const session = await auth();
-  if (!session) {
-    redirect('/login');
+  const t = await getT();
+  try {
+    await requireAdmin();
+  } catch (error) {
+    if (error instanceof NotAuthorizedError) {
+      return { message: t('admin.notAllowed') };
+    }
+    throw error;
   }
 
-  const t = await getT();
   const parsed = meetingFormSchema(t).safeParse(rawValues(formData));
   if (!parsed.success) {
     return {
@@ -188,12 +192,16 @@ export async function updateMeeting(
   _prevState: MeetingFormState,
   formData: FormData
 ): Promise<MeetingFormState> {
-  const session = await auth();
-  if (!session) {
-    redirect('/login');
+  const t = await getT();
+  try {
+    await requireAdmin();
+  } catch (error) {
+    if (error instanceof NotAuthorizedError) {
+      return { message: t('admin.notAllowed') };
+    }
+    throw error;
   }
 
-  const t = await getT();
   const parsed = meetingFormSchema(t).safeParse(rawValues(formData));
   if (!parsed.success) {
     return {
@@ -223,10 +231,7 @@ export async function updateMeeting(
 }
 
 export async function deleteMeeting(formData: FormData): Promise<void> {
-  const session = await auth();
-  if (!session) {
-    redirect('/login');
-  }
+  await requireAdmin();
 
   const t = await getT();
   const id = Number(formData.get('id'));

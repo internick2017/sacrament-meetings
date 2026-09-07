@@ -101,6 +101,19 @@ export async function getOrganizationIdByKey(key: string): Promise<number | unde
   return rows[0]?.id;
 }
 
+// Which organization a calling belongs to. Needed before ending or deleting
+// one, so a leader cannot act on another organization's calling by guessing an
+// id.
+export async function getCallingOrganizationId(
+  callingId: number
+): Promise<number | undefined> {
+  const rows = (await sql.query(
+    `SELECT organization_id FROM callings WHERE id = $1`,
+    [callingId]
+  )) as { organization_id: number }[];
+  return rows[0]?.organization_id;
+}
+
 export const getOrganizationByKey = cache(async function getOrganizationByKey(
   key: string,
   includeNames: boolean
