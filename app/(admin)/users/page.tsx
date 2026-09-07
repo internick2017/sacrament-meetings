@@ -5,6 +5,7 @@ import { getT } from '@/lib/i18n/server';
 import UserForm from '@/components/UserForm';
 import UserRowActions from '@/components/UserRowActions';
 import type { DictionaryKey } from '@/lib/i18n';
+import NotAllowed from '@/components/NotAllowed';
 
 export default async function UsersPage() {
   const [sessionUser, t] = await Promise.all([getSessionUser(), getT()]);
@@ -13,9 +14,13 @@ export default async function UsersPage() {
   // /users is admin-only: it manages every account in the congregation, not
   // just one organization, so it needs its own tighter gate here. The roster
   // is only queried after this check passes, so an unauthorized request
-  // never touches the full user table.
-  if (sessionUser?.role !== 'admin') {
+  // never touches the full user table. Anonymous still goes to /login; a
+  // signed-in leader sees NotAllowed rather than a login form.
+  if (!sessionUser) {
     redirect('/login');
+  }
+  if (sessionUser.role !== 'admin') {
+    return <NotAllowed />;
   }
 
   const users = await listUsers();

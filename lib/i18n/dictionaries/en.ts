@@ -313,6 +313,13 @@ export const en = {
   'profile.noPersonLinked':
     'Your account is not linked to a person yet. Ask an admin to link it before uploading a photo.',
 
+  'header.unnamedUnit': 'Our unit',
+
+  'forbidden.title': 'You do not have permission',
+  'forbidden.body':
+    'Your account does not have access to this part of the site. If you think this is a mistake, ask the bishopric to change your account permissions.',
+  'forbidden.backHome': 'Back to home',
+
   'validation.photo.invalidId': 'Invalid photo id.',
   'validation.photo.invalidType': 'Choose a JPEG, PNG, or WebP image.',
   'validation.photo.tooLarge': 'That image is too large.',

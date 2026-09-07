@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { getSessionUser } from '@/lib/authz';
 import { signOutAction } from '@/lib/auth-actions';
 import { getT } from '@/lib/i18n/server';
+import NotAllowed from '@/components/NotAllowed';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const [session, user, t] = await Promise.all([auth(), getSessionUser(), getT()]);
@@ -13,9 +14,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // mistypes a route could expose the full roster with no error anywhere.
   //
   // A member has a session but must not reach the admin area at all, so the
-  // gate checks role, not just presence of a session.
-  if (!user || (user.role !== 'admin' && user.role !== 'leader')) {
+  // gate checks role, not just presence of a session. An anonymous visitor
+  // (no session) is still sent to /login; a signed-in user who simply lacks
+  // the role sees NotAllowed instead — a redirect to /login would show them
+  // a login form while they are already logged in.
+  if (!user) {
     redirect('/login');
+  }
+  if (user.role !== 'admin' && user.role !== 'leader') {
+    return <NotAllowed />;
   }
 
   return (

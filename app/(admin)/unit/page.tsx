@@ -3,6 +3,7 @@ import { getUnit } from '@/lib/unit-db';
 import { getSessionUser } from '@/lib/authz';
 import { getT } from '@/lib/i18n/server';
 import UnitForm from '@/components/UnitForm';
+import NotAllowed from '@/components/NotAllowed';
 
 export default async function UnitSettingsPage() {
   const [sessionUser, unit, t] = await Promise.all([getSessionUser(), getUnit(), getT()]);
@@ -10,9 +11,13 @@ export default async function UnitSettingsPage() {
   // The (admin) layout lets a leader through too, since /callings is shared.
   // /unit is admin-only: it edits congregation-wide settings, not one
   // organization, so it needs its own tighter gate here (same pattern as
-  // /users).
-  if (sessionUser?.role !== 'admin') {
+  // /users). Anonymous still goes to /login; a signed-in leader sees
+  // NotAllowed rather than a login form.
+  if (!sessionUser) {
     redirect('/login');
+  }
+  if (sessionUser.role !== 'admin') {
+    return <NotAllowed />;
   }
 
   return (

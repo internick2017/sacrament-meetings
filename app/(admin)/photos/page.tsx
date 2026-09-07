@@ -4,6 +4,7 @@ import { getPendingPhotos } from '@/lib/event-photos-db';
 import { getT } from '@/lib/i18n/server';
 import type { DictionaryKey } from '@/lib/i18n';
 import PendingPhotoRowActions from '@/components/PendingPhotoRowActions';
+import NotAllowed from '@/components/NotAllowed';
 
 export default async function PendingPhotosPage() {
   const [sessionUser, t] = await Promise.all([getSessionUser(), getT()]);
@@ -12,9 +13,13 @@ export default async function PendingPhotosPage() {
   // of their own activity, but never approve — the approval queue sees
   // pending photos across every organization, which is exactly the
   // asymmetry this phase exists to protect. The query below only runs after
-  // this check passes.
-  if (sessionUser?.role !== 'admin') {
+  // this check passes. Anonymous still goes to /login; a signed-in leader
+  // sees NotAllowed rather than a login form.
+  if (!sessionUser) {
     redirect('/login');
+  }
+  if (sessionUser.role !== 'admin') {
+    return <NotAllowed />;
   }
 
   const photos = await getPendingPhotos();

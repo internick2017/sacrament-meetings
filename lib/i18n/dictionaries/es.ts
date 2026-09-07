@@ -315,6 +315,13 @@ export const es: Dictionary = {
   'profile.noPersonLinked':
     'Tu cuenta todavía no está vinculada a una persona. Pedile a un admin que la vincule antes de subir una foto.',
 
+  'header.unnamedUnit': 'Nuestra unidad',
+
+  'forbidden.title': 'No tienes permiso',
+  'forbidden.body':
+    'Tu cuenta no tiene acceso a esta parte del sitio. Si crees que es un error, pedile al obispado que cambie los permisos de tu cuenta.',
+  'forbidden.backHome': 'Volver al inicio',
+
   'validation.photo.invalidId': 'Id de foto inválido.',
   'validation.photo.invalidType': 'Elige una imagen JPEG, PNG o WebP.',
   'validation.photo.tooLarge': 'Esa imagen es demasiado grande.',

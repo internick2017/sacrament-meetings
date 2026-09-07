@@ -4,14 +4,19 @@ import { getSessionUser } from '@/lib/authz';
 import { getOrganizations } from '@/lib/organizations-db';
 import { getT } from '@/lib/i18n/server';
 import type { OrganizationKey } from '@/lib/types';
+import NotAllowed from '@/components/NotAllowed';
 
 export default async function NewAnnouncementPage() {
   const [sessionUser, t] = await Promise.all([getSessionUser(), getT()]);
 
   // The (admin) layout already lets admin and leader through; a member with
-  // a stray session should still never reach this form.
-  if (!sessionUser || (sessionUser.role !== 'admin' && sessionUser.role !== 'leader')) {
+  // a stray session should still never reach this form. Anonymous still goes
+  // to /login; a signed-in member sees NotAllowed rather than a login form.
+  if (!sessionUser) {
     redirect('/login');
+  }
+  if (sessionUser.role !== 'admin' && sessionUser.role !== 'leader') {
+    return <NotAllowed />;
   }
 
   let organizationKeys: readonly OrganizationKey[];
