@@ -5,6 +5,7 @@ export const en = {
   'nav.meetings': 'Meetings',
   'nav.current': "This Week's Meeting",
   'nav.signIn': 'Sign in',
+  'nav.profile': 'My profile',
 
   'locale.label': 'Language',
 
@@ -212,6 +213,10 @@ export const en = {
   'users.confirmRemove': 'Remove this user permanently?',
   'users.self': 'This is your own account.',
   'users.current': 'Current users',
+  'users.photoWarning':
+    'Turning this on lets that person upload their own profile photo. This site does not store birth dates and cannot tell who is a minor — never enable this for a minor’s account. That decision is the bishopric’s alone.',
+  'users.photoUploadEnable': 'Allow profile photo',
+  'users.photoUploadDisable': 'Disallow profile photo',
 
   'validation.user.email': 'Enter a valid email.',
   'validation.user.leaderNeedsOrganization': 'A leader needs an organization.',
@@ -296,6 +301,18 @@ export const en = {
   'photos.uploadDisabled': 'Photo uploads are not available on this site yet.',
   'photos.willNeedApproval': 'Photos for this activity are reviewed by the bishopric before they appear here.',
   'photos.untitledAlt': 'Activity photo',
+
+  'profile.title': 'My profile',
+  'profile.photoAlt': 'Your profile photo',
+  'profile.upload': 'Upload photo',
+  'profile.uploaded': 'Photo updated.',
+  'profile.delete': 'Remove photo',
+  'profile.confirmDelete': 'Remove your profile photo?',
+  'profile.notAllowed':
+    'Profile photos are not turned on for your account yet. Ask the bishopric to enable it for you.',
+  'profile.noPersonLinked':
+    'Your account is not linked to a person yet. Ask an admin to link it before uploading a photo.',
+  'profile.noPhoto': 'You have not added a photo yet.',
 
   'validation.photo.invalidId': 'Invalid photo id.',
   'validation.photo.invalidType': 'Choose a JPEG, PNG, or WebP image.',

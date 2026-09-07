@@ -39,6 +39,9 @@ export default function NavLinks({ role }: { role: Role | null }) {
           { href: '/announcements', label: 'announcements.title' as const },
         ]
       : []),
+    // Any signed-in role, not just admin/leader: profile photos belong to
+    // whoever is signed in, member included.
+    ...(role !== null ? [{ href: '/profile', label: 'nav.profile' as const }] : []),
     ...(role === null ? [{ href: '/login', label: 'nav.signIn' as const }] : []),
   ];
 

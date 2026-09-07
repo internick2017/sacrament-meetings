@@ -7,6 +7,7 @@ export const pt: Dictionary = {
   'nav.meetings': 'Reuniões',
   'nav.current': 'Reunião desta semana',
   'nav.signIn': 'Entrar',
+  'nav.profile': 'Meu perfil',
 
   'locale.label': 'Idioma',
 
@@ -214,6 +215,10 @@ export const pt: Dictionary = {
   'users.confirmRemove': 'Remover este usuário definitivamente?',
   'users.self': 'Esta é a sua própria conta.',
   'users.current': 'Usuários atuais',
+  'users.photoWarning':
+    'Ativar isto permite que essa pessoa envie sua própria foto de perfil. Este site não guarda datas de nascimento e não consegue saber quem é menor de idade: nunca habilite isto na conta de um menor. Essa decisão é só do bispado.',
+  'users.photoUploadEnable': 'Permitir foto de perfil',
+  'users.photoUploadDisable': 'Remover permissão de foto de perfil',
 
   'validation.user.email': 'Informe um e-mail válido.',
   'validation.user.leaderNeedsOrganization': 'Um líder precisa de uma organização.',
@@ -298,6 +303,18 @@ export const pt: Dictionary = {
   'photos.uploadDisabled': 'O envio de fotos ainda não está disponível neste site.',
   'photos.willNeedApproval': 'As fotos desta atividade são revisadas pelo bispado antes de aparecerem aqui.',
   'photos.untitledAlt': 'Foto da atividade',
+
+  'profile.title': 'Meu perfil',
+  'profile.photoAlt': 'Sua foto de perfil',
+  'profile.upload': 'Enviar foto',
+  'profile.uploaded': 'Foto atualizada.',
+  'profile.delete': 'Remover foto',
+  'profile.confirmDelete': 'Remover sua foto de perfil?',
+  'profile.notAllowed':
+    'As fotos de perfil ainda não estão habilitadas para a sua conta. Peça ao bispado para habilitar para você.',
+  'profile.noPersonLinked':
+    'Sua conta ainda não está vinculada a uma pessoa. Peça a um admin para vincular antes de enviar uma foto.',
+  'profile.noPhoto': 'Você ainda não adicionou uma foto.',
 
   'validation.photo.invalidId': 'Id de foto inválido.',
   'validation.photo.invalidType': 'Escolha uma imagem JPEG, PNG ou WebP.',

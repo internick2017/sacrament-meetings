@@ -17,6 +17,7 @@ export const config = {
     '/callings',
     '/users',
     '/photos',
+    '/profile',
     '/activities/new',
     '/activities/:id/edit',
     '/announcements',

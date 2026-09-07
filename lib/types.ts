@@ -85,6 +85,10 @@ export interface Calling {
   // so a stable per-person identifier never reaches an anonymous visitor.
   personId?: number;
   personName?: string;
+  // Absent on the public layer, same rule and same reason as personName: a
+  // face is at least as identifying as a name, so it follows it through
+  // hideNames() rather than getting its own separate rule.
+  personPhotoUrl?: string;
   displayOrder: number;
 }
 

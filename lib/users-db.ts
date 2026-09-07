@@ -8,6 +8,7 @@ export interface AppUser {
   role: Role;
   organizationId: number | null;
   personId: number | null;
+  photoUploadAllowed: boolean;
 }
 
 interface AppUserRow {
@@ -17,6 +18,7 @@ interface AppUserRow {
   role: Role;
   organization_id: number | null;
   person_id: number | null;
+  photo_upload_allowed: boolean;
 }
 
 function mapAppUser(row: AppUserRow): AppUser {
@@ -27,10 +29,11 @@ function mapAppUser(row: AppUserRow): AppUser {
     role: row.role,
     organizationId: row.organization_id,
     personId: row.person_id,
+    photoUploadAllowed: row.photo_upload_allowed,
   };
 }
 
-const APP_USER_COLUMNS = `id, username, email, role, organization_id, person_id`;
+const APP_USER_COLUMNS = `id, username, email, role, organization_id, person_id, photo_upload_allowed`;
 
 // Case-insensitive on purpose: the unique index is on lower(email), so this is
 // the lookup that matches it. Anything else would let a capitalised address
@@ -57,6 +60,7 @@ export interface UserWithOrganization {
   role: Role;
   organizationId: number | null;
   organizationKey: string | null;
+  photoUploadAllowed: boolean;
 }
 
 interface UserWithOrganizationRow {
@@ -65,13 +69,14 @@ interface UserWithOrganizationRow {
   role: Role;
   organization_id: number | null;
   org_key: string | null;
+  photo_upload_allowed: boolean;
 }
 
 // All accounts, for the admin panel. LEFT JOIN so a user with no organization
 // (an admin, or a member) still appears, with organizationKey null.
 export async function listUsers(): Promise<UserWithOrganization[]> {
   const rows = (await sql.query(
-    `SELECT u.id, u.email, u.role, u.organization_id, o.org_key
+    `SELECT u.id, u.email, u.role, u.organization_id, o.org_key, u.photo_upload_allowed
        FROM users u
        LEFT JOIN organizations o ON o.id = u.organization_id
       ORDER BY u.email`
@@ -83,6 +88,7 @@ export async function listUsers(): Promise<UserWithOrganization[]> {
     role: row.role,
     organizationId: row.organization_id,
     organizationKey: row.org_key,
+    photoUploadAllowed: row.photo_upload_allowed,
   }));
 }
 
@@ -112,6 +118,14 @@ export async function updateUserRole(
     role,
     organizationId,
   ]);
+}
+
+// Admin-only switch (enforced by the caller, requireAdmin(), not here).
+// false is the default for every account; an admin turns it on one account
+// at a time, and the panel that offers this control must carry the minor
+// warning — see users.photoWarning in the dictionaries.
+export async function updateUserPhotoUploadAllowed(id: number, allowed: boolean): Promise<void> {
+  await sql.query(`UPDATE users SET photo_upload_allowed = $2 WHERE id = $1`, [id, allowed]);
 }
 
 export async function deleteUser(id: number): Promise<void> {

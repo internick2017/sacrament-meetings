@@ -51,6 +51,7 @@ describe('auth callbacks: role propagation to the session', () => {
       role: 'admin',
       organizationId: null,
       personId: null,
+      photoUploadAllowed: false,
     });
 
     const token = (await authConfig.callbacks!.jwt!({
@@ -70,6 +71,7 @@ describe('auth callbacks: role propagation to the session', () => {
       role: 'leader',
       organizationId: 30,
       personId: null,
+      photoUploadAllowed: false,
     });
 
     const token = (await authConfig.callbacks!.jwt!({
@@ -89,6 +91,7 @@ describe('auth callbacks: role propagation to the session', () => {
       role: 'admin',
       organizationId: null,
       personId: null,
+      photoUploadAllowed: false,
     });
 
     const token = (await authConfig.callbacks!.jwt!({
@@ -156,6 +159,7 @@ describe('auth callbacks: signIn allow-list', () => {
       role: 'member',
       organizationId: null,
       personId: null,
+      photoUploadAllowed: false,
     });
 
     const result = await authConfig.callbacks!.signIn!({
@@ -187,6 +191,7 @@ describe('auth callbacks: signIn allow-list', () => {
       role: 'member',
       organizationId: null,
       personId: null,
+      photoUploadAllowed: false,
     });
 
     const result = await authConfig.callbacks!.signIn!({

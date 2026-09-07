@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { requireAdmin, NotAuthorizedError } from './authz';
 import { getT } from './i18n/server';
 import { userFormSchema } from './users-schema';
-import { addUser, updateUserRole, deleteUser } from './users-db';
+import { addUser, updateUserRole, updateUserPhotoUploadAllowed, deleteUser } from './users-db';
 import { getOrganizationIdByKey } from './organizations-db';
 import { ROLES, ORGANIZATION_KEYS } from './types';
 
@@ -164,6 +164,32 @@ export async function updateUserRoleAction(
   await updateUserRole(id, parsed.data.role, organizationId);
   revalidatePath('/users');
   return { message: t('users.updated') };
+}
+
+// Toggles whether one account may upload its own profile photo. Admin only,
+// following updateUserRoleAction's shape: id and the new value both come
+// from the form, requireAdmin() gates the whole thing, and the panel that
+// renders this control carries the users.photoWarning text — never enable
+// this for a minor's account.
+export async function updatePhotoUploadAllowedAction(formData: FormData): Promise<void> {
+  const id = Number(formData.get('id'));
+  const allowed = formData.get('allowed') === 'true';
+
+  if (!isValidId(id)) {
+    return;
+  }
+
+  try {
+    await requireAdmin();
+  } catch (error) {
+    if (error instanceof NotAuthorizedError) {
+      return;
+    }
+    throw error;
+  }
+
+  await updateUserPhotoUploadAllowed(id, allowed);
+  revalidatePath('/users');
 }
 
 export async function deleteUserAction(formData: FormData): Promise<void> {

@@ -27,6 +27,16 @@ export default async function UsersPage() {
 
       <UserForm />
 
+      {/* Part of the design, not decoration: the switch below can turn on
+          profile-photo uploads for any account, and the system has no way
+          to know who is a minor (this project deliberately stores no birth
+          dates). The bishopric decides, one account at a time, and this
+          text is the only thing standing between the switch and that
+          decision being skipped. */}
+      <p className="max-w-xl rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        {t('users.photoWarning')}
+      </p>
+
       <div className="space-y-2">
         <h2 className="text-xl font-bold">{t('users.current')}</h2>
 
@@ -48,6 +58,7 @@ export default async function UsersPage() {
                 email={user.email ?? ''}
                 role={user.role}
                 organizationKey={user.organizationKey ?? ''}
+                photoUploadAllowed={user.photoUploadAllowed}
                 isSelf={String(user.id) === String(sessionUser?.id)}
               />
             </li>

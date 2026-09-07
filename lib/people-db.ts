@@ -1,5 +1,48 @@
 import { sql } from './db';
 
+export interface PersonProfile {
+  id: number;
+  fullName: string;
+  photoUrl: string | null;
+}
+
+interface PersonProfileRow {
+  id: number;
+  full_name: string;
+  photo_url: string | null;
+}
+
+// Looked up by the profile page, always with the id from the session's own
+// user.personId — never from a route param or form field. See
+// lib/profile-actions.ts for the write side of this same rule.
+export async function getPersonById(id: number): Promise<PersonProfile | undefined> {
+  const rows = (await sql.query(
+    `SELECT id, full_name, photo_url FROM people WHERE id = $1`,
+    [id]
+  )) as PersonProfileRow[];
+  const row = rows[0];
+  return row ? { id: row.id, fullName: row.full_name, photoUrl: row.photo_url } : undefined;
+}
+
+// Sets a person's own profile photo and records consent in the same write.
+// `id` must always be the caller's own person_id, resolved server-side from
+// the session — see lib/profile-actions.ts for the guarantee.
+export async function setPersonPhoto(id: number, url: string): Promise<void> {
+  await sql.query(`UPDATE people SET photo_url = $2, photo_consent_at = now() WHERE id = $1`, [
+    id,
+    url,
+  ]);
+}
+
+// Clears a person's photo and consent record together: removing the photo
+// also removes the record that they once consented to it.
+export async function clearPersonPhoto(id: number): Promise<void> {
+  await sql.query(
+    `UPDATE people SET photo_url = NULL, photo_consent_at = NULL WHERE id = $1`,
+    [id]
+  );
+}
+
 // Reuse an existing person with the same name instead of creating a duplicate.
 // Names are compared case-insensitively and trimmed, because "Ana Silva" typed
 // twice should be one person with two callings, not two people.

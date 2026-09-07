@@ -13,6 +13,7 @@ interface CallingRow {
   title: string | null;
   person_id: number | null;
   full_name: string | null;
+  photo_url: string | null;
   calling_display_order: number | null;
 }
 
@@ -27,6 +28,7 @@ const SELECT_ROWS = `
          c.title             AS title,
          c.person_id         AS person_id,
          p.full_name         AS full_name,
+         p.photo_url         AS photo_url,
          c.display_order     AS calling_display_order
     FROM organizations o
     LEFT JOIN callings c
@@ -63,6 +65,7 @@ function groupRows(rows: CallingRow[]): OrganizationWithCallings[] {
         title: row.title ?? '',
         personId: row.person_id ?? 0,
         personName: row.full_name ?? undefined,
+        personPhotoUrl: row.photo_url ?? undefined,
         displayOrder: row.calling_display_order ?? 0,
       });
     }
@@ -78,7 +81,14 @@ function groupRows(rows: CallingRow[]): OrganizationWithCallings[] {
 export function hideNames(orgs: OrganizationWithCallings[]): OrganizationWithCallings[] {
   return orgs.map((org) => ({
     ...org,
-    callings: org.callings.map(({ personName: _personName, personId: _personId, ...calling }: Calling) => calling),
+    callings: org.callings.map(
+      ({
+        personName: _personName,
+        personId: _personId,
+        personPhotoUrl: _personPhotoUrl,
+        ...calling
+      }: Calling) => calling
+    ),
   }));
 }
 

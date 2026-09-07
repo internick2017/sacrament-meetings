@@ -43,12 +43,15 @@ export async function uploadImage(file: File | null, prefix: string): Promise<st
     // DESIGN NOTE (not resolved by this fix): `access: 'public'` means an
     // image's URL requires no session or credential to fetch — the UUID in
     // the path is the ONLY thing keeping a private activity's picture from
-    // an anonymous visitor who happens to have (or guesses) the link.
-    // Vercel Blob's private access needs signed URLs and a different
-    // serving path than a plain <img src>, which is a real design change,
-    // not a one-line fix, so it is deliberately left for whoever wires up
-    // the BLOB_READ_WRITE_TOKEN credential to decide on purpose rather than
-    // discover by accident.
+    // an anonymous visitor who happens to have (or guesses) the link. This
+    // applies just as much to a member's profile photo (prefix
+    // 'profile-photos') as to an activity's: a face is a more sensitive
+    // thing to leave behind an unguessable-but-public URL than an activity
+    // cover, so this limitation matters more there, not less. Vercel Blob's
+    // private access needs signed URLs and a different serving path than a
+    // plain <img src>, which is a real design change, not a one-line fix, so
+    // it is deliberately left for whoever wires up the BLOB_READ_WRITE_TOKEN
+    // credential to decide on purpose rather than discover by accident.
     const blob = await put(`${prefix}/${crypto.randomUUID()}`, file, {
       access: 'public',
       contentType: file.type,

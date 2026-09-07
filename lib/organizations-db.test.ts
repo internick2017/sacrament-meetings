@@ -20,7 +20,14 @@ const orgs: OrganizationWithCallings[] = [
     key: 'primary',
     displayOrder: 60,
     callings: [
-      { id: 1, title: 'President', personId: 7, personName: 'Jane Doe', displayOrder: 0 },
+      {
+        id: 1,
+        title: 'President',
+        personId: 7,
+        personName: 'Jane Doe',
+        personPhotoUrl: 'https://blob.example/jane.jpg',
+        displayOrder: 0,
+      },
       { id: 2, title: 'Counselor', personId: 8, personName: 'John Roe', displayOrder: 1 },
     ],
   },
@@ -38,6 +45,13 @@ describe('hideNames', () => {
     const result = hideNames(orgs);
     for (const calling of result[0].callings) {
       expect(calling.personId).toBeUndefined();
+    }
+  });
+
+  it('removes every profile photo, following the same rule as the name it sits next to', () => {
+    const result = hideNames(orgs);
+    for (const calling of result[0].callings) {
+      expect(calling.personPhotoUrl).toBeUndefined();
     }
   });
 
