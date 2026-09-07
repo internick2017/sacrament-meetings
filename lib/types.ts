@@ -130,6 +130,18 @@ export interface Announcement {
 
 export type AnnouncementInput = Omit<Announcement, 'id' | 'organizationKey'>;
 
+// A photo attached to an activity. `approved` is false until an admin (or,
+// for organizations that do not need approval, automatically) publishes it.
+// Who uploaded or approved it is a data-layer concern (uploaded_by,
+// approved_by columns): this public shape stays minimal on purpose.
+export interface EventPhoto {
+  id: number;
+  eventId: number;
+  url: string;
+  caption: string;
+  approved: boolean;
+}
+
 export const ROLES = ['admin', 'leader', 'member'] as const;
 
 export type Role = (typeof ROLES)[number];
