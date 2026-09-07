@@ -108,7 +108,11 @@ export async function addAnnouncementAction(
     createdByFromUser(user)
   );
 
+  // The home page also renders announcements (see AnnouncementList usage in
+  // app/page.tsx), not just /announcements, so the whole layout must be
+  // revalidated too — same pattern as updateUnitAction in unit-actions.ts.
   revalidatePath('/announcements');
+  revalidatePath('/', 'layout');
   redirect('/announcements');
 }
 
@@ -186,6 +190,7 @@ export async function updateAnnouncementAction(
   });
 
   revalidatePath('/announcements');
+  revalidatePath('/', 'layout');
   redirect('/announcements');
 }
 
@@ -221,4 +226,5 @@ export async function deleteAnnouncementAction(formData: FormData): Promise<void
 
   await deleteAnnouncement(id);
   revalidatePath('/announcements');
+  revalidatePath('/', 'layout');
 }

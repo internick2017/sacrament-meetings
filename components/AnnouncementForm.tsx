@@ -115,7 +115,7 @@ export default function AnnouncementForm({
       </label>
 
       <label className="block space-y-1">
-        <span className="font-semibold">{t('activities.titleLabel')}</span>
+        <span className="font-semibold">{t('announcements.titleLabel')}</span>
         <input
           type="text"
           name="title"
@@ -185,7 +185,7 @@ export default function AnnouncementForm({
         disabled={pending}
         className="rounded bg-slate-800 px-5 py-2 font-semibold text-white hover:bg-slate-700 disabled:opacity-50"
       >
-        {announcement ? t('activities.saveChanges') : t('announcements.new')}
+        {announcement ? t('announcements.saveChanges') : t('announcements.new')}
       </button>
     </form>
   );

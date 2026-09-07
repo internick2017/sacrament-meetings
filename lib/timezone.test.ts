@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { zonedLocalToInstant } from './timezone';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { zonedLocalToInstant, todayInTimeZone } from './timezone';
 
 // America/Sao_Paulo is this project's default unit timezone (see
 // EMPTY_UNIT in lib/unit-db.ts) and is UTC-3 with no DST since 2019, so it
@@ -98,5 +98,44 @@ describe('zonedLocalToInstant', () => {
       const instant = zonedLocalToInstant('2026-03-08T02:30', 'America/Sao_Paulo');
       expect(instant).toBe('2026-03-08T05:30:00.000Z');
     });
+  });
+});
+
+// todayInTimeZone is tested against a FIXED instant (via fake timers), not
+// new Date(), so the test cannot pass by accident just because it happens to
+// run at a moment where every zone agrees on the date. This is the exact
+// case Finding 1 in the whole-branch review was about: at 21:30 local time
+// in Francisco Beltrão on 15 October, UTC has already rolled over to the
+// 16th, so a caller that read the date from CURRENT_DATE (UTC) or from
+// `new Date().toISOString()` would disagree with a caller that asked for the
+// congregation's own calendar date.
+describe('todayInTimeZone', () => {
+  // 2026-10-16T00:30:00.000Z. In UTC this is already the 16th. In
+  // America/Sao_Paulo (UTC-3, no DST) the wall clock reads 2026-10-15
+  // 21:30 — sacrament-meeting eve, still the 15th. In Asia/Tokyo (UTC+9,
+  // east of UTC) the wall clock reads 2026-10-16 09:30 — also the 16th,
+  // but arrived at from the opposite direction, proving the function reads
+  // the zone's own wall clock rather than just "is it UTC or not".
+  const FIXED_INSTANT = '2026-10-16T00:30:00.000Z';
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(FIXED_INSTANT));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('returns the previous local calendar day in a UTC-3 zone late on a Brazilian evening, even though UTC has already rolled over', () => {
+    expect(todayInTimeZone('America/Sao_Paulo')).toBe('2026-10-15');
+  });
+
+  it('returns the UTC calendar day in the UTC zone itself', () => {
+    expect(todayInTimeZone('UTC')).toBe('2026-10-16');
+  });
+
+  it('returns the local calendar day in a zone east of UTC', () => {
+    expect(todayInTimeZone('Asia/Tokyo')).toBe('2026-10-16');
   });
 });

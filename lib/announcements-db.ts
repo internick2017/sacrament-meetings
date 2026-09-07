@@ -1,6 +1,8 @@
 import { cache } from 'react';
 import { sql } from './db';
 import { audienceFilter } from './events-db';
+import { getUnit } from './unit-db';
+import { todayInTimeZone } from './timezone';
 import type { Announcement, AnnouncementInput, Audience, OrganizationKey } from './types';
 
 // One row per announcement, already joined with its organization to bring the
@@ -32,11 +34,23 @@ function mapRow(row: AnnouncementRow): Announcement {
 // An announcement is in force when today falls inside its window. A null
 // starts_on means "from today", so it is treated as always started.
 //
-// Like audienceFilter, this is concatenated into the query rather than
-// parameterised, and it is safe for the same reason: it takes no arguments and
-// returns a constant string, so nothing a caller supplies can reach the SQL.
-export function currentFilter(): string {
-  return '(starts_on IS NULL OR starts_on <= CURRENT_DATE) AND ends_on >= CURRENT_DATE';
+// This used to compare against Postgres CURRENT_DATE, but CURRENT_DATE runs
+// in the database session's timezone (UTC on this project's host), while the
+// rest of this codebase (see todayInTimeZone in timezone.ts) treats "today"
+// as the congregation's own timezone. The two disagree for the last three
+// hours of every Brazilian day: an announcement ending on its own last local
+// evening would already read as expired in the database while the admin
+// screen, using local time, still showed it as in force. So "today" is now
+// computed once, in the congregation's timezone, and passed in as a query
+// parameter — there is exactly one source of truth for what day it is.
+//
+// This fragment is still concatenated into the query rather than being a
+// value itself, and that remains safe for the same reason audienceFilter is:
+// it takes only a placeholder INDEX (a number chosen by the caller to match
+// its own params array), never a value. The date itself always travels in
+// the parameter array, never through this string.
+export function currentFilter(datePlaceholder: number): string {
+  return `(starts_on IS NULL OR starts_on <= $${datePlaceholder}::date) AND ends_on >= $${datePlaceholder}::date`;
 }
 
 // Dates are read as plain text via to_char so they never arrive as
@@ -80,7 +94,9 @@ export const getAnnouncements = cache(async function getAnnouncements({
   }
 
   if (includeExpired !== true) {
-    conditions.push(currentFilter());
+    const unit = await getUnit();
+    params.push(todayInTimeZone(unit.timezone));
+    conditions.push(currentFilter(params.length));
   }
 
   const query = `${SELECT_ROWS} WHERE ${conditions.join(' AND ')} ORDER BY a.ends_on ASC`;
@@ -107,14 +123,17 @@ export const getAnnouncementById = cache(async function getAnnouncementById({
   includeExpired?: boolean;
 }): Promise<Announcement | undefined> {
   const conditions = [`a.id = $1`, audienceFilter(signedIn)];
+  const params: unknown[] = [id];
 
   if (includeExpired !== true) {
-    conditions.push(currentFilter());
+    const unit = await getUnit();
+    params.push(todayInTimeZone(unit.timezone));
+    conditions.push(currentFilter(params.length));
   }
 
   const rows = (await sql.query(
     `${SELECT_ROWS} WHERE ${conditions.join(' AND ')}`,
-    [id]
+    params
   )) as AnnouncementRow[];
   return rows[0] ? mapRow(rows[0]) : undefined;
 });

@@ -14,6 +14,20 @@ export default async function AnnouncementsAdminPage() {
     getUnit(),
   ]);
 
+  // A leader whose account has no organizationId yet cannot own any
+  // announcement, so there is nothing this screen could ever list for them.
+  // Same account state, and same explanation, as new/page.tsx: show why
+  // instead of falling back to an organizationId of -1 and letting it read
+  // as the ordinary "no announcements yet" empty state.
+  if (sessionUser?.role === 'leader' && sessionUser.organizationId == null) {
+    return (
+      <section className="space-y-6">
+        <h1 className="text-2xl font-bold">{t('announcements.title')}</h1>
+        <p role="alert">{t('announcements.noOrganizationAssigned')}</p>
+      </section>
+    );
+  }
+
   // signedIn is true here rather than gated on session presence: an admin
   // or leader is always signed in by the time they reach this admin-only
   // route (the (admin) layout already redirects anonymous visitors to

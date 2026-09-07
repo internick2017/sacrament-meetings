@@ -57,6 +57,11 @@ export default function AnnouncementList({
                 : t('announcements.unitWide')}
             </p>
             <p className="whitespace-pre-line text-slate-700">{announcement.body}</p>
+            {announcement.startsOn && (
+              <p className="text-sm text-slate-500">
+                {t('announcements.from')}: {formatMeetingDate(announcement.startsOn, locale)}
+              </p>
+            )}
             <p className="text-sm text-slate-500">
               {t('announcements.until')}: {formatMeetingDate(announcement.endsOn, locale)}
             </p>
