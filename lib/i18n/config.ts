@@ -1,9 +1,17 @@
-// Supported UI languages. `en` is the source of truth for dictionary keys.
+// Supported UI languages. `en` is the source of truth for dictionary keys:
+// `es.ts` and `pt.ts` are typed against it, so a missing key is a compile
+// error. That is a build-time concern and says nothing about which language a
+// visitor sees.
 export const LOCALES = ['en', 'es', 'pt'] as const;
 
 export type Locale = (typeof LOCALES)[number];
 
-export const DEFAULT_LOCALE: Locale = 'en';
+// What a visitor sees before choosing anything. Portuguese, because this unit
+// is in Francisco Beltrão, Paraná: for almost everyone arriving here it is the
+// only language they read, so English as the default would have been a
+// leftover from the course project, not a decision. Spanish and English stay
+// one click away in the switcher.
+export const DEFAULT_LOCALE: Locale = 'pt';
 
 // Cookie that remembers the visitor's choice. Read on the server (layout,
 // server components, server actions) and written by the locale switcher.
