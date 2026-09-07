@@ -166,7 +166,6 @@ export const es: Dictionary = {
     'Inicia sesión para ver quién ocupa cada cargo.',
   'organizations.contactBishopric': 'Contactar al obispado',
   'organizations.noCallings': 'Todavía no hay nadie registrado aquí.',
-  'organizations.notFound': 'Organización no encontrada',
   'organizations.back': 'Todas las organizaciones',
 
   'callings.title': 'Llamamientos',
@@ -179,9 +178,7 @@ export const es: Dictionary = {
   'callings.add': 'Agregar llamamiento',
   'callings.added': 'Llamamiento agregado.',
   'callings.release': 'Relevar',
-  'callings.released': 'Llamamiento finalizado.',
   'callings.delete': 'Eliminar',
-  'callings.deleted': 'Llamamiento eliminado.',
   'callings.confirmDelete': '¿Eliminar este llamamiento definitivamente?',
   'callings.current': 'Llamamientos vigentes',
 

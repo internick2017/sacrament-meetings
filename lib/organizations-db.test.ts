@@ -22,6 +22,13 @@ describe('hideNames', () => {
     }
   });
 
+  it('removes every person id, so a client component could not leak it in an RSC payload', () => {
+    const result = hideNames(orgs);
+    for (const calling of result[0].callings) {
+      expect(calling.personId).toBeUndefined();
+    }
+  });
+
   it('keeps the position titles, which are what the public page shows', () => {
     expect(hideNames(orgs)[0].callings.map((c) => c.title)).toEqual(['President', 'Counselor']);
   });

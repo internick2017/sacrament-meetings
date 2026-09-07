@@ -57,11 +57,3 @@ export async function deleteCalling(id: number): Promise<boolean> {
   )) as { id: number }[];
   return rows.length > 0;
 }
-
-export async function getOrganizationIdByKey(key: string): Promise<number | undefined> {
-  const rows = (await sql.query(
-    `SELECT id FROM organizations WHERE org_key = $1`,
-    [key]
-  )) as { id: number }[];
-  return rows[0]?.id;
-}

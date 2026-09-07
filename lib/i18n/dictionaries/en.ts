@@ -164,7 +164,6 @@ export const en = {
     'Sign in to see who currently holds each position.',
   'organizations.contactBishopric': 'Contact the bishopric',
   'organizations.noCallings': 'No one is listed here yet.',
-  'organizations.notFound': 'Organization not found',
   'organizations.back': 'All organizations',
 
   'callings.title': 'Callings',
@@ -177,9 +176,7 @@ export const en = {
   'callings.add': 'Add calling',
   'callings.added': 'Calling added.',
   'callings.release': 'Release',
-  'callings.released': 'Calling ended.',
   'callings.delete': 'Delete',
-  'callings.deleted': 'Calling deleted.',
   'callings.confirmDelete': 'Delete this calling permanently?',
   'callings.current': 'Current callings',
 

@@ -81,7 +81,9 @@ export interface Person {
 export interface Calling {
   id: number;
   title: string;
-  personId: number;
+  // Absent on the public layer, alongside personName: hideNames() strips both
+  // so a stable per-person identifier never reaches an anonymous visitor.
+  personId?: number;
   personName?: string;
   displayOrder: number;
 }

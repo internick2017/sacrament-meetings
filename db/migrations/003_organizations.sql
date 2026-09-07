@@ -3,6 +3,12 @@
 -- Data minimisation is the rule here: a person is a name and nothing else. No
 -- phone, no email, no address, no birth date. Contact details live in the
 -- official Church tools and stay there.
+--
+-- The two photo_* columns on `people` below are the one deliberate, consent
+-- gated exception, added for a much later phase: a person may self-upload
+-- their own photo, and `photo_consent_at` records that they, personally,
+-- consented to it. Nobody uploads a photo of someone else, and this is never
+-- used for minors. Everything else about a person stays just the name.
 
 CREATE TABLE IF NOT EXISTS organizations (
   id            serial PRIMARY KEY,

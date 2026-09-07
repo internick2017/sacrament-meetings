@@ -5,7 +5,8 @@ import { revalidatePath } from 'next/cache';
 import { auth } from './auth';
 import { getT } from './i18n/server';
 import { callingFormSchema } from './callings-schema';
-import { addCalling, deleteCalling, endCalling, getOrganizationIdByKey } from './people-db';
+import { addCalling, deleteCalling, endCalling } from './people-db';
+import { getOrganizationIdByKey } from './organizations-db';
 
 export interface CallingFormState {
   message?: string;

@@ -37,7 +37,7 @@ const SELECT_ROWS = `
    WHERE o.active = true
 `;
 
-const ORDER_BY = ` ORDER BY o.display_order, c.display_order, c.id`;
+const ORDER_BY = ` ORDER BY o.display_order, o.id, c.display_order, c.id`;
 
 // Fold the flat join result back into one entry per organization.
 function groupRows(rows: CallingRow[]): OrganizationWithCallings[] {
@@ -78,7 +78,7 @@ function groupRows(rows: CallingRow[]): OrganizationWithCallings[] {
 export function hideNames(orgs: OrganizationWithCallings[]): OrganizationWithCallings[] {
   return orgs.map((org) => ({
     ...org,
-    callings: org.callings.map(({ personName, ...calling }: Calling) => calling),
+    callings: org.callings.map(({ personName: _personName, personId: _personId, ...calling }: Calling) => calling),
   }));
 }
 
@@ -92,6 +92,14 @@ export const getOrganizations = cache(async function getOrganizations(
   const orgs = groupRows(rows);
   return includeNames ? orgs : hideNames(orgs);
 });
+
+export async function getOrganizationIdByKey(key: string): Promise<number | undefined> {
+  const rows = (await sql.query(
+    `SELECT id FROM organizations WHERE org_key = $1`,
+    [key]
+  )) as { id: number }[];
+  return rows[0]?.id;
+}
 
 export const getOrganizationByKey = cache(async function getOrganizationByKey(
   key: string,
