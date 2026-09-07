@@ -4,18 +4,26 @@ import { put, del } from '@vercel/blob';
 // yet. Rather than failing, the site simply saves activities without a cover
 // image: an activity with no picture is a normal, well-designed state here, not
 // a degraded one.
-export const coverUploadEnabled = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+//
+// Neutral name: this one credential backs every kind of image upload in the
+// project (activity covers, activity/event photos), so a name built around
+// "cover" stopped fitting once photos were added. `coverUploadEnabled` and
+// `photoUploadEnabled` below are kept as the public exports so nothing else
+// in the codebase has to change.
+const BLOB_UPLOAD_ENABLED = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+
+export const coverUploadEnabled = BLOB_UPLOAD_ENABLED;
 
 // Same underlying credential as covers: both are Vercel Blob uploads, so
 // there is only one thing to have or not have. Kept as a separate export
 // (rather than reusing coverUploadEnabled directly at call sites) so a
 // screen that only cares about photos never has to know the name of an
 // activity-cover concept.
-export const photoUploadEnabled = coverUploadEnabled;
+export const photoUploadEnabled = BLOB_UPLOAD_ENABLED;
 
-const MAX_BYTES = 4 * 1024 * 1024;
+export const MAX_BYTES = 4 * 1024 * 1024;
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+export const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 // Returns the public URL of the stored image, or null when there is nothing to
 // store, no credential to store it with, or the file is not an acceptable
@@ -24,7 +32,7 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 // 'activities' or 'event-photos') so different kinds of uploads don't share
 // one flat namespace.
 export async function uploadImage(file: File | null, prefix: string): Promise<string | null> {
-  if (!file || file.size === 0 || !coverUploadEnabled) {
+  if (!file || file.size === 0 || !BLOB_UPLOAD_ENABLED) {
     return null;
   }
   if (!ALLOWED_TYPES.includes(file.type) || file.size > MAX_BYTES) {
@@ -61,7 +69,7 @@ export async function uploadImage(file: File | null, prefix: string): Promise<st
 // unreachable. Losing track of one orphaned file is an acceptable outcome;
 // failing the user's action over it is not.
 export async function deleteImage(url: string | null | undefined): Promise<void> {
-  if (!url || !coverUploadEnabled) {
+  if (!url || !BLOB_UPLOAD_ENABLED) {
     return;
   }
   try {

@@ -37,9 +37,14 @@ vi.mock('./event-photos-db', () => ({
 vi.mock('./blob', () => ({
   uploadImage: vi.fn(),
   deleteImage: vi.fn().mockResolvedValue(undefined),
+  ALLOWED_TYPES: ['image/jpeg', 'image/png', 'image/webp'],
+  MAX_BYTES: 4 * 1024 * 1024,
 }));
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
+}));
+vi.mock('./i18n/server', () => ({
+  getT: vi.fn().mockResolvedValue((key: string) => key),
 }));
 
 import { requireLeaderOf, requireAdmin } from './authz';
@@ -75,13 +80,18 @@ function makeFile(): File {
   return new File([new Uint8Array(10)], 'photo.jpg', { type: 'image/jpeg' });
 }
 
-function uploadForm(overrides: Partial<{ eventId: string; photo: File | null; caption: string }> = {}): FormData {
+function uploadForm(
+  overrides: Partial<{ eventId: string; photo: File | null; caption: string; approved: string }> = {}
+): FormData {
   const fd = new FormData();
   fd.set('eventId', overrides.eventId ?? '5');
   if (overrides.photo !== null) {
     fd.set('photo', overrides.photo ?? makeFile());
   }
   fd.set('caption', overrides.caption ?? 'A caption');
+  if (overrides.approved !== undefined) {
+    fd.set('approved', overrides.approved);
+  }
   return fd;
 }
 
@@ -104,7 +114,7 @@ describe('uploadEventPhotoAction', () => {
     mockUploadImage.mockResolvedValue('https://blob.example/photo.jpg');
     mockAddEventPhoto.mockResolvedValue(1);
 
-    await uploadEventPhotoAction(uploadForm());
+    await uploadEventPhotoAction({}, uploadForm());
 
     expect(calls).toEqual(['resolveOrganization', 'requirePermission']);
   });
@@ -116,7 +126,7 @@ describe('uploadEventPhotoAction', () => {
     const { NotAuthorizedError } = await import('./authz-rules');
     mockRequireLeaderOf.mockRejectedValue(new NotAuthorizedError());
 
-    await uploadEventPhotoAction(uploadForm());
+    await uploadEventPhotoAction({}, uploadForm());
 
     expect(mockUploadImage).not.toHaveBeenCalled();
     expect(mockAddEventPhoto).not.toHaveBeenCalled();
@@ -125,7 +135,7 @@ describe('uploadEventPhotoAction', () => {
   it('exits silently for an activity that does not exist, without uploading', async () => {
     mockGetEventOrganizationId.mockResolvedValue(undefined);
 
-    await uploadEventPhotoAction(uploadForm());
+    await uploadEventPhotoAction({}, uploadForm());
 
     expect(mockRequireLeaderOf).not.toHaveBeenCalled();
     expect(mockUploadImage).not.toHaveBeenCalled();
@@ -138,11 +148,18 @@ describe('uploadEventPhotoAction', () => {
     mockUploadImage.mockResolvedValue('https://blob.example/primary.jpg');
     mockAddEventPhoto.mockResolvedValue(1);
 
-    await uploadEventPhotoAction(uploadForm({ eventId: '3' }));
+    await uploadEventPhotoAction({}, uploadForm({ eventId: '3' }));
 
-    expect(mockAddEventPhoto).toHaveBeenCalledWith(
-      expect.objectContaining({ approved: false })
-    );
+    // Exact object, not objectContaining: a mutant that adds or renames a
+    // field (e.g. slipping `approved` from the form into the insert) must
+    // be caught here, not hidden by a partial match.
+    expect(mockAddEventPhoto).toHaveBeenCalledWith({
+      eventId: 3,
+      url: 'https://blob.example/primary.jpg',
+      caption: 'A caption',
+      approved: false,
+      uploadedBy: null,
+    });
   });
 
   it('inserts a Relief Society activity photo with approved = true', async () => {
@@ -152,11 +169,15 @@ describe('uploadEventPhotoAction', () => {
     mockUploadImage.mockResolvedValue('https://blob.example/rs.jpg');
     mockAddEventPhoto.mockResolvedValue(1);
 
-    await uploadEventPhotoAction(uploadForm({ eventId: '3' }));
+    await uploadEventPhotoAction({}, uploadForm({ eventId: '3' }));
 
-    expect(mockAddEventPhoto).toHaveBeenCalledWith(
-      expect.objectContaining({ approved: true })
-    );
+    expect(mockAddEventPhoto).toHaveBeenCalledWith({
+      eventId: 3,
+      url: 'https://blob.example/rs.jpg',
+      caption: 'A caption',
+      approved: true,
+      uploadedBy: null,
+    });
   });
 
   it('treats a whole-branch activity (null organization) as needing approval', async () => {
@@ -165,7 +186,7 @@ describe('uploadEventPhotoAction', () => {
     mockUploadImage.mockResolvedValue('https://blob.example/branch.jpg');
     mockAddEventPhoto.mockResolvedValue(1);
 
-    await uploadEventPhotoAction(uploadForm());
+    await uploadEventPhotoAction({}, uploadForm());
 
     expect(mockGetOrganizationKeyById).not.toHaveBeenCalled();
     expect(mockAddEventPhoto).toHaveBeenCalledWith(
@@ -173,21 +194,116 @@ describe('uploadEventPhotoAction', () => {
     );
   });
 
+  // FINDING 1: the fail-safe in resolveNeedsApproval. If the organization
+  // lookup somehow fails to resolve a key for an id that getEventOrganizationId
+  // just returned (should never happen; ids only append), the photo must
+  // still require approval rather than publish instantly.
+  it('treats an unresolved organization key as needing approval (fail-safe)', async () => {
+    mockGetEventOrganizationId.mockResolvedValue(3);
+    mockRequireLeaderOf.mockResolvedValue({ id: '1', role: 'leader', organizationId: 3 });
+    mockGetOrganizationKeyById.mockResolvedValue(undefined);
+    mockUploadImage.mockResolvedValue('https://blob.example/unresolved.jpg');
+    mockAddEventPhoto.mockResolvedValue(1);
+
+    await uploadEventPhotoAction({}, uploadForm({ eventId: '3' }));
+
+    expect(mockAddEventPhoto).toHaveBeenCalledWith(
+      expect.objectContaining({ approved: false })
+    );
+  });
+
+  // FINDING 2: `approved` must be computed on the server, never read from
+  // the submitted form. This is the exact attack this phase exists to
+  // prevent, so it is written down as a test: a Primary-activity upload
+  // that tries to sneak `approved=true` through the form must still land
+  // as approved: false.
+  it('ignores an approved=true field submitted in the form for a Primary activity', async () => {
+    mockGetEventOrganizationId.mockResolvedValue(3);
+    mockRequireLeaderOf.mockResolvedValue({ id: '1', role: 'leader', organizationId: 3 });
+    mockGetOrganizationKeyById.mockResolvedValue('primary');
+    mockUploadImage.mockResolvedValue('https://blob.example/spoofed.jpg');
+    mockAddEventPhoto.mockResolvedValue(1);
+
+    await uploadEventPhotoAction({}, uploadForm({ eventId: '3', approved: 'true' }));
+
+    expect(mockAddEventPhoto).toHaveBeenCalledWith({
+      eventId: 3,
+      url: 'https://blob.example/spoofed.jpg',
+      caption: 'A caption',
+      approved: false,
+      uploadedBy: null,
+    });
+  });
+
   it('does not insert a row when the upload produced no url', async () => {
     mockGetEventOrganizationId.mockResolvedValue(3);
     mockRequireLeaderOf.mockResolvedValue({ id: '1', role: 'leader', organizationId: 3 });
     mockUploadImage.mockResolvedValue(null);
 
-    await uploadEventPhotoAction(uploadForm());
+    await uploadEventPhotoAction({}, uploadForm());
 
     expect(mockAddEventPhoto).not.toHaveBeenCalled();
   });
 
   it('exits silently for a malformed activity id', async () => {
-    await uploadEventPhotoAction(uploadForm({ eventId: 'not-a-number' }));
+    await uploadEventPhotoAction({}, uploadForm({ eventId: 'not-a-number' }));
 
     expect(mockGetEventOrganizationId).not.toHaveBeenCalled();
     expect(mockUploadImage).not.toHaveBeenCalled();
+  });
+
+  it('reports a message for a malformed activity id', async () => {
+    const state = await uploadEventPhotoAction({}, uploadForm({ eventId: 'not-a-number' }));
+
+    expect(state.message).toBe('validation.photo.invalidId');
+  });
+
+  it('reports a message for an activity that does not exist', async () => {
+    mockGetEventOrganizationId.mockResolvedValue(undefined);
+
+    const state = await uploadEventPhotoAction({}, uploadForm());
+
+    expect(state.message).toBe('validation.photo.invalidId');
+  });
+
+  it('rejects a disallowed file type before ever uploading, with a message', async () => {
+    mockGetEventOrganizationId.mockResolvedValue(3);
+    mockRequireLeaderOf.mockResolvedValue({ id: '1', role: 'leader', organizationId: 3 });
+    const badFile = new File([new Uint8Array(10)], 'photo.gif', { type: 'image/gif' });
+
+    const state = await uploadEventPhotoAction({}, uploadForm({ photo: badFile }));
+
+    expect(mockUploadImage).not.toHaveBeenCalled();
+    expect(mockAddEventPhoto).not.toHaveBeenCalled();
+    expect(state.message).toBe('validation.photo.invalidType');
+  });
+
+  it('rejects an oversized file before ever uploading, with a message', async () => {
+    mockGetEventOrganizationId.mockResolvedValue(3);
+    mockRequireLeaderOf.mockResolvedValue({ id: '1', role: 'leader', organizationId: 3 });
+    const bigFile = new File([new Uint8Array(4 * 1024 * 1024 + 1)], 'photo.jpg', {
+      type: 'image/jpeg',
+    });
+
+    const state = await uploadEventPhotoAction({}, uploadForm({ photo: bigFile }));
+
+    expect(mockUploadImage).not.toHaveBeenCalled();
+    expect(mockAddEventPhoto).not.toHaveBeenCalled();
+    expect(state.message).toBe('validation.photo.tooLarge');
+  });
+
+  it('trims and caps the caption before inserting', async () => {
+    mockGetEventOrganizationId.mockResolvedValue(3);
+    mockRequireLeaderOf.mockResolvedValue({ id: '1', role: 'leader', organizationId: 3 });
+    mockGetOrganizationKeyById.mockResolvedValue('relief_society');
+    mockUploadImage.mockResolvedValue('https://blob.example/caption.jpg');
+    mockAddEventPhoto.mockResolvedValue(1);
+    const longCaption = `  ${'x'.repeat(600)}  `;
+
+    await uploadEventPhotoAction({}, uploadForm({ eventId: '3', caption: longCaption }));
+
+    const insertedCaption = mockAddEventPhoto.mock.calls[0][0].caption;
+    expect(insertedCaption).toBe('x'.repeat(500));
   });
 });
 

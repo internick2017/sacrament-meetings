@@ -2,13 +2,24 @@
 
 import { revalidatePath } from 'next/cache';
 import { requireLeaderOf, requireAdmin, NotAuthorizedError, getSessionUser } from './authz';
+import { getT } from './i18n/server';
 import { getEventOrganizationId } from './events-db';
 import { getOrganizationKeyById } from './organizations-db';
 import { needsApproval } from './photo-rules';
 import { addEventPhoto, approveEventPhoto, deleteEventPhoto, getPhotoEventId, getPhotoUrl } from './event-photos-db';
-import { uploadImage, deleteImage } from './blob';
+import { uploadImage, deleteImage, ALLOWED_TYPES, MAX_BYTES } from './blob';
 
 const PHOTO_BLOB_PREFIX = 'event-photos';
+
+// A caption with no bound would let a leader store an arbitrarily large
+// string in a column meant for a short line of context. Trimmed and
+// truncated explicitly (rather than left unbounded) so the stored value is
+// always predictable.
+const CAPTION_MAX_LENGTH = 500;
+
+export interface PhotoFormState {
+  message?: string;
+}
 
 // `user.id` is a string from the session; Number(user.id) on a malformed or
 // missing id would silently insert NaN into uploaded_by/approved_by. Guard
@@ -48,40 +59,70 @@ async function resolveNeedsApproval(organizationId: number | null): Promise<bool
 // organization — never from the form — which is the entire guarantee this
 // phase exists to provide.
 //
-// Void return and swallowed NotAuthorizedError, same shape as
-// deleteEventAction: there is no form state to report an error into, and a
-// rejected request must never surface as an unexplained server error.
-export async function uploadEventPhotoAction(formData: FormData): Promise<void> {
+// Returns a PhotoFormState (the `{ message? }` shape used by the other
+// *-actions.ts files) rather than void, so a leader whose upload was
+// rejected sees why instead of watching the form silently clear. Type and
+// size are checked here explicitly, rather than only inside uploadImage, so
+// those two cases can be told apart in the message; a missing Blob
+// credential (the third reason uploadImage can return null) is left silent
+// on purpose, same as an activity's cover: this project already treats "no
+// upload credential configured" as a normal, non-error environment state,
+// not something to surface to a leader as if their file were at fault.
+//
+// A permission failure still returns without spending an upload, and with
+// no message — same silent shape as before — so a rejected request never
+// leaks whether the activity exists or what organization it belongs to.
+export async function uploadEventPhotoAction(
+  _prevState: PhotoFormState,
+  formData: FormData
+): Promise<PhotoFormState> {
+  const t = await getT();
+
   const rawEventId = formData.get('eventId');
   const eventId = rawEventId === null || rawEventId === '' ? NaN : Number(rawEventId);
   if (!Number.isInteger(eventId) || eventId <= 0) {
-    return;
+    return { message: t('validation.photo.invalidId') };
   }
 
   const organizationId = await getEventOrganizationId(eventId);
   if (organizationId === undefined) {
-    // No such activity.
-    return;
+    // No such activity. Same message as a malformed id: neither case should
+    // tell an unauthorized caller anything more specific than "that id is
+    // no good".
+    return { message: t('validation.photo.invalidId') };
   }
 
   try {
     await requireLeaderOf(organizationId);
   } catch (error) {
     if (error instanceof NotAuthorizedError) {
-      return;
+      return {};
     }
     throw error;
   }
 
   const photoFile = formData.get('photo');
-  const url = await uploadImage(photoFile instanceof File ? photoFile : null, PHOTO_BLOB_PREFIX);
-  if (!url) {
-    // Nothing usable was submitted (no file, wrong type, too large, or no
-    // Blob credential). There is nothing to record.
-    return;
+  if (!(photoFile instanceof File) || photoFile.size === 0) {
+    // Nothing was submitted; nothing to record and nothing to explain.
+    return {};
+  }
+  if (!ALLOWED_TYPES.includes(photoFile.type)) {
+    return { message: t('validation.photo.invalidType') };
+  }
+  if (photoFile.size > MAX_BYTES) {
+    return { message: t('validation.photo.tooLarge') };
   }
 
-  const caption = String(formData.get('caption') ?? '');
+  const url = await uploadImage(photoFile, PHOTO_BLOB_PREFIX);
+  if (!url) {
+    // Type and size were already checked above, so the only remaining
+    // reason uploadImage can fail here is no Blob credential (or a failed
+    // put()) — left silent, see the function comment above.
+    return {};
+  }
+
+  const rawCaption = String(formData.get('caption') ?? '').trim();
+  const caption = rawCaption.slice(0, CAPTION_MAX_LENGTH);
   const approved = !(await resolveNeedsApproval(organizationId));
   const user = await getSessionUser();
 
@@ -95,6 +136,8 @@ export async function uploadEventPhotoAction(formData: FormData): Promise<void> 
 
   revalidatePath(`/activities/${eventId}`);
   revalidatePath('/admin/photos');
+
+  return {};
 }
 
 // Publishes a pending photo. Admin only, on purpose: a leader may upload and
