@@ -64,6 +64,10 @@ export const en = {
   'login.submitting': 'Signing in…',
   'login.loading': 'Loading…',
   'login.invalid': 'Invalid username or password.',
+  'login.magicTitle': 'Or sign in with a link',
+  'login.magicEmail': 'Email',
+  'login.magicSend': 'Send sign-in link',
+  'login.magicSent': 'If that email is registered, a sign-in link is on its way.',
 
   'admin.area': 'Admin area',
   'admin.signedInAs': 'signed in as {name}',
@@ -184,6 +188,29 @@ export const en = {
   'validation.required.callingTitle': 'The position is required.',
   'validation.displayOrderInt': 'The order must be a whole number.',
   'validation.displayOrderMin': 'The order cannot be negative.',
+
+  'role.admin': 'Administrator',
+  'role.leader': 'Organization leader',
+  'role.member': 'Member',
+
+  'users.title': 'Users',
+  'users.intro':
+    'A role change only takes effect the next time that person signs in. Nothing changes for a session already open.',
+  'users.email': 'Email',
+  'users.role': 'Role',
+  'users.organization': 'Organization',
+  'users.none': 'None',
+  'users.add': 'Add user',
+  'users.added': 'User added.',
+  'users.save': 'Save',
+  'users.remove': 'Remove',
+  'users.confirmRemove': 'Remove this user permanently?',
+  'users.self': 'This is your own account.',
+  'users.current': 'Current users',
+
+  'validation.user.email': 'Enter a valid email.',
+  'validation.user.leaderNeedsOrganization': 'A leader needs an organization.',
+  'validation.user.duplicateEmail': 'That email is already registered.',
 } as const;
 
 export type DictionaryKey = keyof typeof en;

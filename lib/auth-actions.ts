@@ -41,6 +41,33 @@ export async function loginAction(
   }
 }
 
+export interface MagicLinkFormState {
+  message?: string;
+}
+
+// The response is identical whether or not the e-mail is in the allow-list.
+// Telling the two apart would let anyone probe which addresses belong to the
+// congregation; the signIn callback in auth.ts already rejects an unknown
+// address silently (returns false), so any AuthError raised here also gets
+// the same neutral message rather than a distinguishing one.
+export async function requestMagicLinkAction(
+  _prevState: MagicLinkFormState,
+  formData: FormData
+): Promise<MagicLinkFormState> {
+  const t = await getT();
+  const email = String(formData.get('email') ?? '').trim();
+
+  try {
+    await signIn('resend', { email, redirect: false });
+  } catch (error) {
+    if (!(error instanceof AuthError)) {
+      throw error;
+    }
+  }
+
+  return { message: t('login.magicSent') };
+}
+
 export async function signOutAction(): Promise<void> {
   await signOut({ redirectTo: '/meetings' });
 }

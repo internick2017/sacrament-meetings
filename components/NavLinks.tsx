@@ -25,7 +25,12 @@ export default function NavLinks({ role }: { role: Role | null }) {
   // the routes.
   const allLinks: { href: string; label: DictionaryKey }[] = [
     ...links,
-    ...(role === 'admin' ? [{ href: '/unit', label: 'unit.title' as const }] : []),
+    ...(role === 'admin'
+      ? [
+          { href: '/unit', label: 'unit.title' as const },
+          { href: '/users', label: 'users.title' as const },
+        ]
+      : []),
     ...(role === 'admin' || role === 'leader'
       ? [{ href: '/callings', label: 'callings.title' as const }]
       : []),

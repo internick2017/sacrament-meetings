@@ -66,6 +66,10 @@ export const pt: Dictionary = {
   'login.submitting': 'Entrando…',
   'login.loading': 'Carregando…',
   'login.invalid': 'Usuário ou senha incorretos.',
+  'login.magicTitle': 'Ou entre com um link',
+  'login.magicEmail': 'E-mail',
+  'login.magicSend': 'Enviar link de acesso',
+  'login.magicSent': 'Se esse e-mail estiver cadastrado, um link de acesso vai chegar em breve.',
 
   'admin.area': 'Área administrativa',
   'admin.signedInAs': 'conectado como {name}',
@@ -186,4 +190,27 @@ export const pt: Dictionary = {
   'validation.required.callingTitle': 'O cargo é obrigatório.',
   'validation.displayOrderInt': 'A ordem deve ser um número inteiro.',
   'validation.displayOrderMin': 'A ordem não pode ser negativa.',
+
+  'role.admin': 'Administrador',
+  'role.leader': 'Líder de organização',
+  'role.member': 'Membro',
+
+  'users.title': 'Usuários',
+  'users.intro':
+    'Uma mudança de função só entra em vigor no próximo login dessa pessoa. Uma sessão já aberta não muda.',
+  'users.email': 'E-mail',
+  'users.role': 'Função',
+  'users.organization': 'Organização',
+  'users.none': 'Nenhuma',
+  'users.add': 'Adicionar usuário',
+  'users.added': 'Usuário adicionado.',
+  'users.save': 'Salvar',
+  'users.remove': 'Remover',
+  'users.confirmRemove': 'Remover este usuário definitivamente?',
+  'users.self': 'Esta é a sua própria conta.',
+  'users.current': 'Usuários atuais',
+
+  'validation.user.email': 'Informe um e-mail válido.',
+  'validation.user.leaderNeedsOrganization': 'Um líder precisa de uma organização.',
+  'validation.user.duplicateEmail': 'Esse e-mail já está cadastrado.',
 };
