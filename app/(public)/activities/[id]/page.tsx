@@ -65,7 +65,11 @@ export default async function ActivityDetailPage({
         <h1 className="text-2xl font-bold">{event.title}</h1>
       </header>
 
-      {event.coverUrl && (
+      {/* A cover photo is a photograph like any other: on an activity whose
+          organization requires approval, it is withheld from anonymous
+          visitors the same way the gallery is, using the same server-side
+          rule (needsApproval) rather than a second, drifting check. */}
+      {event.coverUrl && (signedIn || !willNeedApproval) && (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={event.coverUrl} alt="" className="w-full rounded object-cover" />
       )}

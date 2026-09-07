@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { EventItem } from '@/lib/types';
 import type { Translator, DictionaryKey, Locale } from '@/lib/i18n';
 import { formatEventDateTime } from '@/lib/i18n';
+import { needsApproval } from '@/lib/photo-rules';
 import EventRowActions from './EventRowActions';
 
 export default function EventCard({
@@ -10,6 +11,7 @@ export default function EventCard({
   locale,
   timezone,
   canEdit = false,
+  signedIn,
 }: {
   event: EventItem;
   t: Translator;
@@ -23,6 +25,12 @@ export default function EventCard({
   // (their own organization's) and not others (another organization's, or a
   // branch-wide one) on the very same list.
   canEdit?: boolean;
+  // Whether the current viewer has a session. A cover photo is a photograph
+  // like any other: on an activity whose organization requires approval
+  // (needsApproval), it is withheld from anonymous visitors the same way the
+  // gallery is, using the very same server-side rule — this is not a second,
+  // drifting policy.
+  signedIn: boolean;
 }) {
   const organizationLabel = event.organizationKey
     ? t(`organization.${event.organizationKey}` as DictionaryKey)
@@ -30,16 +38,18 @@ export default function EventCard({
 
   const formattedDate = formatEventDateTime(event.startsAt, event.allDay, locale, timezone);
 
+  const showCover = event.coverUrl && (signedIn || !needsApproval(event.organizationKey));
+
   return (
     <section className="overflow-hidden rounded border border-slate-200">
       {/* Most activities have no cover yet (the upload credential does not
           exist), so the image is a bonus row when present rather than a
           placeholder gap when absent — the card is fully laid out either
           way. */}
-      {event.coverUrl && (
+      {showCover && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={event.coverUrl}
+          src={event.coverUrl ?? undefined}
           alt=""
           className="h-40 w-full object-cover"
         />

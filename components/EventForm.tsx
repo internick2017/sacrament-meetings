@@ -9,6 +9,7 @@ import {
 import { useT } from '@/lib/i18n/client';
 import { AUDIENCES, type OrganizationKey } from '@/lib/types';
 import type { DictionaryKey } from '@/lib/i18n';
+import { needsApproval } from '@/lib/photo-rules';
 
 const INPUT = 'w-full rounded border border-slate-300 px-3 py-2';
 
@@ -88,6 +89,14 @@ export default function EventForm({
     removeCover: 'off',
   };
 
+  // Tracked separately (rather than read straight from `values`) so the
+  // cover-visibility note below reacts live as the leader changes the
+  // organization picker, instead of only after a submission round-trip.
+  const [selectedOrg, setSelectedOrg] = useState<OrganizationKey | null>(
+    (values.organizationKey as OrganizationKey) || null,
+  );
+  const coverWillNeedApproval = needsApproval(selectedOrg);
+
   return (
     <form
       key={formInstance}
@@ -109,6 +118,7 @@ export default function EventForm({
           name="organizationKey"
           defaultValue={values.organizationKey}
           aria-describedby="organizationKey-error"
+          onChange={(e) => setSelectedOrg((e.target.value as OrganizationKey) || null)}
           className={INPUT}
         >
           {allowBranchWide && <option value="">{t('activities.branchWide')}</option>}
@@ -232,6 +242,14 @@ export default function EventForm({
             className={INPUT}
           />
           {fieldError('cover')}
+          {/* A cover is a photograph like any other: when the chosen
+              organization requires bishopric approval, its cover is withheld
+              from anonymous visitors the same way the gallery is (see
+              needsApproval in lib/photo-rules.ts). Said up front here so a
+              leader isn't surprised later. */}
+          {coverWillNeedApproval && (
+            <p className="text-sm text-slate-600">{t('photos.willNeedApproval')}</p>
+          )}
         </label>
       )}
 

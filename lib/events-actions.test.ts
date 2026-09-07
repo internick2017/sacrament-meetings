@@ -25,6 +25,7 @@ vi.mock('./authz', async () => {
 });
 vi.mock('./organizations-db', () => ({
   getOrganizationIdByKey: vi.fn(),
+  getOrganizationKeyById: vi.fn(),
 }));
 vi.mock('./events-db', () => ({
   addEvent: vi.fn(),
@@ -33,6 +34,10 @@ vi.mock('./events-db', () => ({
   getEventOrganizationId: vi.fn(),
   getEventCoverUrl: vi.fn(),
 }));
+vi.mock('./event-photos-db', () => ({
+  resetEventPhotosApproval: vi.fn(),
+  getEventPhotoUrls: vi.fn().mockResolvedValue([]),
+}));
 // uploadCover is exercised directly in blob.test.ts (its own rejection
 // paths: bad type, too large, upload disabled, upload throws). Here it is
 // mocked so events-actions.test.ts stays focused on ordering and the
@@ -40,6 +45,7 @@ vi.mock('./events-db', () => ({
 vi.mock('./blob', () => ({
   uploadCover: vi.fn().mockResolvedValue(null),
   deleteCover: vi.fn().mockResolvedValue(undefined),
+  deleteImage: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
@@ -63,7 +69,7 @@ vi.mock('./unit-db', () => ({
 }));
 
 import { requireLeaderOf, NotAuthorizedError } from './authz';
-import { getOrganizationIdByKey } from './organizations-db';
+import { getOrganizationIdByKey, getOrganizationKeyById } from './organizations-db';
 import {
   addEvent,
   updateEvent,
@@ -71,20 +77,25 @@ import {
   getEventOrganizationId,
   getEventCoverUrl,
 } from './events-db';
+import { resetEventPhotosApproval, getEventPhotoUrls } from './event-photos-db';
 import { redirect } from 'next/navigation';
-import { uploadCover, deleteCover } from './blob';
+import { uploadCover, deleteCover, deleteImage } from './blob';
 import { addEventAction, updateEventAction, deleteEventAction } from './events-actions';
 
 const mockRequireLeaderOf = vi.mocked(requireLeaderOf);
 const mockGetOrganizationIdByKey = vi.mocked(getOrganizationIdByKey);
+const mockGetOrganizationKeyById = vi.mocked(getOrganizationKeyById);
 const mockAddEvent = vi.mocked(addEvent);
 const mockUpdateEvent = vi.mocked(updateEvent);
 const mockDeleteEvent = vi.mocked(deleteEvent);
 const mockGetEventOrganizationId = vi.mocked(getEventOrganizationId);
 const mockGetEventCoverUrl = vi.mocked(getEventCoverUrl);
+const mockResetEventPhotosApproval = vi.mocked(resetEventPhotosApproval);
+const mockGetEventPhotoUrls = vi.mocked(getEventPhotoUrls);
 const mockRedirect = vi.mocked(redirect);
 const mockUploadCover = vi.mocked(uploadCover);
 const mockDeleteCover = vi.mocked(deleteCover);
+const mockDeleteImage = vi.mocked(deleteImage);
 
 function formWithId(id: number): FormData {
   const fd = new FormData();
@@ -117,15 +128,21 @@ function formWithValues(values: Record<string, string>, id?: number): FormData {
 beforeEach(() => {
   mockRequireLeaderOf.mockReset();
   mockGetOrganizationIdByKey.mockReset();
+  mockGetOrganizationKeyById.mockReset();
   mockAddEvent.mockReset();
   mockUpdateEvent.mockReset();
   mockDeleteEvent.mockReset();
   mockGetEventOrganizationId.mockReset();
   mockGetEventCoverUrl.mockReset();
+  mockResetEventPhotosApproval.mockReset();
+  mockGetEventPhotoUrls.mockReset();
+  mockGetEventPhotoUrls.mockResolvedValue([]);
   mockUploadCover.mockReset();
   mockUploadCover.mockResolvedValue(null);
   mockDeleteCover.mockReset();
   mockDeleteCover.mockResolvedValue(undefined);
+  mockDeleteImage.mockReset();
+  mockDeleteImage.mockResolvedValue(undefined);
   mockGetEventCoverUrl.mockResolvedValue(null);
 });
 
@@ -228,6 +245,28 @@ describe('deleteEventAction', () => {
 
     expect(mockDeleteEvent).toHaveBeenCalledWith(5);
     expect(mockDeleteCover).toHaveBeenCalledWith('https://example.public.blob.vercel-storage.com/old.jpg');
+  });
+
+  // Finding 4 of the final review: deleting an activity cascades its
+  // event_photos rows, but without this the photo FILES stayed behind at
+  // their public, unguessable-but-reachable URLs forever.
+  it('deletes every photo file from Blob storage when the activity is deleted', async () => {
+    mockGetEventOrganizationId.mockResolvedValue(30);
+    mockRequireLeaderOf.mockResolvedValue({ id: '1', role: 'leader', organizationId: 30 });
+    mockGetEventPhotoUrls.mockResolvedValue([
+      'https://example.public.blob.vercel-storage.com/photo1.jpg',
+      'https://example.public.blob.vercel-storage.com/photo2.jpg',
+    ]);
+
+    await deleteEventAction(formWithId(5));
+
+    expect(mockDeleteEvent).toHaveBeenCalledWith(5);
+    expect(mockDeleteImage).toHaveBeenCalledWith(
+      'https://example.public.blob.vercel-storage.com/photo1.jpg'
+    );
+    expect(mockDeleteImage).toHaveBeenCalledWith(
+      'https://example.public.blob.vercel-storage.com/photo2.jpg'
+    );
   });
 });
 
@@ -433,6 +472,50 @@ describe('updateEventAction', () => {
     const missing = await updateEventAction({}, formWithValues(baseValues, 999));
 
     expect(forbidden.message).toBe(missing.message);
+  });
+
+  // Finding 2 of the final review: `approved` is frozen at upload time, so
+  // moving an activity INTO an organization that requires approval must
+  // re-close the gate on its already-approved photos, or they stay
+  // published under a classification the bishopric never reviewed them
+  // against.
+  it('resets photo approval when the activity moves into an organization that requires approval', async () => {
+    mockGetEventOrganizationId.mockResolvedValue(10); // relief_society, no approval needed
+    mockGetOrganizationIdByKey.mockResolvedValue(20); // young_men
+    mockGetOrganizationKeyById.mockResolvedValue('young_men');
+    mockRequireLeaderOf.mockResolvedValue({ id: '1', role: 'admin', organizationId: null });
+
+    await updateEventAction(
+      {},
+      formWithValues({ ...baseValues, organizationKey: 'young_men' }, 7)
+    );
+
+    expect(mockResetEventPhotosApproval).toHaveBeenCalledWith(7);
+  });
+
+  it('does not reset photo approval when the organization does not change, even if it requires approval', async () => {
+    mockGetEventOrganizationId.mockResolvedValue(20); // already young_men
+    mockGetOrganizationIdByKey.mockResolvedValue(20);
+    mockGetOrganizationKeyById.mockResolvedValue('young_men');
+    mockRequireLeaderOf.mockResolvedValue({ id: '1', role: 'leader', organizationId: 20 });
+
+    await updateEventAction(
+      {},
+      formWithValues({ ...baseValues, organizationKey: 'young_men' }, 7)
+    );
+
+    expect(mockResetEventPhotosApproval).not.toHaveBeenCalled();
+  });
+
+  it('does not reset photo approval when the activity moves OUT of an organization that requires approval', async () => {
+    mockGetEventOrganizationId.mockResolvedValue(20); // young_men
+    mockGetOrganizationIdByKey.mockResolvedValue(10); // relief_society
+    mockGetOrganizationKeyById.mockResolvedValue('relief_society');
+    mockRequireLeaderOf.mockResolvedValue({ id: '1', role: 'admin', organizationId: null });
+
+    await updateEventAction({}, formWithValues(baseValues, 7));
+
+    expect(mockResetEventPhotosApproval).not.toHaveBeenCalled();
   });
 
   it('rejects an id that is missing, empty, zero, or not an integer, without checking permission', async () => {

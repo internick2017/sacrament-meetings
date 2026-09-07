@@ -5,8 +5,16 @@ import { revalidatePath } from 'next/cache';
 import { requireAdmin, NotAuthorizedError } from './authz';
 import { getT } from './i18n/server';
 import { userFormSchema } from './users-schema';
-import { addUser, updateUserRole, updateUserPhotoUploadAllowed, deleteUser } from './users-db';
+import {
+  addUser,
+  updateUserRole,
+  updateUserPhotoUploadAllowed,
+  deleteUser,
+  getAppUserById,
+} from './users-db';
 import { getOrganizationIdByKey } from './organizations-db';
+import { getPersonById, clearPersonPhoto } from './people-db';
+import { deleteImage } from './blob';
 import { ROLES, ORGANIZATION_KEYS } from './types';
 
 export interface UserFormState {
@@ -211,6 +219,26 @@ export async function deleteUserAction(formData: FormData): Promise<void> {
   // Same rule as above: an admin cannot delete their own account.
   if (String(sessionUser.id) === String(id)) {
     return;
+  }
+
+  // Deleting an account must not leave its linked person's profile photo
+  // behind, published with nobody now able to remove it: the account is
+  // gone, so the one person who could remove it themselves
+  // (deleteProfilePhotoAction, gated to the session's own person_id) no
+  // longer exists. Looked up and cleared BEFORE the account row is gone,
+  // same reasoning as every other delete-then-cleanup pair in this project;
+  // clearing the photo never blocks the account deletion below, even if the
+  // account has no linked person (deletedUser?.personId is then null and
+  // the whole block is skipped).
+  const deletedUser = await getAppUserById(id);
+  if (deletedUser?.personId !== null && deletedUser?.personId !== undefined) {
+    const person = await getPersonById(deletedUser.personId);
+    await clearPersonPhoto(deletedUser.personId);
+    try {
+      await deleteImage(person?.photoUrl);
+    } catch (error) {
+      console.error('Image delete failed, leaving the old file in place', error);
+    }
   }
 
   await deleteUser(id);

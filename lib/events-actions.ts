@@ -13,10 +13,12 @@ import {
   getEventOrganizationId,
   getEventCoverUrl,
 } from './events-db';
-import { getOrganizationIdByKey } from './organizations-db';
+import { getOrganizationIdByKey, getOrganizationKeyById } from './organizations-db';
 import { getUnit } from './unit-db';
 import { zonedLocalToInstant } from './timezone';
-import { uploadCover, deleteCover } from './blob';
+import { uploadCover, deleteCover, deleteImage } from './blob';
+import { needsApproval } from './photo-rules';
+import { resetEventPhotosApproval, getEventPhotoUrls } from './event-photos-db';
 
 export interface EventFormState {
   message?: string;
@@ -266,6 +268,24 @@ export async function updateEventAction(
     coverUrl,
   });
 
+  // `approved` is frozen at upload time (computed once, from the
+  // organization the activity belonged to when the photo was uploaded — see
+  // uploadEventPhotoAction). Moving an activity INTO an organization that
+  // requires approval must not leave its already-approved photos published
+  // under the new classification with nobody in the bishopric having
+  // reviewed them there. Only fires on an actual organization change, into
+  // an organization that needs approval; moving OUT is left alone on
+  // purpose — a photo that already waited for approval once does not need
+  // to wait again just because the activity moved to a organization that
+  // does not require it.
+  if (currentOrganizationId !== newOrganizationId) {
+    const newOrganizationKey =
+      newOrganizationId === null ? null : ((await getOrganizationKeyById(newOrganizationId)) ?? null);
+    if (needsApproval(newOrganizationKey)) {
+      await resetEventPhotosApproval(id);
+    }
+  }
+
   // Revalidate both the list and the detail page, then redirect there,
   // matching the meetings precedent in lib/actions.ts (updateMeeting). Without
   // this, the form remounts with the pre-save `event` prop (a stale server
@@ -304,11 +324,16 @@ export async function deleteEventAction(formData: FormData): Promise<void> {
     throw error;
   }
 
-  // Look up the cover before the row is gone, so the file can be cleaned up
-  // from Blob storage too; deleteCover never throws, so a missing or
-  // already-gone file never blocks the deletion.
+  // Look up the cover and every photo's file before the row is gone (the
+  // delete cascades event_photos, which would otherwise take the only
+  // record of those URLs with it). Deleting an activity must not leave its
+  // photos' files — often pictures of the children who were there —
+  // orphaned at their public URLs forever. deleteCover/deleteImage never
+  // throw, so a missing or already-gone file never blocks the deletion.
   const coverUrl = await getEventCoverUrl(id);
+  const photoUrls = await getEventPhotoUrls(id);
   await deleteEvent(id);
   await deleteCover(coverUrl);
+  await Promise.all(photoUrls.map((url) => deleteImage(url)));
   revalidatePath('/activities');
 }

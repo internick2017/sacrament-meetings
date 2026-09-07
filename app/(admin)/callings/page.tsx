@@ -63,7 +63,12 @@ export default async function CallingsPage() {
                     <span>
                       {calling.title} — {calling.personName}
                     </span>
-                    <CallingRowActions id={calling.id} />
+                    <CallingRowActions
+                      id={calling.id}
+                      personId={calling.personId}
+                      personPhotoUrl={calling.personPhotoUrl}
+                      isAdmin={sessionUser?.role === 'admin'}
+                    />
                   </li>
                 ))}
               </ul>

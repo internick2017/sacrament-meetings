@@ -119,6 +119,32 @@ export async function deleteEventPhoto(id: number): Promise<void> {
   await sql.query(`DELETE FROM event_photos WHERE id = $1`, [id]);
 }
 
+// Re-closes the approval gate on every photo of one activity. Used when an
+// admin re-files an activity into an organization that requires approval
+// (see updateEventAction): `approved` is otherwise frozen at upload time, so
+// without this an Elders Quorum photo that auto-approved stays published
+// even after the activity is moved under Primary, with nobody in the
+// bishopric ever having reviewed it under its new classification.
+export async function resetEventPhotosApproval(eventId: number): Promise<void> {
+  await sql.query(
+    `UPDATE event_photos
+        SET approved = FALSE,
+            approved_by = NULL,
+            approved_at = NULL
+      WHERE event_id = $1`,
+    [eventId]
+  );
+}
+
+// Every photo's stored file URL for one activity, so they can all be deleted
+// from Blob storage before (or alongside) the activity itself is deleted.
+export async function getEventPhotoUrls(eventId: number): Promise<string[]> {
+  const rows = (await sql.query(`SELECT url FROM event_photos WHERE event_id = $1`, [
+    eventId,
+  ])) as { url: string }[];
+  return rows.map((row) => row.url);
+}
+
 // Which activity a photo belongs to. `undefined` means no such photo, and
 // callers must fail silently rather than treat a missing row as belonging to
 // nothing in particular. Lets an action resolve the activity (and therefore

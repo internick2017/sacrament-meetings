@@ -63,6 +63,7 @@ export default async function ActivitiesPage() {
                 locale={locale}
                 timezone={unit.timezone}
                 canEdit={canEditOrganization(sessionUser, event.organizationId)}
+                signedIn={signedIn}
               />
             ))}
           </div>
@@ -83,6 +84,7 @@ export default async function ActivitiesPage() {
                 locale={locale}
                 timezone={unit.timezone}
                 canEdit={canEditOrganization(sessionUser, event.organizationId)}
+                signedIn={signedIn}
               />
             ))}
           </div>

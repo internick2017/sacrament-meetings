@@ -185,6 +185,8 @@ export const en = {
   'callings.release': 'Release',
   'callings.delete': 'Delete',
   'callings.confirmDelete': 'Delete this calling permanently?',
+  'callings.removePhoto': 'Remove photo',
+  'callings.confirmRemovePhoto': 'Remove this person\'s profile photo?',
   'callings.current': 'Current callings',
   'callings.noOrganizationAssigned':
     'Your account is not assigned to an organization yet. Ask an admin to assign one before you can manage callings.',
@@ -288,14 +290,12 @@ export const en = {
   'validation.announcement.invalidDate': 'Choose a valid date.',
 
   'photos.title': 'Photos',
-  'photos.empty': 'No photos yet.',
   'photos.add': 'Add photo',
   'photos.caption': 'Caption',
   'photos.delete': 'Delete',
   'photos.confirmDelete': 'Delete this photo permanently?',
   'photos.pending': 'Pending approval',
   'photos.approve': 'Approve',
-  'photos.approved': 'Approved',
   'photos.pendingQueue': 'Photos pending approval',
   'photos.pendingQueueEmpty': 'No photos are waiting for approval.',
   'photos.uploadDisabled': 'Photo uploads are not available on this site yet.',
@@ -312,7 +312,6 @@ export const en = {
     'Profile photos are not turned on for your account yet. Ask the bishopric to enable it for you.',
   'profile.noPersonLinked':
     'Your account is not linked to a person yet. Ask an admin to link it before uploading a photo.',
-  'profile.noPhoto': 'You have not added a photo yet.',
 
   'validation.photo.invalidId': 'Invalid photo id.',
   'validation.photo.invalidType': 'Choose a JPEG, PNG, or WebP image.',

@@ -187,6 +187,8 @@ export const pt: Dictionary = {
   'callings.release': 'Desobrigar',
   'callings.delete': 'Excluir',
   'callings.confirmDelete': 'Excluir este chamado definitivamente?',
+  'callings.removePhoto': 'Remover foto',
+  'callings.confirmRemovePhoto': 'Remover a foto de perfil desta pessoa?',
   'callings.current': 'Chamados atuais',
   'callings.noOrganizationAssigned':
     'Sua conta ainda não está associada a nenhuma organização. Peça a um administrador para associar uma antes de gerenciar chamados.',
@@ -290,14 +292,12 @@ export const pt: Dictionary = {
   'validation.announcement.invalidDate': 'Escolha uma data válida.',
 
   'photos.title': 'Fotos',
-  'photos.empty': 'Ainda não há fotos.',
   'photos.add': 'Adicionar foto',
   'photos.caption': 'Legenda',
   'photos.delete': 'Excluir',
   'photos.confirmDelete': 'Excluir esta foto permanentemente?',
   'photos.pending': 'Pendente de aprovação',
   'photos.approve': 'Aprovar',
-  'photos.approved': 'Aprovada',
   'photos.pendingQueue': 'Fotos pendentes de aprovação',
   'photos.pendingQueueEmpty': 'Nenhuma foto esperando aprovação.',
   'photos.uploadDisabled': 'O envio de fotos ainda não está disponível neste site.',
@@ -314,7 +314,6 @@ export const pt: Dictionary = {
     'As fotos de perfil ainda não estão habilitadas para a sua conta. Peça ao bispado para habilitar para você.',
   'profile.noPersonLinked':
     'Sua conta ainda não está vinculada a uma pessoa. Peça a um admin para vincular antes de enviar uma foto.',
-  'profile.noPhoto': 'Você ainda não adicionou uma foto.',
 
   'validation.photo.invalidId': 'Id de foto inválido.',
   'validation.photo.invalidType': 'Escolha uma imagem JPEG, PNG ou WebP.',
