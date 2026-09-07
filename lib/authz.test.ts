@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { canEditOrganization } from './authz';
+import { canEditOrganization } from './authz-rules';
 import type { SessionUser } from './types';
 
 const admin: SessionUser = { id: '1', role: 'admin', organizationId: null };
