@@ -297,6 +297,7 @@ export const pt: Dictionary = {
   'photos.pendingQueueEmpty': 'Nenhuma foto esperando aprovação.',
   'photos.uploadDisabled': 'O envio de fotos ainda não está disponível neste site.',
   'photos.willNeedApproval': 'As fotos desta atividade são revisadas pelo bispado antes de aparecerem aqui.',
+  'photos.untitledAlt': 'Foto da atividade',
 
   'validation.photo.invalidId': 'Id de foto inválido.',
   'validation.photo.invalidType': 'Escolha uma imagem JPEG, PNG ou WebP.',

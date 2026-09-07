@@ -135,7 +135,7 @@ export async function uploadEventPhotoAction(
   });
 
   revalidatePath(`/activities/${eventId}`);
-  revalidatePath('/admin/photos');
+  revalidatePath('/photos');
 
   return {};
 }
@@ -170,7 +170,7 @@ export async function approveEventPhotoAction(formData: FormData): Promise<void>
   await approveEventPhoto(id, userIdFromUser(admin));
 
   revalidatePath(`/activities/${eventId}`);
-  revalidatePath('/admin/photos');
+  revalidatePath('/photos');
 }
 
 // Deletes a photo, and its stored file. A leader may delete any photo of an
@@ -213,5 +213,5 @@ export async function deleteEventPhotoAction(formData: FormData): Promise<void> 
   await deleteImage(url);
 
   revalidatePath(`/activities/${eventId}`);
-  revalidatePath('/admin/photos');
+  revalidatePath('/photos');
 }

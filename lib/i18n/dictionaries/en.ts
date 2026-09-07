@@ -295,6 +295,7 @@ export const en = {
   'photos.pendingQueueEmpty': 'No photos are waiting for approval.',
   'photos.uploadDisabled': 'Photo uploads are not available on this site yet.',
   'photos.willNeedApproval': 'Photos for this activity are reviewed by the bishopric before they appear here.',
+  'photos.untitledAlt': 'Activity photo',
 
   'validation.photo.invalidId': 'Invalid photo id.',
   'validation.photo.invalidType': 'Choose a JPEG, PNG, or WebP image.',

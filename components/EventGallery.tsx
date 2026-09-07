@@ -51,7 +51,7 @@ export default function EventGallery({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={photo.url}
-                  alt={photo.caption}
+                  alt={photo.caption || t('photos.untitledAlt')}
                   className="h-32 w-full rounded object-cover"
                 />
                 {photo.caption && <p className="text-sm text-slate-600">{photo.caption}</p>}

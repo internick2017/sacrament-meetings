@@ -35,7 +35,7 @@ export default async function PendingPhotosPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={photo.url}
-                alt={photo.caption}
+                alt={photo.caption || t('photos.untitledAlt')}
                 className="h-20 w-20 rounded object-cover"
               />
               <div className="flex-1 space-y-1">

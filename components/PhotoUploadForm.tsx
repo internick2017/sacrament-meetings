@@ -58,12 +58,6 @@ export default function PhotoUploadForm({
         </p>
       )}
 
-      {state.message && (
-        <p role="alert" aria-live="polite" className="rounded bg-slate-100 px-3 py-2 text-sm">
-          {state.message}
-        </p>
-      )}
-
       <label className="block space-y-1">
         <span className="font-semibold">{t('photos.add')}</span>
         <input
@@ -73,16 +67,18 @@ export default function PhotoUploadForm({
           aria-describedby="photo-error"
           className={INPUT}
         />
+        {/* All validation branches in uploadEventPhotoAction (invalid id,
+            invalid type, too large) are about the photo file, never the
+            caption, so state.message is rendered here — matching the id
+            aria-describedby actually points at. */}
+        <p id="photo-error" role="alert" aria-live="polite" className="min-h-5 text-sm text-red-600">
+          {state.message}
+        </p>
       </label>
 
       <label className="block space-y-1">
         <span className="font-semibold">{t('photos.caption')}</span>
-        <input
-          type="text"
-          name="caption"
-          aria-describedby="caption-error"
-          className={INPUT}
-        />
+        <input type="text" name="caption" className={INPUT} />
       </label>
 
       <button
