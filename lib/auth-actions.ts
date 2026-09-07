@@ -4,19 +4,10 @@ import { AuthError } from 'next-auth';
 import { signIn, signOut } from './auth';
 import { getT } from './i18n/server';
 import { hasRecentVerificationToken } from './users-db';
+import { safeCallbackUrl } from './safe-redirect';
 
 export interface LoginFormState {
   error?: string;
-}
-
-// Only allow redirecting back to a same-app relative path. formData's
-// callbackUrl is client-controlled, so a bare string would let a crafted
-// login link redirect somewhere off-site after a successful sign-in.
-function safeCallbackUrl(value: FormDataEntryValue | null): string {
-  if (typeof value === 'string' && value.startsWith('/') && !value.startsWith('//')) {
-    return value;
-  }
-  return '/meetings';
 }
 
 export async function loginAction(
