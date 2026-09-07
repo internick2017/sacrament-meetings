@@ -274,7 +274,8 @@ export const en = {
   'announcements.privateLabel': 'Private',
   'announcements.body': 'Message',
   'announcements.current': 'Current announcements',
-  'announcements.includeExpired': 'Include expired announcements',
+  'announcements.noOrganizationAssigned':
+    'Your account is not assigned to an organization yet. Ask an admin to assign one.',
 
   'validation.announcement.required.title': 'The title is required.',
   'validation.announcement.required.endsOn': 'The end date is required.',

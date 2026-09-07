@@ -27,7 +27,7 @@ export default async function NewAnnouncementPage() {
       return (
         <section className="space-y-6">
           <h1 className="text-2xl font-bold">{t('announcements.new')}</h1>
-          <p role="alert">{t('activities.noOrganizationAssigned')}</p>
+          <p role="alert">{t('announcements.noOrganizationAssigned')}</p>
         </section>
       );
     }

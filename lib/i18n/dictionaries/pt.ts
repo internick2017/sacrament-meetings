@@ -276,7 +276,8 @@ export const pt: Dictionary = {
   'announcements.privateLabel': 'Privada',
   'announcements.body': 'Mensagem',
   'announcements.current': 'Avisos vigentes',
-  'announcements.includeExpired': 'Incluir avisos expirados',
+  'announcements.noOrganizationAssigned':
+    'Sua conta ainda não tem uma organização atribuída. Peça a um admin para atribuir uma.',
 
   'validation.announcement.required.title': 'O título é obrigatório.',
   'validation.announcement.required.endsOn': 'A data de fim é obrigatória.',

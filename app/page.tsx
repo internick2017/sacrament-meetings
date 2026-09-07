@@ -1,13 +1,18 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import AnnouncementList from '@/components/AnnouncementList';
-import { getT } from '@/lib/i18n/server';
+import { getT, getLocale } from '@/lib/i18n/server';
 import { getUnit } from '@/lib/unit-db';
 import { getAnnouncements } from '@/lib/announcements-db';
 import { getSessionUser } from '@/lib/authz';
 
 export default async function HomePage() {
-  const [t, unit, sessionUser] = await Promise.all([getT(), getUnit(), getSessionUser()]);
+  const [t, locale, unit, sessionUser] = await Promise.all([
+    getT(),
+    getLocale(),
+    getUnit(),
+    getSessionUser(),
+  ]);
 
   // In-force announcements this visitor may see: getAnnouncements already
   // excludes expired ones by default, and audienceFilter (inside it) already
@@ -79,7 +84,12 @@ export default async function HomePage() {
       {announcements.length > 0 && (
         <div className="w-full max-w-xl space-y-2 text-left">
           <h2 className="text-center font-semibold">{t('announcements.current')}</h2>
-          <AnnouncementList announcements={announcements} t={t} />
+          <AnnouncementList
+            announcements={announcements}
+            t={t}
+            locale={locale}
+            timezone={unit.timezone}
+          />
         </div>
       )}
     </section>

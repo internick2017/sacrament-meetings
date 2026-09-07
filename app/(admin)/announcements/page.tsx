@@ -3,10 +3,16 @@ import AnnouncementList from '@/components/AnnouncementList';
 import AnnouncementRowActions from '@/components/AnnouncementRowActions';
 import { getAnnouncements } from '@/lib/announcements-db';
 import { getSessionUser } from '@/lib/authz';
-import { getT } from '@/lib/i18n/server';
+import { getT, getLocale } from '@/lib/i18n/server';
+import { getUnit } from '@/lib/unit-db';
 
 export default async function AnnouncementsAdminPage() {
-  const [sessionUser, t] = await Promise.all([getSessionUser(), getT()]);
+  const [sessionUser, t, locale, unit] = await Promise.all([
+    getSessionUser(),
+    getT(),
+    getLocale(),
+    getUnit(),
+  ]);
 
   // signedIn is true here rather than gated on session presence: an admin
   // or leader is always signed in by the time they reach this admin-only
@@ -39,6 +45,8 @@ export default async function AnnouncementsAdminPage() {
         <AnnouncementList
           announcements={allAnnouncements}
           t={t}
+          locale={locale}
+          timezone={unit.timezone}
           showExpired
           renderActions={(announcement) => <AnnouncementRowActions id={announcement.id} />}
         />

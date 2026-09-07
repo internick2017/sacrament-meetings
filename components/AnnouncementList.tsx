@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import type { Announcement } from '@/lib/types';
-import type { Translator, DictionaryKey } from '@/lib/i18n';
+import type { Translator, DictionaryKey, Locale } from '@/lib/i18n';
+import { formatMeetingDate } from '@/lib/i18n';
+import { todayInTimeZone } from '@/lib/timezone';
 
 // Pure display: renders whatever announcements it is given, in the order
 // received. The caller decides what to fetch (in-force only for the home
@@ -11,19 +13,26 @@ import type { Translator, DictionaryKey } from '@/lib/i18n';
 export default function AnnouncementList({
   announcements,
   t,
+  locale,
+  timezone,
   showExpired = false,
   renderActions,
 }: {
   announcements: Announcement[];
   t: Translator;
+  locale: Locale;
+  timezone: string;
   showExpired?: boolean;
   renderActions?: (announcement: Announcement) => ReactNode;
 }) {
   // Today as a 'YYYY-MM-DD' string, comparable directly against endsOn: a
   // validity window is a calendar day, not an instant (same rule as
-  // currentFilter() in announcements-db.ts), so this must never go through
-  // Date arithmetic.
-  const today = new Date().toISOString().slice(0, 10);
+  // currentFilter() in announcements-db.ts, which compares against Postgres
+  // CURRENT_DATE), so this must never go through Date arithmetic. It is also
+  // computed in the congregation's own timezone, not the server or visitor's
+  // — see todayInTimeZone's own comment for why that distinction matters
+  // here specifically.
+  const today = todayInTimeZone(timezone);
 
   return (
     <ul className="space-y-4">
@@ -49,7 +58,7 @@ export default function AnnouncementList({
             </p>
             <p className="whitespace-pre-line text-slate-700">{announcement.body}</p>
             <p className="text-sm text-slate-500">
-              {t('announcements.until')}: {announcement.endsOn}
+              {t('announcements.until')}: {formatMeetingDate(announcement.endsOn, locale)}
             </p>
             {renderActions && <div className="pt-1">{renderActions(announcement)}</div>}
           </li>

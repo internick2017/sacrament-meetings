@@ -96,7 +96,7 @@ export async function addAnnouncementAction(
 
   const user = await getSessionUser();
 
-  const id = await addAnnouncement(
+  await addAnnouncement(
     {
       organizationId,
       title: parsed.data.title,
@@ -109,8 +109,7 @@ export async function addAnnouncementAction(
   );
 
   revalidatePath('/announcements');
-  revalidatePath(`/announcements/${id}`);
-  redirect(`/announcements/${id}`);
+  redirect('/announcements');
 }
 
 export async function updateAnnouncementAction(
@@ -187,8 +186,7 @@ export async function updateAnnouncementAction(
   });
 
   revalidatePath('/announcements');
-  revalidatePath(`/announcements/${id}`);
-  redirect(`/announcements/${id}`);
+  redirect('/announcements');
 }
 
 // Deleting takes only the id from the form, so the organization the

@@ -105,3 +105,24 @@ function wallTimeMsInZone(utcMs: number, timeZone: string): number {
 
   return Date.UTC(get('year'), get('month') - 1, get('day'), hour, get('minute'), get('second'));
 }
+
+// Today's calendar date, as 'YYYY-MM-DD', in a given IANA time zone.
+//
+// This is the third time a date in this codebase has been computed in the
+// wrong zone (see zonedLocalToInstant's own comment, and the write-side
+// history in events-actions.ts), so the rule is spelled out here rather than
+// left implicit: `new Date().toISOString().slice(0, 10)` reads the UTC
+// calendar date, not the congregation's. In Brazil (UTC-3), the two disagree
+// for the last three hours of every local day, which would show or hide an
+// "expired" badge for an announcement the database still (correctly) counts
+// as in force, or no longer in force, per its own CURRENT_DATE comparison.
+// The 'en-CA' locale is used only as a formatting trick (it happens to
+// output 'YYYY-MM-DD'), not to localize anything shown to a user.
+export function todayInTimeZone(timeZone: string): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+}

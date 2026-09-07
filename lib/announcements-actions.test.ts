@@ -163,14 +163,14 @@ describe('addAnnouncementAction', () => {
     expect(mockAddAnnouncement).not.toHaveBeenCalled();
   });
 
-  it('redirects to the new announcement, using the id addAnnouncement returns', async () => {
+  it('redirects to the announcements list after a successful create', async () => {
     mockGetOrganizationIdByKey.mockResolvedValue(60);
     mockRequireLeaderOf.mockResolvedValue({ id: '1', role: 'leader', organizationId: 60 });
     mockAddAnnouncement.mockResolvedValue(42);
 
     await addAnnouncementAction({}, formWithValues(baseValues));
 
-    expect(mockRedirect).toHaveBeenCalledWith('/announcements/42');
+    expect(mockRedirect).toHaveBeenCalledWith('/announcements');
   });
 });
 
@@ -348,14 +348,14 @@ describe('updateAnnouncementAction', () => {
     );
   });
 
-  it('redirects to the announcement detail page after a successful update', async () => {
+  it('redirects to the announcements list after a successful update', async () => {
     mockGetAnnouncementOrganizationId.mockResolvedValue(10);
     mockGetOrganizationIdByKey.mockResolvedValue(10);
     mockRequireLeaderOf.mockResolvedValue({ id: '1', role: 'leader', organizationId: 10 });
 
     await updateAnnouncementAction({}, formWithValues(baseValues, 7));
 
-    expect(mockRedirect).toHaveBeenCalledWith('/announcements/7');
+    expect(mockRedirect).toHaveBeenCalledWith('/announcements');
   });
 
   it('reports the same message for a forbidden announcement as for a missing one', async () => {
