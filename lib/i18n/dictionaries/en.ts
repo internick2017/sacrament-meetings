@@ -215,6 +215,33 @@ export const en = {
   'validation.user.leaderNeedsOrganization': 'A leader needs an organization.',
   'validation.user.duplicateEmail': 'That email is already registered.',
   'validation.user.invalidId': 'Invalid user id.',
+
+  'activities.title': 'Activities',
+  'activities.intro': 'Upcoming and past activities for the branch and its organizations.',
+  'activities.upcoming': 'Upcoming activities',
+  'activities.past': 'Past activities',
+  'activities.empty': 'No activities to show.',
+  'activities.new': 'New activity',
+  'activities.edit': 'Edit activity',
+  'activities.delete': 'Delete',
+  'activities.confirmDelete': 'Delete this activity permanently?',
+  'activities.saved': 'Activity saved.',
+  'activities.deleted': 'Activity deleted.',
+  'activities.allDay': 'All day',
+  'activities.from': 'From',
+  'activities.to': 'To',
+  'activities.where': 'Where',
+  'activities.audience': 'Audience',
+  'activities.publicLabel': 'Public',
+  'activities.privateLabel': 'Private',
+  'activities.branchWide': 'Whole unit',
+  'activities.organization': 'Organization',
+  'activities.signedOutNote': 'Sign in to see private activities.',
+
+  'validation.event.required.title': 'The title is required.',
+  'validation.event.required.startsAt': 'The start date is required.',
+  'validation.event.endBeforeStart': 'The end must be after the start.',
+  'validation.event.invalidDate': 'Choose a valid date.',
 } as const;
 
 export type DictionaryKey = keyof typeof en;
