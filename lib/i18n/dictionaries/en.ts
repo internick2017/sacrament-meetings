@@ -203,6 +203,7 @@ export const en = {
   'users.add': 'Add user',
   'users.added': 'User added.',
   'users.save': 'Save',
+  'users.updated': 'Role updated.',
   'users.remove': 'Remove',
   'users.confirmRemove': 'Remove this user permanently?',
   'users.self': 'This is your own account.',
@@ -211,6 +212,7 @@ export const en = {
   'validation.user.email': 'Enter a valid email.',
   'validation.user.leaderNeedsOrganization': 'A leader needs an organization.',
   'validation.user.duplicateEmail': 'That email is already registered.',
+  'validation.user.invalidId': 'Invalid user id.',
 } as const;
 
 export type DictionaryKey = keyof typeof en;

@@ -7,14 +7,18 @@ import UserRowActions from '@/components/UserRowActions';
 import type { DictionaryKey } from '@/lib/i18n';
 
 export default async function UsersPage() {
-  const [users, sessionUser, t] = await Promise.all([listUsers(), getSessionUser(), getT()]);
+  const [sessionUser, t] = await Promise.all([getSessionUser(), getT()]);
 
   // The (admin) layout lets a leader through too, since /callings is shared.
   // /users is admin-only: it manages every account in the congregation, not
-  // just one organization, so it needs its own tighter gate here.
+  // just one organization, so it needs its own tighter gate here. The roster
+  // is only queried after this check passes, so an unauthorized request
+  // never touches the full user table.
   if (sessionUser?.role !== 'admin') {
     redirect('/login');
   }
+
+  const users = await listUsers();
 
   return (
     <section className="space-y-6">
@@ -41,6 +45,7 @@ export default async function UsersPage() {
               </span>
               <UserRowActions
                 id={user.id}
+                email={user.email ?? ''}
                 role={user.role}
                 organizationKey={user.organizationKey ?? ''}
                 isSelf={String(user.id) === String(sessionUser?.id)}

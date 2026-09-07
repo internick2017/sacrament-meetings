@@ -205,6 +205,7 @@ export const es: Dictionary = {
   'users.add': 'Agregar usuario',
   'users.added': 'Usuario agregado.',
   'users.save': 'Guardar',
+  'users.updated': 'Rol actualizado.',
   'users.remove': 'Quitar',
   'users.confirmRemove': '¿Quitar este usuario definitivamente?',
   'users.self': 'Esta es tu propia cuenta.',
@@ -213,4 +214,5 @@ export const es: Dictionary = {
   'validation.user.email': 'Ingresa un correo electrónico válido.',
   'validation.user.leaderNeedsOrganization': 'Un líder necesita una organización.',
   'validation.user.duplicateEmail': 'Ese correo ya está registrado.',
+  'validation.user.invalidId': 'Id de usuario inválido.',
 };

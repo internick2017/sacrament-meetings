@@ -103,13 +103,28 @@ const roleUpdateSchema = z
     path: ['organizationKey'],
   });
 
-export async function updateUserRoleAction(formData: FormData): Promise<void> {
+// A well-formed id is a positive integer: `Number(missingField)` is 0, which
+// passes `Number.isInteger` but never names a real row.
+function isValidId(id: number): boolean {
+  return Number.isInteger(id) && id > 0;
+}
+
+export interface UserRowState {
+  message?: string;
+}
+
+export async function updateUserRoleAction(
+  _prevState: UserRowState,
+  formData: FormData
+): Promise<UserRowState> {
+  const t = await getT();
+
   const id = Number(formData.get('id'));
   const role = String(formData.get('role') ?? '');
   const organizationKey = String(formData.get('organizationKey') ?? '');
 
-  if (!Number.isInteger(id)) {
-    return;
+  if (!isValidId(id)) {
+    return { message: t('validation.user.invalidId') };
   }
 
   let sessionUser;
@@ -117,38 +132,43 @@ export async function updateUserRoleAction(formData: FormData): Promise<void> {
     sessionUser = await requireAdmin();
   } catch (error) {
     if (error instanceof NotAuthorizedError) {
-      return;
+      return { message: t('admin.notAllowed') };
     }
     throw error;
   }
 
   // An admin cannot change their own role: doing so could leave the
-  // congregation with nobody able to administer the site.
+  // congregation with nobody able to administer the site. This is
+  // unreachable through the UI (the row renders no form for the caller's own
+  // account), kept here only as defense in depth.
   if (String(sessionUser.id) === String(id)) {
-    return;
+    return {};
   }
 
   const parsed = roleUpdateSchema.safeParse({ role, organizationKey });
   if (!parsed.success) {
-    return;
+    return { message: t('validation.user.leaderNeedsOrganization') };
   }
 
   let organizationId: number | null = null;
   if (parsed.data.organizationKey !== '') {
     const orgId = await getOrganizationIdByKey(parsed.data.organizationKey);
     if (orgId === undefined) {
-      return;
+      // The enum already restricts the key to the seven seeded organizations,
+      // so this only fires if the database and the code have drifted apart.
+      return { message: t('validation.fixFields') };
     }
     organizationId = orgId;
   }
 
   await updateUserRole(id, parsed.data.role, organizationId);
   revalidatePath('/users');
+  return { message: t('users.updated') };
 }
 
 export async function deleteUserAction(formData: FormData): Promise<void> {
   const id = Number(formData.get('id'));
-  if (!Number.isInteger(id)) {
+  if (!isValidId(id)) {
     return;
   }
 
