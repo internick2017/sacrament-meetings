@@ -47,3 +47,45 @@ export interface Unit {
   directoryUrl: string;
   contactNote: string;
 }
+
+// The fixed set of organizations a ward or branch has. The display name is NOT
+// stored: it comes from the i18n dictionary under `organization.<key>`, so it
+// reads correctly in all three languages.
+export const ORGANIZATION_KEYS = [
+  'bishopric',
+  'elders_quorum',
+  'relief_society',
+  'young_men',
+  'young_women',
+  'primary',
+  'sunday_school',
+] as const;
+
+export type OrganizationKey = (typeof ORGANIZATION_KEYS)[number];
+
+export interface Organization {
+  id: number;
+  key: OrganizationKey;
+  displayOrder: number;
+}
+
+// A person is a name. Nothing else is stored, on purpose: contact details live
+// in the official Church tools.
+export interface Person {
+  id: number;
+  fullName: string;
+}
+
+// `personName` is undefined on the public layer, where positions are listed
+// without the people holding them.
+export interface Calling {
+  id: number;
+  title: string;
+  personId: number;
+  personName?: string;
+  displayOrder: number;
+}
+
+export interface OrganizationWithCallings extends Organization {
+  callings: Calling[];
+}
