@@ -50,26 +50,49 @@ const EMPTY_UNIT: Unit = {
 // There is exactly one unit, so there is no id parameter. Wrapped in cache()
 // because the home page, the header and generateMetadata all want it within a
 // single request.
+// Also falls back to EMPTY_UNIT if the query itself throws (for example the
+// `unit` table does not exist yet because migrations have not been applied
+// to this environment), so a deploy that lands before `yarn migrate` shows an
+// empty home page instead of a 500 for every visitor. The error is still
+// logged so the missing migration is visible, not silently swallowed.
 export const getUnit = cache(async function getUnit(): Promise<Unit> {
-  const rows = (await sql.query(
-    `SELECT id, name, unit_type, stake_name, address, meeting_times,
-            timezone, calendar_url, directory_url, contact_note
-       FROM unit WHERE id = 1`
-  )) as UnitRow[];
-  return rows[0] ? mapRow(rows[0]) : EMPTY_UNIT;
+  try {
+    const rows = (await sql.query(
+      `SELECT id, name, unit_type, stake_name, address, meeting_times,
+              timezone, calendar_url, directory_url, contact_note
+         FROM unit WHERE id = 1`
+    )) as UnitRow[];
+    return rows[0] ? mapRow(rows[0]) : EMPTY_UNIT;
+  } catch (error) {
+    console.error('getUnit: falling back to EMPTY_UNIT after query failure', error);
+    return EMPTY_UNIT;
+  }
 });
 
 export type UnitInput = Omit<Unit, 'id'>;
 
-// Always an UPDATE of row 1: the row is created by migration 002 and the table
-// forbids any other id, so there is no insert path to worry about.
+// An upsert of row 1, not a plain UPDATE: row 1 is normally seeded by
+// migration 002, but if it is ever missing (deleted manually, or a future
+// environment gets the table without the seed), an UPDATE would match zero
+// rows and silently discard the clerk's changes while still reporting
+// success. The table's CHECK (id = 1) guarantees the single-row invariant
+// regardless of which branch runs.
 export async function updateUnit(input: UnitInput): Promise<void> {
   await sql.query(
-    `UPDATE unit SET
-        name = $1, unit_type = $2, stake_name = $3, address = $4,
-        meeting_times = $5, timezone = $6, calendar_url = $7,
-        directory_url = $8, contact_note = $9, updated_at = now()
-      WHERE id = 1`,
+    `INSERT INTO unit (id, name, unit_type, stake_name, address,
+        meeting_times, timezone, calendar_url, directory_url, contact_note)
+      VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8, $9)
+      ON CONFLICT (id) DO UPDATE SET
+        name = excluded.name,
+        unit_type = excluded.unit_type,
+        stake_name = excluded.stake_name,
+        address = excluded.address,
+        meeting_times = excluded.meeting_times,
+        timezone = excluded.timezone,
+        calendar_url = excluded.calendar_url,
+        directory_url = excluded.directory_url,
+        contact_note = excluded.contact_note,
+        updated_at = now()`,
     [
       input.name,
       input.unitType,

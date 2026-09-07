@@ -33,7 +33,7 @@ Create a `.env.local` file with:
 | `DATABASE_URL` | Neon Postgres connection string                    |
 | `AUTH_SECRET`  | Secret used by NextAuth to sign the session cookie |
 
-`AUTH_SECRET` can be generated with `npx auth secret`.
+`AUTH_SECRET` can be generated with `yarn dlx auth secret`.
 
 ### Database migrations
 
@@ -48,6 +48,11 @@ The runner records each applied file in the `schema_migrations` table, so it is
 safe to run repeatedly. To add a change, create the next numbered file (for
 example `003_add_organizations.sql`) and run the command again. Never edit a
 migration that has already been applied: add a new one.
+
+**Always run `yarn migrate` before deploying code that depends on the new
+migration.** Code in this app queries new tables/columns unconditionally
+(for example the home page reads the `unit` table), so deploying ahead of the
+migration can break pages for every visitor until the migration is applied.
 
 ## How the translations work
 

@@ -6,14 +6,19 @@ const UNIT_TYPES = ['ward', 'branch'] as const;
 // Built per request, not at module load, so every message comes from the
 // visitor's dictionary. Same reason as meetingFormSchema in lib/actions.ts.
 export function unitFormSchema(t: Translator) {
-  // An optional link is either empty or a real URL. z.url() alone would reject
-  // the empty string, and a unit that has not published a calendar yet is a
-  // normal state, not an error.
+  // An optional link is either empty or a real https:// URL. z.url() alone
+  // accepts any scheme it can parse (javascript:, mailto:, ftp://, plain
+  // http://), which both mismatches the "starts with https://" message shown
+  // to the user and, for javascript: URLs rendered as <a href> on the public
+  // home page, is a stored XSS vector. An empty string stays valid: a unit
+  // that has not published a calendar yet is a normal state, not an error.
   const optionalUrl = z
     .string()
     .trim()
     .refine(
-      (value) => value === '' || z.url().safeParse(value).success,
+      (value) =>
+        value === '' ||
+        (z.url().safeParse(value).success && value.startsWith('https://')),
       { message: t('validation.unit.url') }
     );
 

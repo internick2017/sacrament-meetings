@@ -42,4 +42,35 @@ describe('unitFormSchema', () => {
     expect(result.success).toBe(false);
     expect(result.error?.issues[0].path).toEqual(['calendarUrl']);
   });
+
+  it('rejects a javascript: URL', () => {
+    const result = unitFormSchema(t).safeParse({
+      ...valid,
+      calendarUrl: 'javascript:alert(1)',
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0].path).toEqual(['calendarUrl']);
+  });
+
+  it('rejects a plain http:// URL', () => {
+    const result = unitFormSchema(t).safeParse({
+      ...valid,
+      calendarUrl: 'http://churchofjesuschrist.org/calendar',
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0].path).toEqual(['calendarUrl']);
+  });
+
+  it('accepts an https:// URL', () => {
+    const result = unitFormSchema(t).safeParse({
+      ...valid,
+      calendarUrl: 'https://churchofjesuschrist.org/calendar',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('still accepts the empty string', () => {
+    const result = unitFormSchema(t).safeParse({ ...valid, calendarUrl: '' });
+    expect(result.success).toBe(true);
+  });
 });

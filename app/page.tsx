@@ -28,10 +28,10 @@ export default async function HomePage() {
       <p className="max-w-xl text-slate-600">{t('home.subheading')}</p>
 
       {(unit.meetingTimes || unit.address) && (
-        <dl className="space-y-1 text-slate-700">
-          {unit.meetingTimes && <dd>{unit.meetingTimes}</dd>}
-          {unit.address && <dd>{unit.address}</dd>}
-        </dl>
+        <div className="space-y-1 text-slate-700">
+          {unit.meetingTimes && <p>{unit.meetingTimes}</p>}
+          {unit.address && <p>{unit.address}</p>}
+        </div>
       )}
 
       <Link
