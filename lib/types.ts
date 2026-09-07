@@ -91,3 +91,16 @@ export interface Calling {
 export interface OrganizationWithCallings extends Organization {
   callings: Calling[];
 }
+
+export const ROLES = ['admin', 'leader', 'member'] as const;
+
+export type Role = (typeof ROLES)[number];
+
+// What the application knows about whoever is making the current request.
+// `organizationId` is only meaningful for a leader: it is the one organization
+// they may edit.
+export interface SessionUser {
+  id: string;
+  role: Role;
+  organizationId: number | null;
+}
