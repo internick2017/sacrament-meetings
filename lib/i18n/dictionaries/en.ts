@@ -152,6 +152,7 @@ export const en = {
   'validation.unit.url': 'This must be a full link starting with https://',
 
   'nav.organizations': 'Organizations',
+  'nav.activities': 'Activities',
 
   'organization.bishopric': 'Bishopric',
   'organization.elders_quorum': 'Elders Quorum',

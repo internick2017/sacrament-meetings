@@ -13,6 +13,7 @@ const links: { href: string; label: DictionaryKey }[] = [
   { href: '/meetings', label: 'nav.meetings' },
   { href: '/meetings/current', label: 'nav.current' },
   { href: '/organizations', label: 'nav.organizations' },
+  { href: '/activities', label: 'nav.activities' },
 ];
 
 export default function NavLinks({ role }: { role: Role | null }) {

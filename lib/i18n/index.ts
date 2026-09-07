@@ -43,3 +43,29 @@ export function formatMeetingDate(date: string, locale: Locale): string {
     day: 'numeric',
   });
 }
+
+// An activity's timestamp is stored as an absolute instant (ISO 8601 with an
+// offset), unlike a meeting's plain date. It is rendered in the congregation's
+// own timezone (from `getUnit().timezone`), not the visitor's or the server's,
+// so the same activity reads the same way for everyone. An all-day activity
+// shows no time, since the stored time-of-day is a placeholder rather than a
+// real start time.
+export function formatEventDateTime(
+  isoString: string,
+  allDay: boolean,
+  locale: Locale,
+  timeZone: string
+): string {
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone,
+  };
+  if (!allDay) {
+    options.hour = 'numeric';
+    options.minute = '2-digit';
+  }
+  return new Date(isoString).toLocaleString(DATE_LOCALES[locale], options);
+}

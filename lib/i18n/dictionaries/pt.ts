@@ -154,6 +154,7 @@ export const pt: Dictionary = {
   'validation.unit.url': 'Isto deve ser um link completo começando com https://',
 
   'nav.organizations': 'Organizações',
+  'nav.activities': 'Atividades',
 
   'organization.bishopric': 'Bispado',
   'organization.elders_quorum': 'Quórum de Élderes',
