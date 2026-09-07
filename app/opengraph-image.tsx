@@ -4,6 +4,12 @@ import { getUnit } from '@/lib/unit-db';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
+// Rendered per request rather than baked at build time. The whole point of
+// reading the name from the unit table is that the clerk can change it without
+// a deploy, and a statically prerendered preview would keep showing the old
+// name in every shared link until the next build.
+export const dynamic = 'force-dynamic';
+
 // This file has no request-scoped locale (share-link previews are generated
 // by crawlers, not a signed-in visitor with a locale cookie), so the
 // fallback below is hardcoded English rather than pulled from a dictionary
