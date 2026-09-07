@@ -21,7 +21,11 @@ export default function NavLinks({ isAdmin }: { isAdmin: boolean }) {
   // anonymous visitors is cosmetic only; the middleware and the Server Action
   // are what actually protect the route.
   const allLinks: { href: string; label: DictionaryKey }[] = isAdmin
-    ? [...links, { href: '/unit', label: 'unit.title' }]
+    ? [
+        ...links,
+        { href: '/unit', label: 'unit.title' },
+        { href: '/callings', label: 'callings.title' },
+      ]
     : [...links, { href: '/login', label: 'nav.signIn' }];
 
   return (

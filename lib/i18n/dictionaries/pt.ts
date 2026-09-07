@@ -168,4 +168,25 @@ export const pt: Dictionary = {
   'organizations.noCallings': 'Ainda não há ninguém registrado aqui.',
   'organizations.notFound': 'Organização não encontrada',
   'organizations.back': 'Todas as organizações',
+
+  'callings.title': 'Chamados',
+  'callings.intro':
+    'Registre quem ocupa cada cargo. Somente o nome é guardado: nada de telefones, e-mails ou endereços.',
+  'callings.organization': 'Organização',
+  'callings.person': 'Nome',
+  'callings.position': 'Cargo',
+  'callings.order': 'Ordem',
+  'callings.add': 'Adicionar chamado',
+  'callings.added': 'Chamado adicionado.',
+  'callings.release': 'Desobrigar',
+  'callings.released': 'Chamado encerrado.',
+  'callings.delete': 'Excluir',
+  'callings.deleted': 'Chamado excluído.',
+  'callings.confirmDelete': 'Excluir este chamado definitivamente?',
+  'callings.current': 'Chamados atuais',
+
+  'validation.required.personName': 'O nome é obrigatório.',
+  'validation.required.callingTitle': 'O cargo é obrigatório.',
+  'validation.displayOrderInt': 'A ordem deve ser um número inteiro.',
+  'validation.displayOrderMin': 'A ordem não pode ser negativa.',
 };

@@ -166,6 +166,27 @@ export const en = {
   'organizations.noCallings': 'No one is listed here yet.',
   'organizations.notFound': 'Organization not found',
   'organizations.back': 'All organizations',
+
+  'callings.title': 'Callings',
+  'callings.intro':
+    'Record who holds each position. Only names are stored: no phone numbers, no emails, no addresses.',
+  'callings.organization': 'Organization',
+  'callings.person': 'Name',
+  'callings.position': 'Position',
+  'callings.order': 'Order',
+  'callings.add': 'Add calling',
+  'callings.added': 'Calling added.',
+  'callings.release': 'Release',
+  'callings.released': 'Calling ended.',
+  'callings.delete': 'Delete',
+  'callings.deleted': 'Calling deleted.',
+  'callings.confirmDelete': 'Delete this calling permanently?',
+  'callings.current': 'Current callings',
+
+  'validation.required.personName': 'A name is required.',
+  'validation.required.callingTitle': 'The position is required.',
+  'validation.displayOrderInt': 'The order must be a whole number.',
+  'validation.displayOrderMin': 'The order cannot be negative.',
 } as const;
 
 export type DictionaryKey = keyof typeof en;
