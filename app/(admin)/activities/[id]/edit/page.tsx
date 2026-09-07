@@ -5,6 +5,7 @@ import { getEventById } from '@/lib/events-db';
 import { getOrganizations } from '@/lib/organizations-db';
 import { getUnit } from '@/lib/unit-db';
 import { getT } from '@/lib/i18n/server';
+import { coverUploadEnabled } from '@/lib/blob';
 import type { OrganizationKey } from '@/lib/types';
 
 // Renders a stored ISO instant as the 'YYYY-MM-DDTHH:mm' value a
@@ -86,6 +87,7 @@ export default async function EditActivityPage({
       <EventForm
         organizationKeys={organizationKeys}
         allowBranchWide={sessionUser!.role === 'admin'}
+        coverUploadEnabled={coverUploadEnabled}
         event={{
           id: event.id,
           organizationKey: event.organizationKey,
@@ -96,6 +98,7 @@ export default async function EditActivityPage({
           endsAt: event.endsAt ? toDatetimeLocalValue(event.endsAt, unit.timezone) : '',
           allDay: event.allDay,
           audience: event.audience,
+          coverUrl: event.coverUrl,
         }}
       />
     </section>

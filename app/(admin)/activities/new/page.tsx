@@ -3,6 +3,7 @@ import EventForm from '@/components/EventForm';
 import { getSessionUser } from '@/lib/authz';
 import { getOrganizations } from '@/lib/organizations-db';
 import { getT } from '@/lib/i18n/server';
+import { coverUploadEnabled } from '@/lib/blob';
 import type { OrganizationKey } from '@/lib/types';
 
 export default async function NewActivityPage() {
@@ -41,6 +42,7 @@ export default async function NewActivityPage() {
       <EventForm
         organizationKeys={organizationKeys}
         allowBranchWide={sessionUser.role === 'admin'}
+        coverUploadEnabled={coverUploadEnabled}
       />
     </section>
   );

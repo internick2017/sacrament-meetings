@@ -12,8 +12,19 @@ export function eventFormSchema(t: Translator) {
       title: z.string().trim().min(1, t('validation.event.required.title')),
       description: z.string().trim().optional().default(''),
       location: z.string().trim().optional().default(''),
-      // Forms send the datetime-local value as 'YYYY-MM-DDTHH:mm'.
-      startsAt: z.string().trim().min(1, t('validation.event.required.startsAt')),
+      // Forms send the datetime-local value as 'YYYY-MM-DDTHH:mm'. Checked
+      // for non-emptiness AND for parsing as a date — previously only
+      // emptiness was checked here, so an unparsable value (e.g. malformed
+      // input bypassing the browser's date picker) fell through to the
+      // cross-field refine below and was reported against endsAt instead of
+      // the field that was actually wrong.
+      startsAt: z
+        .string()
+        .trim()
+        .min(1, t('validation.event.required.startsAt'))
+        .refine((value) => !Number.isNaN(Date.parse(value)), {
+          message: t('validation.event.invalidDate'),
+        }),
       // Empty means no declared end; otherwise it must parse as a date.
       endsAt: z
         .string()

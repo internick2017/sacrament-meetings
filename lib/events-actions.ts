@@ -6,10 +6,17 @@ import { redirect } from 'next/navigation';
 import { requireLeaderOf, NotAuthorizedError, getSessionUser } from './authz';
 import { getT } from './i18n/server';
 import { eventFormSchema } from './events-schema';
-import { addEvent, updateEvent, deleteEvent, getEventOrganizationId } from './events-db';
+import {
+  addEvent,
+  updateEvent,
+  deleteEvent,
+  getEventOrganizationId,
+  getEventCoverUrl,
+} from './events-db';
 import { getOrganizationIdByKey } from './organizations-db';
 import { getUnit } from './unit-db';
 import { zonedLocalToInstant } from './timezone';
+import { uploadCover } from './blob';
 
 export interface EventFormState {
   message?: string;
@@ -25,6 +32,7 @@ export interface EventFormState {
     endsAt: string;
     allDay: string;
     audience: string;
+    removeCover: string;
   };
 }
 
@@ -38,7 +46,21 @@ function rawValuesFromForm(formData: FormData): EventFormState['values'] & objec
     endsAt: String(formData.get('endsAt') ?? ''),
     allDay: formData.get('allDay') ? 'on' : 'off',
     audience: String(formData.get('audience') ?? 'public'),
+    removeCover: formData.get('removeCover') ? 'on' : 'off',
   };
+}
+
+// A file input's chosen file cannot be echoed back into the form when
+// validation fails (the remount-by-key pattern rebuilds the DOM node, but
+// browsers refuse to let script set an <input type="file">'s value for
+// security reasons). Rather than silently dropping the file with no
+// explanation, tell the leader plainly that they need to pick it again.
+function messageWithCoverNotice(message: string, formData: FormData, t: Awaited<ReturnType<typeof getT>>): string {
+  const cover = formData.get('cover');
+  if (cover instanceof File && cover.size > 0) {
+    return `${message} ${t('activities.reselectCover')}`;
+  }
+  return message;
 }
 
 export async function addEventAction(
@@ -51,7 +73,7 @@ export async function addEventAction(
   const parsed = eventFormSchema(t).safeParse(rawValues);
   if (!parsed.success) {
     return {
-      message: t('validation.fixFields'),
+      message: messageWithCoverNotice(t('validation.fixFields'), formData, t),
       errors: z.flattenError(parsed.error).fieldErrors,
       values: rawValues,
     };
@@ -80,6 +102,12 @@ export async function addEventAction(
     throw error;
   }
 
+  // The upload only happens once the write is known to be allowed: spending
+  // an upload on a request that will be rejected anyway would waste storage
+  // and let an unauthorized caller trigger writes to Blob.
+  const coverFile = formData.get('cover');
+  const coverUrl = await uploadCover(coverFile instanceof File ? coverFile : null);
+
   const user = await getSessionUser();
 
   // The form sends naive 'YYYY-MM-DDTHH:mm' local values. They must be
@@ -102,13 +130,25 @@ export async function addEventAction(
       endsAt,
       allDay: parsed.data.allDay,
       audience: parsed.data.audience,
-      coverUrl: null,
+      coverUrl,
     },
-    user ? Number(user.id) : null
+    createdByFromUser(user)
   );
 
   revalidatePath('/activities');
   return { message: t('activities.saved') };
+}
+
+// `user.id` is a string from the session; Number(user.id) on a malformed or
+// missing id would silently insert NaN into created_by. Guard it so a bad
+// session value falls back to null (unattributed) instead of corrupting the
+// row.
+function createdByFromUser(user: { id: string } | null): number | null {
+  if (!user) {
+    return null;
+  }
+  const id = Number(user.id);
+  return Number.isInteger(id) ? id : null;
 }
 
 export async function updateEventAction(
@@ -118,15 +158,19 @@ export async function updateEventAction(
   const t = await getT();
   const rawValues = rawValuesFromForm(formData);
 
-  const id = Number(formData.get('id'));
-  if (!Number.isInteger(id)) {
+  // A missing 'id' field must not pass this guard: Number(null) is 0, which
+  // Number.isInteger accepts, so the field's presence is checked first and
+  // the id is required to be a positive integer (activity ids start at 1).
+  const rawId = formData.get('id');
+  const id = rawId === null || rawId === '' ? NaN : Number(rawId);
+  if (!Number.isInteger(id) || id <= 0) {
     return { message: t('validation.fixFields'), values: rawValues };
   }
 
   const parsed = eventFormSchema(t).safeParse(rawValues);
   if (!parsed.success) {
     return {
-      message: t('validation.fixFields'),
+      message: messageWithCoverNotice(t('validation.fixFields'), formData, t),
       errors: z.flattenError(parsed.error).fieldErrors,
       values: rawValues,
     };
@@ -138,9 +182,11 @@ export async function updateEventAction(
   // guessing its id.
   const currentOrganizationId = await getEventOrganizationId(id);
   if (currentOrganizationId === undefined) {
-    // No such activity. Fail silently rather than treat a missing row as
-    // congregation-wide.
-    return { message: t('validation.fixFields'), values: rawValues };
+    // No such activity. Reported with the SAME message as a forbidden
+    // request (admin.notAllowed), not a validation error: a distinct
+    // "does not exist" message would let a leader probe which ids are real
+    // by comparing the two responses.
+    return { message: t('admin.notAllowed'), values: rawValues };
   }
 
   const newOrganizationId =
@@ -168,6 +214,24 @@ export async function updateEventAction(
     throw error;
   }
 
+  // The upload only happens once the write is known to be allowed (same
+  // reasoning as addEventAction). A leader who ticks "remove cover" without
+  // also picking a new file gets null regardless of what uploadCover would
+  // have returned; otherwise, no file chosen and no removal requested means
+  // the existing cover_url is carried forward unchanged, so a plain text
+  // edit never silently deletes the picture.
+  const coverFile = formData.get('cover');
+  const uploadedCoverUrl = await uploadCover(coverFile instanceof File ? coverFile : null);
+  const removeCover = rawValues.removeCover === 'on';
+  let coverUrl: string | null;
+  if (uploadedCoverUrl) {
+    coverUrl = uploadedCoverUrl;
+  } else if (removeCover) {
+    coverUrl = null;
+  } else {
+    coverUrl = (await getEventCoverUrl(id)) ?? null;
+  }
+
   // See addEventAction for why the naive local values must be converted
   // using the congregation's timezone before they reach a timestamptz column.
   const unit = await getUnit();
@@ -184,7 +248,7 @@ export async function updateEventAction(
     endsAt,
     allDay: parsed.data.allDay,
     audience: parsed.data.audience,
-    coverUrl: null,
+    coverUrl,
   });
 
   // Revalidate both the list and the detail page, then redirect there,

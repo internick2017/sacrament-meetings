@@ -35,6 +35,12 @@ describe('eventFormSchema', () => {
     expect(result.error?.issues[0].path).toEqual(['startsAt']);
   });
 
+  it('reports an unparsable start date on startsAt, not on endsAt', () => {
+    const result = eventFormSchema(t).safeParse({ ...valid, startsAt: 'not-a-date' });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0].path).toEqual(['startsAt']);
+  });
+
   it('rejects an end before the start, which is the mistake people actually make', () => {
     const result = eventFormSchema(t).safeParse({
       ...valid,

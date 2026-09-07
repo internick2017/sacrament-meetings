@@ -159,6 +159,22 @@ export async function deleteEvent(id: number): Promise<void> {
   await sql.query(`DELETE FROM events WHERE id = $1`, [id]);
 }
 
+// The activity's current cover_url, used by updateEventAction to carry the
+// existing cover forward when the leader submits an edit without choosing a
+// new file and without ticking "remove cover". `undefined` means no such
+// activity (the caller has already checked existence via
+// getEventOrganizationId by the time this runs, but the type still allows
+// it defensively).
+export async function getEventCoverUrl(id: number): Promise<string | null | undefined> {
+  const rows = (await sql.query(`SELECT cover_url FROM events WHERE id = $1`, [
+    id,
+  ])) as { cover_url: string | null }[];
+  if (rows.length === 0) {
+    return undefined;
+  }
+  return rows[0].cover_url;
+}
+
 // Which organization an activity belongs to. `null` means it exists and
 // belongs to the whole branch (only an admin may edit it); `undefined` means
 // no such activity, and callers must fail silently rather than treat a

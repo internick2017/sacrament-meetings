@@ -235,7 +235,7 @@ export const pt: Dictionary = {
   'activities.from': 'De',
   'activities.to': 'Até',
   'activities.where': 'Onde',
-  'activities.audience': 'Público',
+  'activities.audience': 'Visibilidade',
   'activities.publicLabel': 'Pública',
   'activities.privateLabel': 'Privada',
   'activities.branchWide': 'Toda a unidade',
@@ -247,6 +247,10 @@ export const pt: Dictionary = {
   'activities.saveChanges': 'Salvar alterações',
   'activities.noOrganizationAssigned':
     'Sua conta ainda não tem uma organização atribuída. Peça a um admin para atribuir uma.',
+  'activities.cover': 'Imagem de capa',
+  'activities.removeCover': 'Remover a imagem de capa atual',
+  'activities.reselectCover': 'A imagem escolhida não foi mantida: selecione-a novamente.',
+  'activities.currentCover': 'Imagem de capa atual',
 
   'validation.event.required.title': 'O título é obrigatório.',
   'validation.event.required.startsAt': 'A data de início é obrigatória.',

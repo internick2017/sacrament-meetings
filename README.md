@@ -34,6 +34,7 @@ Create a `.env.local` file with:
 | `AUTH_SECRET`  | Secret used by NextAuth to sign the session cookie |
 | `AUTH_RESEND_KEY` | API key for Resend. **Optional**: without it the magic-link option is not offered and password sign-in keeps working. |
 | `AUTH_EMAIL_FROM` | Sender address for magic links. |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob credential for activity cover images. **Optional**: without it the cover image field is not offered and activities save normally with no cover. |
 
 `AUTH_SECRET` can be generated with `yarn dlx auth secret`.
 

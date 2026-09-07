@@ -31,6 +31,14 @@ vi.mock('./events-db', () => ({
   updateEvent: vi.fn(),
   deleteEvent: vi.fn(),
   getEventOrganizationId: vi.fn(),
+  getEventCoverUrl: vi.fn(),
+}));
+// uploadCover is exercised directly in blob.test.ts (its own rejection
+// paths: bad type, too large, upload disabled, upload throws). Here it is
+// mocked so events-actions.test.ts stays focused on ordering and the
+// carry-forward/replace/remove decision, independent of @vercel/blob.
+vi.mock('./blob', () => ({
+  uploadCover: vi.fn().mockResolvedValue(null),
 }));
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
@@ -55,8 +63,15 @@ vi.mock('./unit-db', () => ({
 
 import { requireLeaderOf, NotAuthorizedError } from './authz';
 import { getOrganizationIdByKey } from './organizations-db';
-import { addEvent, updateEvent, deleteEvent, getEventOrganizationId } from './events-db';
+import {
+  addEvent,
+  updateEvent,
+  deleteEvent,
+  getEventOrganizationId,
+  getEventCoverUrl,
+} from './events-db';
 import { redirect } from 'next/navigation';
+import { uploadCover } from './blob';
 import { addEventAction, updateEventAction, deleteEventAction } from './events-actions';
 
 const mockRequireLeaderOf = vi.mocked(requireLeaderOf);
@@ -65,7 +80,9 @@ const mockAddEvent = vi.mocked(addEvent);
 const mockUpdateEvent = vi.mocked(updateEvent);
 const mockDeleteEvent = vi.mocked(deleteEvent);
 const mockGetEventOrganizationId = vi.mocked(getEventOrganizationId);
+const mockGetEventCoverUrl = vi.mocked(getEventCoverUrl);
 const mockRedirect = vi.mocked(redirect);
+const mockUploadCover = vi.mocked(uploadCover);
 
 function formWithId(id: number): FormData {
   const fd = new FormData();
@@ -102,6 +119,9 @@ beforeEach(() => {
   mockUpdateEvent.mockReset();
   mockDeleteEvent.mockReset();
   mockGetEventOrganizationId.mockReset();
+  mockGetEventCoverUrl.mockReset();
+  mockUploadCover.mockReset();
+  mockUploadCover.mockResolvedValue(null);
 });
 
 describe('addEventAction', () => {
@@ -311,5 +331,90 @@ describe('updateEventAction', () => {
     await updateEventAction({}, formWithValues(baseValues, 7));
 
     expect(mockRedirect).toHaveBeenCalledWith('/activities/7');
+  });
+
+  // These three pin down the trap the two earlier reviews flagged: this
+  // action used to hardcode coverUrl: null, so saving a plain text edit
+  // silently deleted the activity's cover image.
+  it('carries the existing cover forward when no file is chosen and removal is not requested', async () => {
+    mockGetEventOrganizationId.mockResolvedValue(10);
+    mockGetOrganizationIdByKey.mockResolvedValue(10);
+    mockRequireLeaderOf.mockResolvedValue({ id: '1', role: 'leader', organizationId: 10 });
+    mockUploadCover.mockResolvedValue(null); // no file chosen
+    mockGetEventCoverUrl.mockResolvedValue('https://example.public.blob.vercel-storage.com/old.jpg');
+
+    await updateEventAction({}, formWithValues(baseValues, 7));
+
+    expect(mockGetEventCoverUrl).toHaveBeenCalledWith(7);
+    expect(mockUpdateEvent).toHaveBeenCalledWith(
+      7,
+      expect.objectContaining({ coverUrl: 'https://example.public.blob.vercel-storage.com/old.jpg' })
+    );
+  });
+
+  it('replaces the cover when uploadCover returns a new url, without consulting the old one', async () => {
+    mockGetEventOrganizationId.mockResolvedValue(10);
+    mockGetOrganizationIdByKey.mockResolvedValue(10);
+    mockRequireLeaderOf.mockResolvedValue({ id: '1', role: 'leader', organizationId: 10 });
+    mockUploadCover.mockResolvedValue('https://example.public.blob.vercel-storage.com/new.jpg');
+
+    await updateEventAction({}, formWithValues(baseValues, 7));
+
+    expect(mockGetEventCoverUrl).not.toHaveBeenCalled();
+    expect(mockUpdateEvent).toHaveBeenCalledWith(
+      7,
+      expect.objectContaining({ coverUrl: 'https://example.public.blob.vercel-storage.com/new.jpg' })
+    );
+  });
+
+  it('clears the cover when removeCover is checked and no new file is chosen', async () => {
+    mockGetEventOrganizationId.mockResolvedValue(10);
+    mockGetOrganizationIdByKey.mockResolvedValue(10);
+    mockRequireLeaderOf.mockResolvedValue({ id: '1', role: 'leader', organizationId: 10 });
+    mockUploadCover.mockResolvedValue(null);
+
+    await updateEventAction(
+      {},
+      formWithValues({ ...baseValues, removeCover: 'on' }, 7)
+    );
+
+    expect(mockGetEventCoverUrl).not.toHaveBeenCalled();
+    expect(mockUpdateEvent).toHaveBeenCalledWith(7, expect.objectContaining({ coverUrl: null }));
+  });
+
+  it('calls uploadCover only after permission is granted, never spending an upload on a rejected request', async () => {
+    mockGetEventOrganizationId.mockResolvedValue(10);
+    mockGetOrganizationIdByKey.mockResolvedValue(10);
+    mockRequireLeaderOf.mockRejectedValue(new NotAuthorizedError());
+
+    await updateEventAction({}, formWithValues(baseValues, 7));
+
+    expect(mockUploadCover).not.toHaveBeenCalled();
+  });
+
+  it('reports the same message for a forbidden activity as for a missing one', async () => {
+    mockGetEventOrganizationId.mockResolvedValue(10);
+    mockGetOrganizationIdByKey.mockResolvedValue(10);
+    mockRequireLeaderOf.mockRejectedValue(new NotAuthorizedError());
+
+    const forbidden = await updateEventAction({}, formWithValues(baseValues, 7));
+
+    mockGetEventOrganizationId.mockResolvedValue(undefined);
+    const missing = await updateEventAction({}, formWithValues(baseValues, 999));
+
+    expect(forbidden.message).toBe(missing.message);
+  });
+
+  it('rejects an id that is missing, empty, zero, or not an integer, without checking permission', async () => {
+    for (const badId of ['', '0', '-1', 'abc', '1.5']) {
+      const fd = new FormData();
+      fd.set('id', badId);
+      for (const [key, value] of Object.entries(baseValues)) {
+        fd.set(key, value);
+      }
+      const result = await updateEventAction({}, fd);
+      expect(result.message).toBe('validation.fixFields');
+    }
+    expect(mockRequireLeaderOf).not.toHaveBeenCalled();
   });
 });

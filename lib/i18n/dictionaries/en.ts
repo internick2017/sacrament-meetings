@@ -245,6 +245,10 @@ export const en = {
   'activities.saveChanges': 'Save changes',
   'activities.noOrganizationAssigned':
     'Your account is not assigned to an organization yet. Ask an admin to assign one.',
+  'activities.cover': 'Cover image',
+  'activities.removeCover': 'Remove current cover image',
+  'activities.reselectCover': 'The chosen cover image was not kept, please choose it again.',
+  'activities.currentCover': 'Current cover image',
 
   'validation.event.required.title': 'The title is required.',
   'validation.event.required.startsAt': 'The start date is required.',

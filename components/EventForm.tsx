@@ -22,6 +22,12 @@ interface EventFormProps {
   // what the picker offers.
   organizationKeys: readonly OrganizationKey[];
   allowBranchWide: boolean;
+  // Decided on the server (Boolean(process.env.BLOB_READ_WRITE_TOKEN)) and
+  // passed down as a plain boolean — this component never reads the
+  // environment itself. When false, the file input is not rendered at all,
+  // rather than rendered-and-disabled, so an activity with no cover reads as
+  // a deliberate, well-designed state rather than a broken control.
+  coverUploadEnabled: boolean;
   // Present only when editing an existing activity.
   event?: {
     id: number;
@@ -33,10 +39,16 @@ interface EventFormProps {
     endsAt: string;
     allDay: boolean;
     audience: string;
+    coverUrl: string | null;
   };
 }
 
-export default function EventForm({ organizationKeys, allowBranchWide, event }: EventFormProps) {
+export default function EventForm({
+  organizationKeys,
+  allowBranchWide,
+  coverUploadEnabled,
+  event,
+}: EventFormProps) {
   const t = useT();
   const action = event ? updateEventAction : addEventAction;
   const [state, formAction, pending] = useActionState<EventFormState, FormData>(action, {});
@@ -73,10 +85,16 @@ export default function EventForm({ organizationKeys, allowBranchWide, event }: 
     endsAt: event?.endsAt ?? '',
     allDay: event?.allDay ? 'on' : 'off',
     audience: event?.audience ?? 'public',
+    removeCover: 'off',
   };
 
   return (
-    <form key={formInstance} action={formAction} className="max-w-xl space-y-4">
+    <form
+      key={formInstance}
+      action={formAction}
+      encType="multipart/form-data"
+      className="max-w-xl space-y-4"
+    >
       {event && <input type="hidden" name="id" value={event.id} />}
 
       {state.message && (
@@ -190,6 +208,47 @@ export default function EventForm({ organizationKeys, allowBranchWide, event }: 
         </select>
         {fieldError('audience')}
       </label>
+
+      {/* The file input is offered only when coverUploadEnabled, a boolean
+          decided on the server from the presence of BLOB_READ_WRITE_TOKEN.
+          Without it, no cover-related controls render at all, which is what
+          keeps "no cover image" a normal state rather than a broken one. */}
+      {coverUploadEnabled && event?.coverUrl && (
+        <div className="space-y-1">
+          <span className="font-semibold">{t('activities.currentCover')}</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={event.coverUrl} alt="" className="h-32 w-full rounded object-cover" />
+        </div>
+      )}
+
+      {coverUploadEnabled && (
+        <label className="block space-y-1">
+          <span className="font-semibold">{t('activities.cover')}</span>
+          <input
+            type="file"
+            name="cover"
+            accept="image/*"
+            aria-describedby="cover-error"
+            className={INPUT}
+          />
+          {fieldError('cover')}
+        </label>
+      )}
+
+      {/* Choosing a new file above already replaces the cover, so this
+          checkbox only needs to exist when there is an existing cover to
+          remove without replacing it. */}
+      {coverUploadEnabled && event?.coverUrl && (
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            name="removeCover"
+            defaultChecked={values.removeCover === 'on'}
+            aria-describedby="removeCover-error"
+          />
+          <span className="font-semibold">{t('activities.removeCover')}</span>
+        </label>
+      )}
 
       <button
         type="submit"
