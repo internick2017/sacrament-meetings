@@ -16,9 +16,12 @@ const links: { href: string; label: DictionaryKey }[] = [
 export default function NavLinks({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
   const t = useT();
-  const allLinks = isAdmin
-    ? links
-    : [...links, { href: '/login', label: 'nav.signIn' as DictionaryKey }];
+  // Signed in: the unit settings link replaces the sign-in link. Hiding it from
+  // anonymous visitors is cosmetic only; the middleware and the Server Action
+  // are what actually protect the route.
+  const allLinks: { href: string; label: DictionaryKey }[] = isAdmin
+    ? [...links, { href: '/unit', label: 'unit.title' }]
+    : [...links, { href: '/login', label: 'nav.signIn' }];
 
   return (
     <nav className="bg-slate-900">

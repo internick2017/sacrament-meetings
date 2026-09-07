@@ -120,6 +120,32 @@ export const en = {
   'validation.updateFailed': 'The meeting could not be updated. Please try again.',
   'validation.deleteFailed': 'The meeting could not be deleted. Please try again.',
   'validation.invalidId': 'Invalid meeting id.',
+
+  'admin.notAllowed': 'You are not allowed to do that.',
+
+  'unit.title': 'Unit settings',
+  'unit.intro':
+    'Information about this ward or branch. Member contact details are not stored here: use the official Church tools.',
+  'unit.name': 'Unit name',
+  'unit.type': 'Unit type',
+  'unit.type.ward': 'Ward',
+  'unit.type.branch': 'Branch',
+  'unit.stakeName': 'Stake or district',
+  'unit.address': 'Meetinghouse address',
+  'unit.meetingTimes': 'Meeting times',
+  'unit.timezone': 'Time zone',
+  'unit.calendarUrl': 'Official calendar link',
+  'unit.directoryUrl': 'Official directory link',
+  'unit.contactNote': 'How to reach the bishopric',
+  'unit.save': 'Save settings',
+  'unit.saved': 'Unit settings saved.',
+  'unit.officialLinks': 'Official Church tools',
+  'unit.officialCalendar': 'Unit calendar',
+  'unit.officialDirectory': 'Member directory (Tools)',
+
+  'validation.required.unitName': 'The unit needs a name.',
+  'validation.required.timezone': 'The time zone is required.',
+  'validation.unit.url': 'This must be a full link starting with https://',
 } as const;
 
 export type DictionaryKey = keyof typeof en;

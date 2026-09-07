@@ -122,4 +122,30 @@ export const es: Dictionary = {
   'validation.updateFailed': 'No se pudo actualizar la reunión. Inténtalo de nuevo.',
   'validation.deleteFailed': 'No se pudo eliminar la reunión. Inténtalo de nuevo.',
   'validation.invalidId': 'Identificador de reunión inválido.',
+
+  'admin.notAllowed': 'No tienes permiso para hacer eso.',
+
+  'unit.title': 'Configuración de la unidad',
+  'unit.intro':
+    'Información sobre este barrio o rama. Los datos de contacto de los miembros no se guardan aquí: usa las herramientas oficiales de la Iglesia.',
+  'unit.name': 'Nombre de la unidad',
+  'unit.type': 'Tipo de unidad',
+  'unit.type.ward': 'Barrio',
+  'unit.type.branch': 'Rama',
+  'unit.stakeName': 'Estaca o distrito',
+  'unit.address': 'Dirección del centro de reuniones',
+  'unit.meetingTimes': 'Horarios de reunión',
+  'unit.timezone': 'Zona horaria',
+  'unit.calendarUrl': 'Enlace al calendario oficial',
+  'unit.directoryUrl': 'Enlace al directorio oficial',
+  'unit.contactNote': 'Cómo contactar al obispado',
+  'unit.save': 'Guardar configuración',
+  'unit.saved': 'Configuración de la unidad guardada.',
+  'unit.officialLinks': 'Herramientas oficiales de la Iglesia',
+  'unit.officialCalendar': 'Calendario de la unidad',
+  'unit.officialDirectory': 'Directorio de miembros (Herramientas)',
+
+  'validation.required.unitName': 'La unidad necesita un nombre.',
+  'validation.required.timezone': 'La zona horaria es obligatoria.',
+  'validation.unit.url': 'Esto debe ser un enlace completo que empiece con https://',
 };

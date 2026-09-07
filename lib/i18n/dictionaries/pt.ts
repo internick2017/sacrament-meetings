@@ -122,4 +122,30 @@ export const pt: Dictionary = {
   'validation.updateFailed': 'Não foi possível atualizar a reunião. Tente novamente.',
   'validation.deleteFailed': 'Não foi possível excluir a reunião. Tente novamente.',
   'validation.invalidId': 'Identificador de reunião inválido.',
+
+  'admin.notAllowed': 'Você não tem permissão para fazer isso.',
+
+  'unit.title': 'Configurações da unidade',
+  'unit.intro':
+    'Informações sobre esta ala ou ramo. Os dados de contato dos membros não são guardados aqui: use as ferramentas oficiais da Igreja.',
+  'unit.name': 'Nome da unidade',
+  'unit.type': 'Tipo de unidade',
+  'unit.type.ward': 'Ala',
+  'unit.type.branch': 'Ramo',
+  'unit.stakeName': 'Estaca ou distrito',
+  'unit.address': 'Endereço da capela',
+  'unit.meetingTimes': 'Horários das reuniões',
+  'unit.timezone': 'Fuso horário',
+  'unit.calendarUrl': 'Link do calendário oficial',
+  'unit.directoryUrl': 'Link do diretório oficial',
+  'unit.contactNote': 'Como falar com o bispado',
+  'unit.save': 'Salvar configurações',
+  'unit.saved': 'Configurações da unidade salvas.',
+  'unit.officialLinks': 'Ferramentas oficiais da Igreja',
+  'unit.officialCalendar': 'Calendário da unidade',
+  'unit.officialDirectory': 'Diretório de membros (Ferramentas)',
+
+  'validation.required.unitName': 'A unidade precisa de um nome.',
+  'validation.required.timezone': 'O fuso horário é obrigatório.',
+  'validation.unit.url': 'Isto deve ser um link completo começando com https://',
 };
