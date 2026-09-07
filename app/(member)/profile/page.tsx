@@ -14,7 +14,19 @@ import { ProfilePhotoForm, ProfilePhotoDeleteButton } from '@/components/Profile
 // credential exists at all) AND user.photoUploadAllowed (the bishopric
 // turned it on for this specific account) are true. Either one missing
 // shows an explanatory message instead of a form that would silently do
-// nothing — a broken-looking screen is worse than an honest one.
+// nothing — a broken-looking screen is worse than an honest one. The two
+// messages are deliberately different: one is actionable by the bishopric
+// (photoUploadAllowed), the other is not (no Blob credential configured for
+// the site at all) — see profile.notAllowed vs photos.uploadDisabled below.
+//
+// The delete button, however, is NOT gated on canUpload. It renders
+// whenever the person already has a photo, independent of whether new
+// uploads are currently allowed — matching lib/profile-actions.ts, which
+// deliberately never gates deletion on photoUploadAllowed. If the
+// bishopric turns the switch off (e.g. after realising the account belongs
+// to a minor), or the Blob credential is ever removed, the member must
+// still be able to take down a photo they already uploaded. Do not move
+// this back inside the canUpload branch.
 export default async function ProfilePage() {
   const [sessionUser, t] = await Promise.all([getSessionUser(), getT()]);
 
@@ -54,15 +66,14 @@ export default async function ProfilePage() {
           </div>
 
           {canUpload ? (
-            <>
-              <ProfilePhotoForm />
-              {person.photoUrl && <ProfilePhotoDeleteButton />}
-            </>
+            <ProfilePhotoForm />
           ) : (
             <p className="rounded bg-slate-100 px-3 py-2 text-sm text-slate-700">
-              {t('profile.notAllowed')}
+              {photoUploadEnabled ? t('profile.notAllowed') : t('photos.uploadDisabled')}
             </p>
           )}
+
+          {person.photoUrl && <ProfilePhotoDeleteButton />}
         </div>
       ) : (
         <p className="rounded bg-slate-100 px-3 py-2 text-sm text-slate-700">

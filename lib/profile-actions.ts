@@ -130,9 +130,17 @@ export async function deleteProfilePhotoAction(): Promise<void> {
 
   // Clear the database row first, then best-effort delete the stored file.
   // A storage failure must never leave a member unable to remove their own
-  // photo from the site.
+  // photo from the site. deleteImage never throws by contract (lib/blob.ts
+  // catches internally), but this action does not depend on that contract:
+  // the row is already cleared above, and the catch here is defence in
+  // depth so a rejection can never surface as a failed action or an
+  // unhandled error.
   await clearPersonPhoto(personId);
-  await deleteImage(person?.photoUrl);
+  try {
+    await deleteImage(person?.photoUrl);
+  } catch (error) {
+    console.error('Image delete failed, leaving the old file in place', error);
+  }
 
   revalidatePath('/profile');
   revalidatePath('/organizations');

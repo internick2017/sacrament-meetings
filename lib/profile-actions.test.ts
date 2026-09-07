@@ -222,11 +222,14 @@ describe('deleteProfilePhotoAction', () => {
       fullName: 'Own Name',
       photoUrl: 'https://blob.example/old.jpg',
     });
-    // deleteImage never throws by contract (lib/blob.ts), but confirm the
-    // row is cleared regardless of what it resolves to.
-    mockDeleteImage.mockResolvedValue(undefined);
+    // deleteImage never throws by contract (lib/blob.ts catches
+    // internally), but this test does not rely on that contract holding:
+    // it forces the mock to reject to prove the action itself tolerates a
+    // storage failure, rather than merely duplicating the happy-path test
+    // above.
+    mockDeleteImage.mockRejectedValue(new Error('storage unavailable'));
 
-    await deleteProfilePhotoAction();
+    await expect(deleteProfilePhotoAction()).resolves.toBeUndefined();
 
     expect(mockClearPersonPhoto).toHaveBeenCalledWith(42);
   });
