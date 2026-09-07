@@ -13,15 +13,28 @@ import type { OrganizationKey } from '@/lib/types';
 // the visitor's — so editing an activity shows the time it was actually set
 // to, not a shifted one.
 function toDatetimeLocalValue(isoString: string, timeZone: string): string {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).formatToParts(new Date(isoString));
+  const format = (zone: string | undefined) =>
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: zone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).formatToParts(new Date(isoString));
+
+  // The schema now blocks new bad timezones (see unit-schema.ts), but this
+  // is the last line of defence for an activity edited before that
+  // validation existed: an unrecognized IANA zone must never throw and 500
+  // the edit page, it should just fall back to the server's own timezone,
+  // same as formatEventDateTime does on the public pages.
+  let parts;
+  try {
+    parts = format(timeZone);
+  } catch {
+    parts = format(undefined);
+  }
 
   const get = (type: string) => parts.find((part) => part.type === type)?.value ?? '00';
   return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`;

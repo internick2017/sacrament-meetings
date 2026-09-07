@@ -35,13 +35,28 @@ vi.mock('./events-db', () => ({
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }));
+// redirect() throws NEXT_REDIRECT in real Next.js; mocked as a plain spy
+// here since these tests only need to assert it was called with the right
+// path, not exercise the real navigation short-circuit.
+vi.mock('next/navigation', () => ({
+  redirect: vi.fn(),
+}));
 vi.mock('./i18n/server', () => ({
   getT: vi.fn().mockResolvedValue((key: string) => key),
+}));
+// updateEventAction and addEventAction now convert the submitted naive
+// local time using the congregation's timezone (see lib/timezone.ts), which
+// means they read the unit. Mocked here so these tests stay a pure
+// unit/permission-ordering check, independent of that conversion (which has
+// its own dedicated tests in lib/timezone.test.ts).
+vi.mock('./unit-db', () => ({
+  getUnit: vi.fn().mockResolvedValue({ timezone: 'America/Sao_Paulo' }),
 }));
 
 import { requireLeaderOf, NotAuthorizedError } from './authz';
 import { getOrganizationIdByKey } from './organizations-db';
 import { addEvent, updateEvent, deleteEvent, getEventOrganizationId } from './events-db';
+import { redirect } from 'next/navigation';
 import { addEventAction, updateEventAction, deleteEventAction } from './events-actions';
 
 const mockRequireLeaderOf = vi.mocked(requireLeaderOf);
@@ -50,6 +65,7 @@ const mockAddEvent = vi.mocked(addEvent);
 const mockUpdateEvent = vi.mocked(updateEvent);
 const mockDeleteEvent = vi.mocked(deleteEvent);
 const mockGetEventOrganizationId = vi.mocked(getEventOrganizationId);
+const mockRedirect = vi.mocked(redirect);
 
 function formWithId(id: number): FormData {
   const fd = new FormData();
@@ -285,5 +301,15 @@ describe('updateEventAction', () => {
     expect(calls[calls.length - 2]).toBe('permission:10');
     expect(calls[calls.length - 1]).toBe('permission:10');
     expect(mockUpdateEvent).toHaveBeenCalledWith(7, expect.objectContaining({ organizationId: 10 }));
+  });
+
+  it('redirects to the activity detail page after a successful update, so the form does not show stale values', async () => {
+    mockGetEventOrganizationId.mockResolvedValue(10);
+    mockGetOrganizationIdByKey.mockResolvedValue(10);
+    mockRequireLeaderOf.mockResolvedValue({ id: '1', role: 'leader', organizationId: 10 });
+
+    await updateEventAction({}, formWithValues(baseValues, 7));
+
+    expect(mockRedirect).toHaveBeenCalledWith('/activities/7');
   });
 });

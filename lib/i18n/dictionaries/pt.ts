@@ -245,11 +245,8 @@ export const pt: Dictionary = {
   'activities.description': 'Descrição',
   'activities.add': 'Adicionar atividade',
   'activities.saveChanges': 'Salvar alterações',
-  'activities.manageTitle': 'Gerenciar atividades',
-  'activities.manageIntro': 'Crie, edite e remova atividades.',
   'activities.noOrganizationAssigned':
-    'Sua conta ainda nao tem uma organizacao atribuida. Peca a um admin para atribuir uma.',
-  'activities.notFound': 'Atividade não encontrada.',
+    'Sua conta ainda não tem uma organização atribuída. Peça a um admin para atribuir uma.',
 
   'validation.event.required.title': 'O título é obrigatório.',
   'validation.event.required.startsAt': 'A data de início é obrigatória.',

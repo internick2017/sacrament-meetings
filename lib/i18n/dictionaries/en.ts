@@ -243,11 +243,8 @@ export const en = {
   'activities.description': 'Description',
   'activities.add': 'Add activity',
   'activities.saveChanges': 'Save changes',
-  'activities.manageTitle': 'Manage activities',
-  'activities.manageIntro': 'Create, edit, and remove activities.',
   'activities.noOrganizationAssigned':
     'Your account is not assigned to an organization yet. Ask an admin to assign one.',
-  'activities.notFound': 'Activity not found.',
 
   'validation.event.required.title': 'The title is required.',
   'validation.event.required.startsAt': 'The start date is required.',

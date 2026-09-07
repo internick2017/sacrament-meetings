@@ -20,9 +20,15 @@ export default async function NewActivityPage() {
     organizationKeys = organizations.map((organization) => organization.key);
   } else {
     // A leader whose account has no organizationId yet would otherwise see
-    // an empty, unusable picker.
+    // an empty, unusable picker. Rather than bouncing them back to
+    // /activities with no explanation, tell them why they cannot create one.
     if (sessionUser.organizationId == null) {
-      redirect('/activities');
+      return (
+        <section className="space-y-6">
+          <h1 className="text-2xl font-bold">{t('activities.new')}</h1>
+          <p role="alert">{t('activities.noOrganizationAssigned')}</p>
+        </section>
+      );
     }
     const organizations = await getOrganizations(false);
     const own = organizations.find((organization) => organization.id === sessionUser.organizationId);

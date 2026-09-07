@@ -5,7 +5,7 @@ import { useT } from '@/lib/i18n/client';
 
 // One form per activity row: delete, with the same confirm-before-destroy
 // pattern as CallingRowActions.tsx. Editing is a plain link on the row
-// itself (see app/(admin)/activities/page.tsx), not a form, since it only
+// itself (see app/(public)/activities/page.tsx), not a form, since it only
 // navigates.
 export default function EventRowActions({ id }: { id: number }) {
   const t = useT();

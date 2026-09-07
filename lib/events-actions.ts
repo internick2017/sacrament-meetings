@@ -2,11 +2,14 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { requireLeaderOf, NotAuthorizedError, getSessionUser } from './authz';
 import { getT } from './i18n/server';
 import { eventFormSchema } from './events-schema';
 import { addEvent, updateEvent, deleteEvent, getEventOrganizationId } from './events-db';
 import { getOrganizationIdByKey } from './organizations-db';
+import { getUnit } from './unit-db';
+import { zonedLocalToInstant } from './timezone';
 
 export interface EventFormState {
   message?: string;
@@ -79,14 +82,24 @@ export async function addEventAction(
 
   const user = await getSessionUser();
 
+  // The form sends naive 'YYYY-MM-DDTHH:mm' local values. They must be
+  // converted to real instants in the congregation's own timezone before
+  // being written to a timestamptz column, or Postgres will interpret them
+  // in the session's timezone (UTC on this project's host) instead — see
+  // zonedLocalToInstant for the full explanation.
+  const unit = await getUnit();
+  const startsAt = zonedLocalToInstant(parsed.data.startsAt, unit.timezone);
+  const endsAt =
+    parsed.data.endsAt === '' ? null : zonedLocalToInstant(parsed.data.endsAt, unit.timezone);
+
   await addEvent(
     {
       organizationId,
       title: parsed.data.title,
       description: parsed.data.description,
       location: parsed.data.location,
-      startsAt: parsed.data.startsAt,
-      endsAt: parsed.data.endsAt === '' ? null : parsed.data.endsAt,
+      startsAt,
+      endsAt,
       allDay: parsed.data.allDay,
       audience: parsed.data.audience,
       coverUrl: null,
@@ -155,20 +168,33 @@ export async function updateEventAction(
     throw error;
   }
 
+  // See addEventAction for why the naive local values must be converted
+  // using the congregation's timezone before they reach a timestamptz column.
+  const unit = await getUnit();
+  const startsAt = zonedLocalToInstant(parsed.data.startsAt, unit.timezone);
+  const endsAt =
+    parsed.data.endsAt === '' ? null : zonedLocalToInstant(parsed.data.endsAt, unit.timezone);
+
   await updateEvent(id, {
     organizationId: newOrganizationId,
     title: parsed.data.title,
     description: parsed.data.description,
     location: parsed.data.location,
-    startsAt: parsed.data.startsAt,
-    endsAt: parsed.data.endsAt === '' ? null : parsed.data.endsAt,
+    startsAt,
+    endsAt,
     allDay: parsed.data.allDay,
     audience: parsed.data.audience,
     coverUrl: null,
   });
 
+  // Revalidate both the list and the detail page, then redirect there,
+  // matching the meetings precedent in lib/actions.ts (updateMeeting). Without
+  // this, the form remounts with the pre-save `event` prop (a stale server
+  // render) and the detail page keeps showing the old content even though
+  // the save succeeded.
   revalidatePath('/activities');
-  return { message: t('activities.saved') };
+  revalidatePath(`/activities/${id}`);
+  redirect(`/activities/${id}`);
 }
 
 // Deleting takes only the id from the form, so the organization the
