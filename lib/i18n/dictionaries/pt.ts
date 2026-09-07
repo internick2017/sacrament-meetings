@@ -192,6 +192,17 @@ export const pt: Dictionary = {
   'callings.current': 'Chamados atuais',
   'callings.noOrganizationAssigned':
     'Sua conta ainda não está associada a nenhuma organização. Peça a um administrador para associar uma antes de gerenciar chamados.',
+  'callings.noCurrentCalling': 'Pessoas sem chamado atual',
+  'callings.noCurrentCallingIntro':
+    'Ninguém está servindo no momento. Remover uma pessoa aqui é permanente e também apaga o histórico de chamados dela.',
+  'callings.pastCallingsCount': '{count} chamado(s) anterior(es)',
+  'callings.removePerson': 'Remover pessoa',
+  'callings.confirmRemovePerson':
+    'Remover esta pessoa definitivamente, incluindo o histórico de chamados dela? Isso não pode ser desfeito.',
+
+  'people.hasCurrentCalling':
+    'Esta pessoa ainda tem um chamado atual. Desobrigue-a primeiro e depois remova.',
+  'people.removed': 'Pessoa removida.',
 
   'validation.required.personName': 'O nome é obrigatório.',
   'validation.required.callingTitle': 'O cargo é obrigatório.',

@@ -100,3 +100,68 @@ export async function deleteCalling(id: number): Promise<boolean> {
   )) as { id: number }[];
   return rows.length > 0;
 }
+
+export interface OrphanedPerson {
+  id: number;
+  fullName: string;
+  photoUrl: string | null;
+  pastCallingsCount: number;
+}
+
+interface OrphanedPersonRow {
+  id: number;
+  full_name: string;
+  photo_url: string | null;
+  past_callings_count: string;
+}
+
+// Everyone with no CURRENT calling (ended_on IS NULL): the never-called
+// orphan left behind by a deleted calling, and anyone who has simply been
+// released. The count is total callings ever held (released or deleted-
+// history included via cascade — see 003_organizations.sql), so an admin
+// can tell "mistyped, never used" (0) from "served for years" (several)
+// before removing someone.
+export async function getPeopleWithNoCurrentCalling(): Promise<OrphanedPerson[]> {
+  const rows = (await sql.query(
+    `SELECT p.id, p.full_name, p.photo_url, COUNT(c.id) AS past_callings_count
+       FROM people p
+       LEFT JOIN callings c ON c.person_id = p.id
+      WHERE NOT EXISTS (
+              SELECT 1 FROM callings cc
+               WHERE cc.person_id = p.id AND cc.ended_on IS NULL
+            )
+      GROUP BY p.id, p.full_name, p.photo_url
+      ORDER BY p.full_name`,
+    []
+  )) as OrphanedPersonRow[];
+
+  return rows.map((row) => ({
+    id: row.id,
+    fullName: row.full_name,
+    photoUrl: row.photo_url,
+    pastCallingsCount: Number(row.past_callings_count),
+  }));
+}
+
+// Whether this person currently holds any calling (ended_on IS NULL). Used to
+// refuse removal: someone presently serving must be released first.
+export async function personHasCurrentCalling(id: number): Promise<boolean> {
+  const rows = (await sql.query(
+    `SELECT 1 FROM callings WHERE person_id = $1 AND ended_on IS NULL LIMIT 1`,
+    [id]
+  )) as { '?column?': number }[];
+  return rows.length > 0;
+}
+
+// Deletes the person row outright. callings.person_id is ON DELETE CASCADE
+// (see 003_organizations.sql), so any released/history callings for this
+// person go with it — that is intended for someone who has moved away, but
+// it means this call also erases their calling history, not just the row.
+// users.person_id is ON DELETE SET NULL (see 004_accounts_roles.sql), so a
+// linked account is unlinked, never deleted.
+export async function deletePerson(id: number): Promise<boolean> {
+  const rows = (await sql.query(`DELETE FROM people WHERE id = $1 RETURNING id`, [id])) as {
+    id: number;
+  }[];
+  return rows.length > 0;
+}

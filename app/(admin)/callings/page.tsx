@@ -1,8 +1,10 @@
 import { getOrganizations } from '@/lib/organizations-db';
 import { getSessionUser } from '@/lib/authz';
+import { getPeopleWithNoCurrentCalling } from '@/lib/people-db';
 import { getT } from '@/lib/i18n/server';
 import CallingForm from '@/components/CallingForm';
 import CallingRowActions from '@/components/CallingRowActions';
+import OrphanedPeople from '@/components/OrphanedPeople';
 import type { DictionaryKey } from '@/lib/i18n';
 
 export default async function CallingsPage() {
@@ -11,6 +13,11 @@ export default async function CallingsPage() {
     getOrganizations(true),
     getT(),
   ]);
+
+  // Only an admin can remove a person, so only an admin needs the query that
+  // finds them — a leader never sees this section at all.
+  const isAdmin = sessionUser?.role === 'admin';
+  const orphanedPeople = isAdmin ? await getPeopleWithNoCurrentCalling() : [];
 
   // /callings is shared between admin and leader (unlike /users or /unit).
   // An admin sees every organization; a leader sees only their own, in both
@@ -76,6 +83,8 @@ export default async function CallingsPage() {
           </div>
         ))}
       </div>
+
+      {isAdmin && <OrphanedPeople people={orphanedPeople} />}
     </section>
   );
 }

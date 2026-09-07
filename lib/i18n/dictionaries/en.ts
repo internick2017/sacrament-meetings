@@ -190,6 +190,17 @@ export const en = {
   'callings.current': 'Current callings',
   'callings.noOrganizationAssigned':
     'Your account is not assigned to an organization yet. Ask an admin to assign one before you can manage callings.',
+  'callings.noCurrentCalling': 'People with no current calling',
+  'callings.noCurrentCallingIntro':
+    'Nobody currently serving. Removing a person here is permanent and also deletes their past calling history.',
+  'callings.pastCallingsCount': '{count} past calling(s)',
+  'callings.removePerson': 'Remove person',
+  'callings.confirmRemovePerson':
+    "Permanently remove this person, including their calling history? This cannot be undone.",
+
+  'people.hasCurrentCalling':
+    'This person still holds a current calling. Release them first, then remove.',
+  'people.removed': 'Person removed.',
 
   'validation.required.personName': 'A name is required.',
   'validation.required.callingTitle': 'The position is required.',
