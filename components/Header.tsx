@@ -1,14 +1,14 @@
 import Link from 'next/link';
 import NavLinks from './NavLinks';
 import LocaleSwitcher from './LocaleSwitcher';
-import { auth } from '@/lib/auth';
+import { getSessionUser } from '@/lib/authz';
 import { DATE_LOCALES } from '@/lib/i18n/config';
 import { getLocale } from '@/lib/i18n/server';
 
 const WARD_NAME = 'Riverside Ward';
 
 export default async function Header() {
-  const [locale, session] = await Promise.all([getLocale(), auth()]);
+  const [locale, user] = await Promise.all([getLocale(), getSessionUser()]);
 
   const today = new Date().toLocaleDateString(DATE_LOCALES[locale], {
     weekday: 'long',
@@ -28,7 +28,7 @@ export default async function Header() {
           <LocaleSwitcher />
         </div>
       </div>
-      <NavLinks isAdmin={!!session} />
+      <NavLinks role={user?.role ?? null} />
     </header>
   );
 }

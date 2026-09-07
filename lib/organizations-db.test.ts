@@ -1,6 +1,18 @@
-import { describe, it, expect } from 'vitest';
-import { hideNames } from './organizations-db';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// getCallingOrganizationId issues a real SQL query, so the database boundary
+// is mocked here rather than exercised against Postgres. Same mocking
+// pattern as lib/auth.test.ts: sql.query is replaced with a vi.fn() and its
+// resolved rows are asserted against directly.
+vi.mock('./db', () => ({
+  sql: { query: vi.fn() },
+}));
+
+import { hideNames, getCallingOrganizationId } from './organizations-db';
+import { sql } from './db';
 import type { OrganizationWithCallings } from './types';
+
+const mockQuery = vi.mocked(sql.query);
 
 const orgs: OrganizationWithCallings[] = [
   {
@@ -43,5 +55,24 @@ describe('hideNames', () => {
       { id: 2, key: 'bishopric', displayOrder: 10, callings: [] },
     ];
     expect(hideNames(empty)).toEqual(empty);
+  });
+});
+
+describe('getCallingOrganizationId', () => {
+  beforeEach(() => {
+    mockQuery.mockReset();
+  });
+
+  it('returns the organization id for an existing calling', async () => {
+    mockQuery.mockResolvedValue([{ organization_id: 30 }]);
+
+    await expect(getCallingOrganizationId(5)).resolves.toBe(30);
+    expect(mockQuery).toHaveBeenCalledWith(expect.stringContaining('FROM callings'), [5]);
+  });
+
+  it('returns undefined when the calling does not exist', async () => {
+    mockQuery.mockResolvedValue([]);
+
+    await expect(getCallingOrganizationId(999)).resolves.toBeUndefined();
   });
 });

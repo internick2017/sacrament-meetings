@@ -6,10 +6,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // another organization's calling by guessing its id. Everything is mocked at
 // the boundary (authz, the db reads/writes, next/cache) so the test proves
 // the ordering and error handling without a real database or session.
-vi.mock('./authz', () => ({
-  requireLeaderOf: vi.fn(),
-  NotAuthorizedError: class NotAuthorizedError extends Error {},
-}));
+// NotAuthorizedError itself is the real class from lib/authz-rules.ts (the
+// module lib/authz.ts re-exports it from), not a local stand-in: this proves
+// the class the action's catch block matches is the same class the real
+// module throws, not merely something shaped like it.
+vi.mock('./authz', async () => {
+  const { NotAuthorizedError } = await import('./authz-rules');
+  return {
+    requireLeaderOf: vi.fn(),
+    NotAuthorizedError,
+  };
+});
 vi.mock('./organizations-db', () => ({
   getCallingOrganizationId: vi.fn(),
   getOrganizationIdByKey: vi.fn(),
@@ -27,12 +34,14 @@ vi.mock('./i18n/server', () => ({
 }));
 
 import { requireLeaderOf, NotAuthorizedError } from './authz';
-import { getCallingOrganizationId } from './organizations-db';
-import { endCalling, deleteCalling } from './people-db';
-import { endCallingAction, deleteCallingAction } from './callings-actions';
+import { getCallingOrganizationId, getOrganizationIdByKey } from './organizations-db';
+import { addCalling, endCalling, deleteCalling } from './people-db';
+import { addCallingAction, endCallingAction, deleteCallingAction } from './callings-actions';
 
 const mockRequireLeaderOf = vi.mocked(requireLeaderOf);
 const mockGetCallingOrganizationId = vi.mocked(getCallingOrganizationId);
+const mockGetOrganizationIdByKey = vi.mocked(getOrganizationIdByKey);
+const mockAddCalling = vi.mocked(addCalling);
 const mockEndCalling = vi.mocked(endCalling);
 const mockDeleteCalling = vi.mocked(deleteCalling);
 
@@ -127,5 +136,81 @@ describe('deleteCallingAction', () => {
 
     await expect(deleteCallingAction(formWithId(9))).resolves.toBeUndefined();
     expect(mockDeleteCalling).not.toHaveBeenCalled();
+  });
+});
+
+describe('addCallingAction', () => {
+  beforeEach(() => {
+    mockRequireLeaderOf.mockReset();
+    mockGetOrganizationIdByKey.mockReset();
+    mockAddCalling.mockReset();
+  });
+
+  function formWithValues(values: {
+    organizationKey: string;
+    personName: string;
+    title: string;
+    displayOrder: string;
+  }): FormData {
+    const fd = new FormData();
+    fd.set('organizationKey', values.organizationKey);
+    fd.set('personName', values.personName);
+    fd.set('title', values.title);
+    fd.set('displayOrder', values.displayOrder);
+    return fd;
+  }
+
+  // organizationId is the one piece of the write derived from client-submitted
+  // data (the submitted key). This asserts requireLeaderOf is called with the
+  // RESOLVED numeric id, not the raw submitted key: the key is 'primary', the
+  // resolved id is 60 (deliberately unrelated in form), so the test would
+  // fail if the code passed the raw client value through instead of the
+  // looked-up id.
+  it('resolves the organization from the submitted key before asking permission with the resolved id', async () => {
+    const calls: string[] = [];
+    mockGetOrganizationIdByKey.mockImplementation(async (key) => {
+      calls.push(`lookup:${key}`);
+      return 60;
+    });
+    mockRequireLeaderOf.mockImplementation(async (organizationId) => {
+      calls.push(`permission:${organizationId}`);
+      return { id: '1', role: 'leader', organizationId: 60 };
+    });
+
+    await addCallingAction(
+      { message: undefined },
+      formWithValues({
+        organizationKey: 'primary',
+        personName: 'Jane Doe',
+        title: 'President',
+        displayOrder: '0',
+      })
+    );
+
+    expect(calls).toEqual(['lookup:primary', 'permission:60']);
+    expect(mockGetOrganizationIdByKey).toHaveBeenCalledWith('primary');
+    expect(mockRequireLeaderOf).toHaveBeenCalledWith(60);
+    expect(mockRequireLeaderOf).not.toHaveBeenCalledWith('primary');
+    expect(mockAddCalling).toHaveBeenCalledWith(
+      expect.objectContaining({ organizationId: 60 })
+    );
+  });
+
+  it('swallows NotAuthorizedError and does not write', async () => {
+    mockGetOrganizationIdByKey.mockResolvedValue(60);
+    mockRequireLeaderOf.mockRejectedValue(new NotAuthorizedError());
+
+    const result = await addCallingAction(
+      { message: undefined },
+      formWithValues({
+        organizationKey: 'primary',
+        personName: 'Jane Doe',
+        title: 'President',
+        displayOrder: '0',
+      })
+    );
+
+    expect(result.message).toBe('admin.notAllowed');
+    expect(mockAddCalling).not.toHaveBeenCalled();
   });
 });

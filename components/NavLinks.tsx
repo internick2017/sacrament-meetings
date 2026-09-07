@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useT } from '@/lib/i18n/client';
 import type { DictionaryKey } from '@/lib/i18n';
+import type { Role } from '@/lib/types';
 
 // Labels are resolved at render time (not module load) so they follow the
 // active language.
@@ -14,19 +15,22 @@ const links: { href: string; label: DictionaryKey }[] = [
   { href: '/organizations', label: 'nav.organizations' },
 ];
 
-export default function NavLinks({ isAdmin }: { isAdmin: boolean }) {
+export default function NavLinks({ role }: { role: Role | null }) {
   const pathname = usePathname();
   const t = useT();
-  // Signed in: the unit settings link replaces the sign-in link. Hiding it from
-  // anonymous visitors is cosmetic only; the middleware and the Server Action
-  // are what actually protect the route.
-  const allLinks: { href: string; label: DictionaryKey }[] = isAdmin
-    ? [
-        ...links,
-        { href: '/unit', label: 'unit.title' },
-        { href: '/callings', label: 'callings.title' },
-      ]
-    : [...links, { href: '/login', label: 'nav.signIn' }];
+  // Per-role nav: `/unit` (branch-wide settings) is admin-only, `/callings`
+  // is admin+leader, and the sign-in link only shows when there is no
+  // session at all. Hiding these from lower-privileged visitors is cosmetic
+  // only; the middleware and the Server Actions are what actually protect
+  // the routes.
+  const allLinks: { href: string; label: DictionaryKey }[] = [
+    ...links,
+    ...(role === 'admin' ? [{ href: '/unit', label: 'unit.title' as const }] : []),
+    ...(role === 'admin' || role === 'leader'
+      ? [{ href: '/callings', label: 'callings.title' as const }]
+      : []),
+    ...(role === null ? [{ href: '/login', label: 'nav.signIn' as const }] : []),
+  ];
 
   return (
     <nav className="bg-slate-900">

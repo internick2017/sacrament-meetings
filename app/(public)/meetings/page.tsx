@@ -3,7 +3,7 @@ import MeetingCard from '@/components/MeetingCard';
 import MeetingSearch from '@/components/MeetingSearch';
 import Pagination from '@/components/Pagination';
 import { getMeetings, countMeetings, PAGE_SIZE } from '@/lib/meetings-db';
-import { auth } from '@/lib/auth';
+import { getSessionUser } from '@/lib/authz';
 import { getT } from '@/lib/i18n/server';
 
 export default async function MeetingsPage({
@@ -18,13 +18,13 @@ export default async function MeetingsPage({
   // Fetch the current page of results, the total count, and the session in
   // parallel.
   const t = await getT();
-  const [meetings, total, session] = await Promise.all([
+  const [meetings, total, user] = await Promise.all([
     getMeetings({ query, page: currentPage }),
     countMeetings({ query }),
-    auth(),
+    getSessionUser(),
   ]);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const isAdmin = !!session;
+  const isAdmin = user?.role === 'admin';
 
   return (
     <div>

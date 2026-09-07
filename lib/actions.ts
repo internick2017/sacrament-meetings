@@ -231,7 +231,14 @@ export async function updateMeeting(
 }
 
 export async function deleteMeeting(formData: FormData): Promise<void> {
-  await requireAdmin();
+  try {
+    await requireAdmin();
+  } catch (error) {
+    if (error instanceof NotAuthorizedError) {
+      return;
+    }
+    throw error;
+  }
 
   const t = await getT();
   const id = Number(formData.get('id'));
