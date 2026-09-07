@@ -11,7 +11,9 @@ export const pt: Dictionary = {
 
   'locale.label': 'Idioma',
 
-  'footer.text': 'Planejador de Reuniões Sacramentais, feito para WDD 430',
+  'footer.text':
+    'Site da unidade, mantido pela própria unidade. Não é um site oficial de A Igreja de Jesus Cristo dos Santos dos Últimos Dias.',
+  'footer.madeBy': 'Feito por',
 
   'home.heading': 'Planeje e revise as reuniões sacramentais',
   'home.subheading':

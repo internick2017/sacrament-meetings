@@ -9,7 +9,9 @@ export const en = {
 
   'locale.label': 'Language',
 
-  'footer.text': 'Sacrament Meeting Planner, built for WDD 430',
+  'footer.text':
+    'Unit site, kept by the unit itself. Not an official site of The Church of Jesus Christ of Latter-day Saints.',
+  'footer.madeBy': 'Built by',
 
   'home.heading': 'Plan and Review Sacrament Meetings',
   'home.subheading':
