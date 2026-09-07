@@ -10,6 +10,14 @@ import { addCalling, deleteCalling, endCalling, getOrganizationIdByKey } from '.
 export interface CallingFormState {
   message?: string;
   errors?: Record<string, string[] | undefined>;
+  // Echo of the raw submitted values, so a failed validation does not throw
+  // away what the user typed. Absent on success, so the form resets empty.
+  values?: {
+    organizationKey: string;
+    personName: string;
+    title: string;
+    displayOrder: string;
+  };
 }
 
 // Authorisation is checked here, on the server, in every action. Hiding a
@@ -29,17 +37,20 @@ export async function addCallingAction(
     return { message: t('admin.notAllowed') };
   }
 
-  const parsed = callingFormSchema(t).safeParse({
-    organizationKey: formData.get('organizationKey'),
-    personName: formData.get('personName'),
-    title: formData.get('title'),
-    displayOrder: formData.get('displayOrder') ?? '0',
-  });
+  const rawValues = {
+    organizationKey: String(formData.get('organizationKey') ?? ''),
+    personName: String(formData.get('personName') ?? ''),
+    title: String(formData.get('title') ?? ''),
+    displayOrder: String(formData.get('displayOrder') ?? '0'),
+  };
+
+  const parsed = callingFormSchema(t).safeParse(rawValues);
 
   if (!parsed.success) {
     return {
       message: t('validation.fixFields'),
       errors: z.flattenError(parsed.error).fieldErrors,
+      values: rawValues,
     };
   }
 
@@ -47,7 +58,7 @@ export async function addCallingAction(
   if (organizationId === undefined) {
     // The enum already restricts the key to the seven seeded organizations, so
     // this only fires if the database and the code have drifted apart.
-    return { message: t('validation.fixFields') };
+    return { message: t('validation.fixFields'), values: rawValues };
   }
 
   await addCalling({
