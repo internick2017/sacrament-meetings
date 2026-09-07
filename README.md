@@ -35,6 +35,20 @@ Create a `.env.local` file with:
 
 `AUTH_SECRET` can be generated with `npx auth secret`.
 
+### Database migrations
+
+The schema lives in `db/migrations/` as numbered SQL files. To apply everything
+that has not run yet:
+
+```bash
+yarn migrate
+```
+
+The runner records each applied file in the `schema_migrations` table, so it is
+safe to run repeatedly. To add a change, create the next numbered file (for
+example `003_add_organizations.sql`) and run the command again. Never edit a
+migration that has already been applied: add a new one.
+
 ## How the translations work
 
 There is no external i18n library, and no `/es` or `/pt` URL prefixes. The
