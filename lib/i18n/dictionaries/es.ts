@@ -194,7 +194,7 @@ export const es: Dictionary = {
     'Tu cuenta todavía no está asignada a ninguna organización. Pídele a un administrador que te asigne una antes de gestionar llamamientos.',
   'callings.noCurrentCalling': 'Personas sin llamamiento vigente',
   'callings.noCurrentCallingIntro':
-    'Nadie está sirviendo actualmente. Quitar a una persona aquí es permanente y también elimina su historial de llamamientos.',
+    'Quitar a una persona aquí es permanente y también elimina su historial de llamamientos.',
   'callings.pastCallingsCount': '{count} llamamiento(s) anterior(es)',
   'callings.removePerson': 'Quitar persona',
   'callings.confirmRemovePerson':
