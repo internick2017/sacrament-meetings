@@ -254,6 +254,32 @@ export const en = {
   'validation.event.required.startsAt': 'The start date is required.',
   'validation.event.endBeforeStart': 'The end must be after the start.',
   'validation.event.invalidDate': 'Choose a valid date.',
+
+  'announcements.title': 'Announcements',
+  'announcements.intro': 'Notices for the branch and its organizations.',
+  'announcements.empty': 'No announcements to show.',
+  'announcements.new': 'New announcement',
+  'announcements.edit': 'Edit announcement',
+  'announcements.delete': 'Delete',
+  'announcements.confirmDelete': 'Delete this announcement permanently?',
+  'announcements.saved': 'Announcement saved.',
+  'announcements.deleted': 'Announcement deleted.',
+  'announcements.from': 'From',
+  'announcements.until': 'Until',
+  'announcements.expired': 'Expired',
+  'announcements.organization': 'Organization',
+  'announcements.unitWide': 'Whole unit',
+  'announcements.audience': 'Audience',
+  'announcements.publicLabel': 'Public',
+  'announcements.privateLabel': 'Private',
+  'announcements.body': 'Message',
+  'announcements.current': 'Current announcements',
+  'announcements.includeExpired': 'Include expired announcements',
+
+  'validation.announcement.required.title': 'The title is required.',
+  'validation.announcement.required.endsOn': 'The end date is required.',
+  'validation.announcement.endBeforeStart': 'The end must be after the start.',
+  'validation.announcement.invalidDate': 'Choose a valid date.',
 } as const;
 
 export type DictionaryKey = keyof typeof en;
