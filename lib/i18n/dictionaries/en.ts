@@ -149,6 +149,7 @@ export const en = {
 
   'validation.required.unitName': 'The unit needs a name.',
   'validation.required.timezone': 'The time zone is required.',
+  'validation.unit.invalidTimezone': 'Enter a valid time zone, e.g. America/Sao_Paulo.',
   'validation.unit.url': 'This must be a full link starting with https://',
 
   'nav.organizations': 'Organizations',
@@ -238,6 +239,15 @@ export const en = {
   'activities.branchWide': 'Whole unit',
   'activities.organization': 'Organization',
   'activities.signedOutNote': 'Sign in to see private activities.',
+  'activities.titleLabel': 'Title',
+  'activities.description': 'Description',
+  'activities.add': 'Add activity',
+  'activities.saveChanges': 'Save changes',
+  'activities.manageTitle': 'Manage activities',
+  'activities.manageIntro': 'Create, edit, and remove activities.',
+  'activities.noOrganizationAssigned':
+    'Your account is not assigned to an organization yet. Ask an admin to assign one.',
+  'activities.notFound': 'Activity not found.',
 
   'validation.event.required.title': 'The title is required.',
   'validation.event.required.startsAt': 'The start date is required.',

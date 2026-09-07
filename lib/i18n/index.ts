@@ -56,6 +56,7 @@ export function formatEventDateTime(
   locale: Locale,
   timeZone: string
 ): string {
+  const date = new Date(isoString);
   const options: Intl.DateTimeFormatOptions = {
     weekday: 'long',
     year: 'numeric',
@@ -67,5 +68,19 @@ export function formatEventDateTime(
     options.hour = 'numeric';
     options.minute = '2-digit';
   }
-  return new Date(isoString).toLocaleString(DATE_LOCALES[locale], options);
+  try {
+    return date.toLocaleString(DATE_LOCALES[locale], options);
+  } catch {
+    // A unit's timezone should already be validated by unit-schema.ts before
+    // it is ever saved, but this is the last line of defence: an
+    // unrecognized IANA zone (a bad value from before validation existed, or
+    // one that slipped in through a direct database edit) must never 500 a
+    // public page. Falling back to the runtime's own timezone still shows a
+    // real date, just not necessarily the congregation's local one.
+    try {
+      return date.toLocaleString(DATE_LOCALES[locale], { ...options, timeZone: undefined });
+    } catch {
+      return date.toISOString();
+    }
+  }
 }

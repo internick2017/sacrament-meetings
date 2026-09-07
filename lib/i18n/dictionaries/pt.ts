@@ -151,6 +151,7 @@ export const pt: Dictionary = {
 
   'validation.required.unitName': 'A unidade precisa de um nome.',
   'validation.required.timezone': 'O fuso horário é obrigatório.',
+  'validation.unit.invalidTimezone': 'Informe um fuso horário válido, por exemplo America/Sao_Paulo.',
   'validation.unit.url': 'Isto deve ser um link completo começando com https://',
 
   'nav.organizations': 'Organizações',
@@ -240,6 +241,15 @@ export const pt: Dictionary = {
   'activities.branchWide': 'Toda a unidade',
   'activities.organization': 'Organização',
   'activities.signedOutNote': 'Entre para ver as atividades privadas.',
+  'activities.titleLabel': 'Título',
+  'activities.description': 'Descrição',
+  'activities.add': 'Adicionar atividade',
+  'activities.saveChanges': 'Salvar alterações',
+  'activities.manageTitle': 'Gerenciar atividades',
+  'activities.manageIntro': 'Crie, edite e remova atividades.',
+  'activities.noOrganizationAssigned':
+    'Sua conta ainda nao tem uma organizacao atribuida. Peca a um admin para atribuir uma.',
+  'activities.notFound': 'Atividade não encontrada.',
 
   'validation.event.required.title': 'O título é obrigatório.',
   'validation.event.required.startsAt': 'A data de início é obrigatória.',

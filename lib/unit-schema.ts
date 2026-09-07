@@ -3,6 +3,20 @@ import type { Translator } from './i18n';
 
 const UNIT_TYPES = ['ward', 'branch'] as const;
 
+// Intl.DateTimeFormat throws a RangeError for a timeZone it does not
+// recognize, instead of returning a validation result. Probing it here
+// (once, at form-validation time) is what stops a typo'd IANA zone from
+// ever reaching the database, where it would later throw inside
+// formatEventDateTime and 500 a public page.
+function isValidTimeZone(value: string): boolean {
+  try {
+    new Intl.DateTimeFormat(undefined, { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Built per request, not at module load, so every message comes from the
 // visitor's dictionary. Same reason as meetingFormSchema in lib/actions.ts.
 export function unitFormSchema(t: Translator) {
@@ -28,7 +42,11 @@ export function unitFormSchema(t: Translator) {
     stakeName: z.string().trim(),
     address: z.string().trim(),
     meetingTimes: z.string().trim(),
-    timezone: z.string().trim().min(1, t('validation.required.timezone')),
+    timezone: z
+      .string()
+      .trim()
+      .min(1, t('validation.required.timezone'))
+      .refine(isValidTimeZone, { message: t('validation.unit.invalidTimezone') }),
     calendarUrl: optionalUrl,
     directoryUrl: optionalUrl,
     contactNote: z.string().trim(),

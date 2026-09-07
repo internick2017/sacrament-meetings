@@ -73,4 +73,15 @@ describe('unitFormSchema', () => {
     const result = unitFormSchema(t).safeParse({ ...valid, calendarUrl: '' });
     expect(result.success).toBe(true);
   });
+
+  it('rejects a timezone that is not a real IANA zone', () => {
+    const result = unitFormSchema(t).safeParse({ ...valid, timezone: 'Not/AZone' });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0].path).toEqual(['timezone']);
+  });
+
+  it('accepts a valid IANA timezone', () => {
+    const result = unitFormSchema(t).safeParse({ ...valid, timezone: 'America/Sao_Paulo' });
+    expect(result.success).toBe(true);
+  });
 });
