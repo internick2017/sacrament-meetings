@@ -33,7 +33,10 @@ export default function NavLinks({ role }: { role: Role | null }) {
         ]
       : []),
     ...(role === 'admin' || role === 'leader'
-      ? [{ href: '/callings', label: 'callings.title' as const }]
+      ? [
+          { href: '/callings', label: 'callings.title' as const },
+          { href: '/announcements', label: 'announcements.title' as const },
+        ]
       : []),
     ...(role === null ? [{ href: '/login', label: 'nav.signIn' as const }] : []),
   ];

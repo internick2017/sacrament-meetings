@@ -278,7 +278,7 @@ export const en = {
 
   'validation.announcement.required.title': 'The title is required.',
   'validation.announcement.required.endsOn': 'The end date is required.',
-  'validation.announcement.endBeforeStart': 'The end must be after the start.',
+  'validation.announcement.endBeforeStart': 'The end must not be before the start.',
   'validation.announcement.invalidDate': 'Choose a valid date.',
 } as const;
 

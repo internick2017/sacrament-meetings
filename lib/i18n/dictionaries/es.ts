@@ -280,6 +280,6 @@ export const es: Dictionary = {
 
   'validation.announcement.required.title': 'El título es obligatorio.',
   'validation.announcement.required.endsOn': 'La fecha de fin es obligatoria.',
-  'validation.announcement.endBeforeStart': 'El fin debe ser posterior al inicio.',
+  'validation.announcement.endBeforeStart': 'El fin no puede ser anterior al inicio.',
   'validation.announcement.invalidDate': 'Elige una fecha válida.',
 };

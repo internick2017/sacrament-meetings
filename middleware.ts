@@ -18,5 +18,8 @@ export const config = {
     '/users',
     '/activities/new',
     '/activities/:id/edit',
+    '/announcements',
+    '/announcements/new',
+    '/announcements/:id/edit',
   ],
 };

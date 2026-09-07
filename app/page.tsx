@@ -1,10 +1,18 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import AnnouncementList from '@/components/AnnouncementList';
 import { getT } from '@/lib/i18n/server';
 import { getUnit } from '@/lib/unit-db';
+import { getAnnouncements } from '@/lib/announcements-db';
+import { getSessionUser } from '@/lib/authz';
 
 export default async function HomePage() {
-  const [t, unit] = await Promise.all([getT(), getUnit()]);
+  const [t, unit, sessionUser] = await Promise.all([getT(), getUnit(), getSessionUser()]);
+
+  // In-force announcements this visitor may see: getAnnouncements already
+  // excludes expired ones by default, and audienceFilter (inside it) already
+  // excludes private ones for an anonymous visitor.
+  const announcements = await getAnnouncements({ signedIn: sessionUser !== null });
 
   // Every unit field is optional in practice: a freshly migrated database has
   // them all empty, and the page has to look deliberate in that state rather
@@ -63,6 +71,16 @@ export default async function HomePage() {
 
       {unit.contactNote && (
         <p className="max-w-xl text-sm text-slate-500">{unit.contactNote}</p>
+      )}
+
+      {/* Same rule as the official-links block above: with nothing to show,
+          the section does not render at all. A front page with an
+          "Announcements" heading over an empty list looks broken. */}
+      {announcements.length > 0 && (
+        <div className="w-full max-w-xl space-y-2 text-left">
+          <h2 className="text-center font-semibold">{t('announcements.current')}</h2>
+          <AnnouncementList announcements={announcements} t={t} />
+        </div>
       )}
     </section>
   );
