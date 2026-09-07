@@ -3,6 +3,7 @@
 import { AuthError } from 'next-auth';
 import { signIn, signOut } from './auth';
 import { getT } from './i18n/server';
+import { hasRecentVerificationToken } from './users-db';
 
 export interface LoginFormState {
   error?: string;
@@ -57,11 +58,20 @@ export async function requestMagicLinkAction(
   const t = await getT();
   const email = String(formData.get('email') ?? '').trim();
 
-  try {
-    await signIn('resend', { email, redirect: false });
-  } catch (error) {
-    if (!(error instanceof AuthError)) {
-      throw error;
+  // Rate limit here, before signIn() ever runs: @auth/core sends the e-mail
+  // and writes the verification-token row in a Promise.all, so a throttle
+  // placed inside the adapter (createVerificationToken) cannot stop the
+  // e-mail — it can only skip the row, leaving a second, newer, dead link in
+  // the recipient's inbox. Refusing to start the flow at all is the only
+  // place this can actually work. The response below is unconditional and
+  // identical to the accepted path, so a throttled request reveals nothing.
+  if (!(await hasRecentVerificationToken(email))) {
+    try {
+      await signIn('resend', { email, redirect: false });
+    } catch (error) {
+      if (!(error instanceof AuthError)) {
+        throw error;
+      }
     }
   }
 

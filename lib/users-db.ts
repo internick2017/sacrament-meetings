@@ -145,3 +145,29 @@ export async function getUserByUsername(username: string): Promise<AuthUser | un
     ? { id: row.id, username: row.username, passwordHash: row.password_hash }
     : undefined;
 }
+
+// Minimum time an identifier must wait before requestMagicLinkAction is
+// allowed to start another sign-in flow for it. Kept here (rather than in
+// auth-adapter.ts's createVerificationToken) because @auth/core races
+// sendVerificationRequest and createVerificationToken in a Promise.all, so a
+// throttle inside the adapter cannot stop the e-mail itself — only refusing
+// the call to signIn() before it starts can. See auth-actions.ts.
+const MAGIC_LINK_THROTTLE_SECONDS = 60;
+
+// True when a verification_token row for this address (case-insensitive,
+// matching the `identifier` @auth/core stores, which is the raw e-mail) was
+// created within the throttle window and has not yet expired. Comparison is
+// done with lower() to match the lower(email) unique index used elsewhere in
+// this project, since the identifier is not normalized before @auth/core
+// hands it to the adapter.
+export async function hasRecentVerificationToken(email: string): Promise<boolean> {
+  const rows = (await sql.query(
+    `SELECT 1 FROM verification_token
+      WHERE lower(identifier) = lower($1)
+        AND expires > now()
+        AND created_at > now() - make_interval(secs => $2)
+      LIMIT 1`,
+    [email, MAGIC_LINK_THROTTLE_SECONDS]
+  )) as unknown[];
+  return rows.length > 0;
+}

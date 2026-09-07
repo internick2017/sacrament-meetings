@@ -183,6 +183,8 @@ export const en = {
   'callings.delete': 'Delete',
   'callings.confirmDelete': 'Delete this calling permanently?',
   'callings.current': 'Current callings',
+  'callings.noOrganizationAssigned':
+    'Your account is not assigned to an organization yet. Ask an admin to assign one before you can manage callings.',
 
   'validation.required.personName': 'A name is required.',
   'validation.required.callingTitle': 'The position is required.',

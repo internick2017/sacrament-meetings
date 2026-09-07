@@ -22,6 +22,19 @@ export default async function CallingsPage() {
       ? allOrganizations
       : allOrganizations.filter((organization) => organization.id === sessionUser?.organizationId);
 
+  // A leader whose account has no organizationId yet (not assigned by an
+  // admin) would otherwise see an empty, unusable <select> in CallingForm —
+  // organizationKeys would be []. Show a clear message instead of a form
+  // with nothing to pick.
+  if (sessionUser?.role !== 'admin' && organizations.length === 0) {
+    return (
+      <section className="space-y-6">
+        <h1 className="text-2xl font-bold">{t('callings.title')}</h1>
+        <p className="max-w-xl text-slate-600">{t('callings.noOrganizationAssigned')}</p>
+      </section>
+    );
+  }
+
   return (
     <section className="space-y-6">
       <h1 className="text-2xl font-bold">{t('callings.title')}</h1>

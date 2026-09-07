@@ -185,6 +185,8 @@ export const es: Dictionary = {
   'callings.delete': 'Eliminar',
   'callings.confirmDelete': '¿Eliminar este llamamiento definitivamente?',
   'callings.current': 'Llamamientos vigentes',
+  'callings.noOrganizationAssigned':
+    'Tu cuenta todavía no está asignada a ninguna organización. Pídele a un administrador que te asigne una antes de gestionar llamamientos.',
 
   'validation.required.personName': 'El nombre es obligatorio.',
   'validation.required.callingTitle': 'El cargo es obligatorio.',

@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { auth } from './auth';
 import { ROLES } from './types';
 import type { SessionUser } from './types';
@@ -23,8 +24,12 @@ function parseOrganizationId(value: unknown): number | null {
 }
 
 // Read the current user off the session. Returns null for an anonymous
-// visitor. Everything else in this file is built on top of this.
-export async function getSessionUser(): Promise<SessionUser | null> {
+// visitor. Everything else in this file is built on top of this. Wrapped in
+// React's cache() the same way getOrganizations/getUnit are, so the layout,
+// the page, and any Server Action that all call this during one render
+// collapse to a single `SELECT ... FROM users WHERE id = $1` instead of
+// running it 3-4 times.
+export const getSessionUser = cache(async function getSessionUser(): Promise<SessionUser | null> {
   const session = await auth();
   const user = session?.user;
   if (!user?.id) {
@@ -42,7 +47,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     role: role && (ROLES as readonly string[]).includes(role) ? role : 'member',
     organizationId: parseOrganizationId(organizationId),
   };
-}
+});
 
 export async function requireAdmin(): Promise<SessionUser> {
   const user = await getSessionUser();
