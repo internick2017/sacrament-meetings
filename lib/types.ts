@@ -115,6 +115,21 @@ export interface EventItem {
 
 export type EventInput = Omit<EventItem, 'id' | 'organizationKey'>;
 
+// An announcement: a piece of text with an expiry. `organizationId` null means
+// it belongs to the whole unit, which only an admin may write.
+export interface Announcement {
+  id: number;
+  organizationId: number | null;
+  organizationKey: OrganizationKey | null;
+  title: string;
+  body: string;
+  startsOn: string | null; // 'YYYY-MM-DD'
+  endsOn: string; // 'YYYY-MM-DD', never null: announcements expire on purpose
+  audience: Audience;
+}
+
+export type AnnouncementInput = Omit<Announcement, 'id' | 'organizationKey'>;
+
 export const ROLES = ['admin', 'leader', 'member'] as const;
 
 export type Role = (typeof ROLES)[number];
