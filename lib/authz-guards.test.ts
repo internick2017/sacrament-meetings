@@ -12,7 +12,15 @@ vi.mock('./auth', () => ({
 import { auth } from './auth';
 import { requireAdmin, requireLeaderOf, NotAuthorizedError } from './authz';
 
-const mockAuth = vi.mocked(auth);
+// `auth` is overloaded (it also serves as Next.js middleware), and
+// vi.mocked() picks the NextMiddleware overload, which does not accept a
+// Session as its resolved value. Cast to the specific overload actually used
+// here — a plain `() => Promise<Session | null>` call with no arguments —
+// rather than weakening the assertions below.
+const mockAuth = vi.mocked(auth) as unknown as {
+  mockReset: () => void;
+  mockResolvedValue: (value: Session | null) => void;
+};
 
 function sessionFor(role: string, organizationId: number | null): Session {
   return {

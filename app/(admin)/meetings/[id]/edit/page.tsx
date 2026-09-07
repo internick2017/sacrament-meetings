@@ -1,5 +1,6 @@
-import { notFound } from 'next/navigation';
+import { redirect, notFound } from 'next/navigation';
 import { getMeetingById } from '@/lib/meetings-db';
+import { getSessionUser } from '@/lib/authz';
 import EditMeetingForm from './EditMeetingForm';
 import { getT } from '@/lib/i18n/server';
 
@@ -8,6 +9,15 @@ export default async function EditMeetingPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const sessionUser = await getSessionUser();
+
+  // The (admin) layout lets a leader through too, since /callings is shared.
+  // Editing a meeting is admin-only, so it needs its own tighter gate here
+  // (same pattern as /users, /unit, and /meetings/new).
+  if (sessionUser?.role !== 'admin') {
+    redirect('/login');
+  }
+
   const t = await getT();
   const { id } = await params;
   const numericId = Number(id);

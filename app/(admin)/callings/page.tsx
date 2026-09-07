@@ -1,18 +1,33 @@
 import { getOrganizations } from '@/lib/organizations-db';
+import { getSessionUser } from '@/lib/authz';
 import { getT } from '@/lib/i18n/server';
 import CallingForm from '@/components/CallingForm';
 import CallingRowActions from '@/components/CallingRowActions';
 import type { DictionaryKey } from '@/lib/i18n';
 
 export default async function CallingsPage() {
-  const [organizations, t] = await Promise.all([getOrganizations(true), getT()]);
+  const [sessionUser, allOrganizations, t] = await Promise.all([
+    getSessionUser(),
+    getOrganizations(true),
+    getT(),
+  ]);
+
+  // /callings is shared between admin and leader (unlike /users or /unit).
+  // An admin sees every organization; a leader sees only their own, in both
+  // the list below and the org picker in the add form. This is UI scoping
+  // only — the server-side guard in callings-actions.ts (requireLeaderOf)
+  // still enforces who can actually write to which organization.
+  const organizations =
+    sessionUser?.role === 'admin'
+      ? allOrganizations
+      : allOrganizations.filter((organization) => organization.id === sessionUser?.organizationId);
 
   return (
     <section className="space-y-6">
       <h1 className="text-2xl font-bold">{t('callings.title')}</h1>
       <p className="max-w-xl text-slate-600">{t('callings.intro')}</p>
 
-      <CallingForm />
+      <CallingForm organizationKeys={organizations.map((organization) => organization.key)} />
 
       <div className="space-y-4">
         <h2 className="text-xl font-bold">{t('callings.current')}</h2>

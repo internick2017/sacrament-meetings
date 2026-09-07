@@ -197,7 +197,7 @@ export const es: Dictionary = {
 
   'users.title': 'Usuarios',
   'users.intro':
-    'Un cambio de rol se aplica recién en el próximo inicio de sesión de esa persona. Una sesión ya abierta no cambia.',
+    'Un cambio de rol se aplica en la próxima solicitud de esa persona, sin necesidad de volver a iniciar sesión. Eliminar un usuario revoca el acceso de la misma manera.',
   'users.email': 'Correo electrónico',
   'users.role': 'Rol',
   'users.organization': 'Organización',

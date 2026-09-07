@@ -197,7 +197,7 @@ export const pt: Dictionary = {
 
   'users.title': 'Usuários',
   'users.intro':
-    'Uma mudança de função só entra em vigor no próximo login dessa pessoa. Uma sessão já aberta não muda.',
+    'Uma mudança de função entra em vigor na próxima solicitação dessa pessoa, sem precisar fazer login novamente. Excluir um usuário revoga o acesso da mesma forma.',
   'users.email': 'E-mail',
   'users.role': 'Função',
   'users.organization': 'Organização',

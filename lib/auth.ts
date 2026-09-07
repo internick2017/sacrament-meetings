@@ -48,6 +48,13 @@ export const authConfig: NextAuthConfig = {
           return null;
         }
 
+        // Member accounts (migration 004 onward) have no password hash and
+        // sign in only via magic link. Reject the credentials attempt before
+        // ever calling bcrypt.compare, which requires a string.
+        if (!user.passwordHash) {
+          return null;
+        }
+
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) {
           return null;
@@ -61,8 +68,12 @@ export const authConfig: NextAuthConfig = {
   pages: {
     signIn: '/login',
   },
+  // 12 hours rather than the default 30 days: deleting a user (or changing
+  // their role) must take effect quickly, and the jwt callback below is what
+  // actually enforces that on every re-issue within this window.
   session: {
     strategy: 'jwt',
+    maxAge: 60 * 60 * 12,
   },
   callbacks: {
     // THE ALLOW-LIST. The users table is the list: an e-mail with no row gets
@@ -80,18 +91,39 @@ export const authConfig: NextAuthConfig = {
       return true;
     },
 
-    // Roles live on the JWT so every request has them without a query. They are
-    // read from the database at sign-in time, never from anything the client
-    // sent. NOTE: because of this, a role change in the database does not take
-    // effect until the person signs in again.
+    // Roles live on the JWT so most requests avoid a query, but the row is
+    // re-read on every request (not just at sign-in): this is what makes
+    // deleting a user, or changing their role, actually take effect instead
+    // of waiting up to `session.maxAge` for the old JWT to expire. The cost
+    // is one extra DB read per request that needs a session — accepted as
+    // the price of removal actually meaning removal.
     async jwt({ token, user }) {
       if (user?.id) {
+        // First issuance, right after sign-in: `user` is the freshly
+        // authenticated account, trusted as-is.
         const appUser = await getAppUserById(Number(user.id));
         if (appUser) {
           token.role = appUser.role;
           token.organizationId = appUser.organizationId;
         }
+        return token;
       }
+
+      // Every subsequent request: re-read the row so a deleted user loses
+      // their session promptly and a role change applies without requiring
+      // a fresh sign-in.
+      if (token.sub) {
+        const appUser = await getAppUserById(Number(token.sub));
+        if (!appUser) {
+          // Returning null invalidates the session (see the `jwt` callback's
+          // `Awaitable<JWT | null>` return type in @auth/core) — the row is
+          // gone, so the token must stop being honored.
+          return null;
+        }
+        token.role = appUser.role;
+        token.organizationId = appUser.organizationId;
+      }
+
       return token;
     },
 

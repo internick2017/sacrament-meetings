@@ -3,12 +3,21 @@
 import { useActionState, useState } from 'react';
 import { addCallingAction, type CallingFormState } from '@/lib/callings-actions';
 import { useT } from '@/lib/i18n/client';
-import { ORGANIZATION_KEYS } from '@/lib/types';
+import { ORGANIZATION_KEYS, type OrganizationKey } from '@/lib/types';
 import type { DictionaryKey } from '@/lib/i18n';
 
 const INPUT = 'w-full rounded border border-slate-300 px-3 py-2';
 
-export default function CallingForm() {
+interface CallingFormProps {
+  // Which organizations show in the picker. Defaults to all seven (admin);
+  // the callings page passes just the leader's own organization for a
+  // leader, so the picker never offers an organization they cannot add to
+  // (the server-side guard in callings-actions.ts still enforces this
+  // regardless — this only scopes what the UI shows).
+  organizationKeys?: readonly OrganizationKey[];
+}
+
+export default function CallingForm({ organizationKeys = ORGANIZATION_KEYS }: CallingFormProps) {
   const t = useT();
   const [state, formAction, pending] = useActionState<CallingFormState, FormData>(
     addCallingAction,
@@ -55,11 +64,11 @@ export default function CallingForm() {
         <span className="font-semibold">{t('callings.organization')}</span>
         <select
           name="organizationKey"
-          defaultValue={state.values?.organizationKey ?? ORGANIZATION_KEYS[0]}
+          defaultValue={state.values?.organizationKey ?? organizationKeys[0]}
           aria-describedby="organizationKey-error"
           className={INPUT}
         >
-          {ORGANIZATION_KEYS.map((key) => (
+          {organizationKeys.map((key) => (
             <option key={key} value={key}>
               {t(`organization.${key}` as DictionaryKey)}
             </option>

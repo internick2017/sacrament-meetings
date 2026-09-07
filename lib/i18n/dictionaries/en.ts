@@ -195,7 +195,7 @@ export const en = {
 
   'users.title': 'Users',
   'users.intro':
-    'A role change only takes effect the next time that person signs in. Nothing changes for a session already open.',
+    'A role change takes effect on that person’s next request, without needing to sign in again. Deleting a user revokes their access the same way.',
   'users.email': 'Email',
   'users.role': 'Role',
   'users.organization': 'Organization',

@@ -121,13 +121,15 @@ export async function deleteUser(id: number): Promise<void> {
 export interface AuthUser {
   id: number;
   username: string;
-  passwordHash: string;
+  // Nullable since migration 004: member accounts sign in only via magic
+  // link and never get a password row.
+  passwordHash: string | null;
 }
 
 interface UserRow {
   id: number;
   username: string;
-  password_hash: string;
+  password_hash: string | null;
 }
 
 // Look up a single user by username for the Credentials provider's
