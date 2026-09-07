@@ -11,6 +11,7 @@ const links: { href: string; label: DictionaryKey }[] = [
   { href: '/', label: 'nav.home' },
   { href: '/meetings', label: 'nav.meetings' },
   { href: '/meetings/current', label: 'nav.current' },
+  { href: '/organizations', label: 'nav.organizations' },
 ];
 
 export default function NavLinks({ isAdmin }: { isAdmin: boolean }) {

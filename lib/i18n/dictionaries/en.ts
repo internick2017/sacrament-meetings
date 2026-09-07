@@ -146,6 +146,26 @@ export const en = {
   'validation.required.unitName': 'The unit needs a name.',
   'validation.required.timezone': 'The time zone is required.',
   'validation.unit.url': 'This must be a full link starting with https://',
+
+  'nav.organizations': 'Organizations',
+
+  'organization.bishopric': 'Bishopric',
+  'organization.elders_quorum': 'Elders Quorum',
+  'organization.relief_society': 'Relief Society',
+  'organization.young_men': 'Young Men',
+  'organization.young_women': 'Young Women',
+  'organization.primary': 'Primary',
+  'organization.sunday_school': 'Sunday School',
+
+  'organizations.title': 'Organizations',
+  'organizations.intro':
+    'Who is responsible for what in this unit. To reach someone, use the official Church tools.',
+  'organizations.signedOutNote':
+    'Sign in to see who currently holds each position.',
+  'organizations.contactBishopric': 'Contact the bishopric',
+  'organizations.noCallings': 'No one is listed here yet.',
+  'organizations.notFound': 'Organization not found',
+  'organizations.back': 'All organizations',
 } as const;
 
 export type DictionaryKey = keyof typeof en;

@@ -148,4 +148,24 @@ export const pt: Dictionary = {
   'validation.required.unitName': 'A unidade precisa de um nome.',
   'validation.required.timezone': 'O fuso horário é obrigatório.',
   'validation.unit.url': 'Isto deve ser um link completo começando com https://',
+
+  'nav.organizations': 'Organizações',
+
+  'organization.bishopric': 'Bispado',
+  'organization.elders_quorum': 'Quórum de Élderes',
+  'organization.relief_society': 'Sociedade de Socorro',
+  'organization.young_men': 'Rapazes',
+  'organization.young_women': 'Moças',
+  'organization.primary': 'Primária',
+  'organization.sunday_school': 'Escola Dominical',
+
+  'organizations.title': 'Organizações',
+  'organizations.intro':
+    'Quem é responsável por cada coisa nesta unidade. Para falar com alguém, use as ferramentas oficiais da Igreja.',
+  'organizations.signedOutNote':
+    'Entre para ver quem ocupa cada cargo.',
+  'organizations.contactBishopric': 'Falar com o bispado',
+  'organizations.noCallings': 'Ainda não há ninguém registrado aqui.',
+  'organizations.notFound': 'Organização não encontrada',
+  'organizations.back': 'Todas as organizações',
 };
