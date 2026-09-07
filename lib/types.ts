@@ -92,6 +92,29 @@ export interface OrganizationWithCallings extends Organization {
   callings: Calling[];
 }
 
+export const AUDIENCES = ['public', 'private'] as const;
+
+export type Audience = (typeof AUDIENCES)[number];
+
+// An activity. `organizationId` null means it belongs to the whole branch,
+// which only an admin may edit. This table records what happens, never who
+// attends.
+export interface EventItem {
+  id: number;
+  organizationId: number | null;
+  organizationKey: OrganizationKey | null;
+  title: string;
+  description: string;
+  location: string;
+  startsAt: string; // ISO 8601
+  endsAt: string | null;
+  allDay: boolean;
+  audience: Audience;
+  coverUrl: string | null;
+}
+
+export type EventInput = Omit<EventItem, 'id' | 'organizationKey'>;
+
 export const ROLES = ['admin', 'leader', 'member'] as const;
 
 export type Role = (typeof ROLES)[number];
