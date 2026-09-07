@@ -32,10 +32,11 @@ vi.mock('next-auth', () => ({
   default: () => ({ handlers: {}, auth: vi.fn(), signIn: vi.fn(), signOut: vi.fn() }),
 }));
 
-import { getAppUserById } from './users-db';
+import { getAppUserById, getUserByEmail } from './users-db';
 import { authConfig } from './auth';
 
 const mockGetAppUserById = vi.mocked(getAppUserById);
+const mockGetUserByEmail = vi.mocked(getUserByEmail);
 
 describe('auth callbacks: role propagation to the session', () => {
   beforeEach(() => {
@@ -133,5 +134,87 @@ describe('auth callbacks: role propagation to the session', () => {
     } as never)) as JWT;
 
     expect(token.role).toBeUndefined();
+  });
+});
+
+// Finding 1 (fix round 1): the allow-list must be enforced on BOTH the SEND
+// path (email.verificationRequest set, e.g. when @auth/core is about to mail
+// a link) and the REDEEM path (no `email` argument at all — @auth/core only
+// sets that flag when sending, never when a link is clicked). Gating on the
+// flag alone left a since-removed user's still-valid link usable for up to
+// 24h; gating on account.type === 'email' covers both paths with one check.
+describe('auth callbacks: signIn allow-list', () => {
+  beforeEach(() => {
+    mockGetUserByEmail.mockReset();
+  });
+
+  it('allows a known email on the SEND path', async () => {
+    mockGetUserByEmail.mockResolvedValue({
+      id: 1,
+      username: null,
+      email: 'known@example.org',
+      role: 'member',
+      organizationId: null,
+      personId: null,
+    });
+
+    const result = await authConfig.callbacks!.signIn!({
+      user: { email: 'known@example.org' },
+      account: { type: 'email' },
+      email: { verificationRequest: true },
+    } as never);
+
+    expect(result).toBe(true);
+  });
+
+  it('rejects an unknown email on the SEND path', async () => {
+    mockGetUserByEmail.mockResolvedValue(undefined);
+
+    const result = await authConfig.callbacks!.signIn!({
+      user: { email: 'unknown@example.org' },
+      account: { type: 'email' },
+      email: { verificationRequest: true },
+    } as never);
+
+    expect(result).toBe(false);
+  });
+
+  it('allows a known email on the REDEEM path (no `email` argument, only account.type)', async () => {
+    mockGetUserByEmail.mockResolvedValue({
+      id: 1,
+      username: null,
+      email: 'known@example.org',
+      role: 'member',
+      organizationId: null,
+      personId: null,
+    });
+
+    const result = await authConfig.callbacks!.signIn!({
+      user: { email: 'known@example.org' },
+      account: { type: 'email' },
+    } as never);
+
+    expect(result).toBe(true);
+  });
+
+  it('rejects an unknown email on the REDEEM path — this is the case that was broken', async () => {
+    mockGetUserByEmail.mockResolvedValue(undefined);
+
+    const result = await authConfig.callbacks!.signIn!({
+      user: { email: 'removed@example.org' },
+      account: { type: 'email' },
+    } as never);
+
+    expect(result).toBe(false);
+  });
+
+  it('allows a credentials sign-in without consulting the allow-list', async () => {
+    const result = await authConfig.callbacks!.signIn!({
+      user: { id: '1', name: 'bishop' },
+      account: { type: 'credentials' },
+    } as never);
+
+    expect(result).toBe(true);
+    expect(mockGetUserByEmail).not.toHaveBeenCalled();
   });
 });

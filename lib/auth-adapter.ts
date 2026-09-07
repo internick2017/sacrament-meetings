@@ -25,7 +25,11 @@ export const postgresAdapter: Adapter = {
   },
 
   async getUser(id) {
-    const user = await getAppUserById(Number(id));
+    const numericId = Number(id);
+    if (!Number.isInteger(numericId)) {
+      return null;
+    }
+    const user = await getAppUserById(numericId);
     return user ? toAdapterUser(user) : null;
   },
 
@@ -45,7 +49,11 @@ export const postgresAdapter: Adapter = {
   },
 
   async updateUser(user) {
-    const existing = await getAppUserById(Number(user.id));
+    const numericId = Number(user.id);
+    if (!Number.isInteger(numericId)) {
+      throw new Error('User not found');
+    }
+    const existing = await getAppUserById(numericId);
     if (!existing) {
       throw new Error('User not found');
     }

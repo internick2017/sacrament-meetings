@@ -18,6 +18,11 @@ const resendProviders = process.env.AUTH_RESEND_KEY
     ]
   : [];
 
+// Whether magic-link sign-in is actually available, for the login form to
+// decide whether to show that option. Server-side only: never expose the key
+// itself, only this boolean, to the client.
+export const magicLinkEnabled = Boolean(process.env.AUTH_RESEND_KEY);
+
 // Exported (rather than kept inline in the NextAuth() call) so the jwt/session
 // callbacks can be exercised directly by tests, without going through next-auth
 // internals or a real database. See auth.test.ts: it proves that a user whose
@@ -61,11 +66,16 @@ export const authConfig: NextAuthConfig = {
   },
   callbacks: {
     // THE ALLOW-LIST. The users table is the list: an e-mail with no row gets
-    // no link. Returning false here stops the mail before it is sent.
-    async signIn({ user, email }) {
-      if (email?.verificationRequest) {
-        const known = user.email ? await getUserByEmail(user.email) : undefined;
-        return !!known;
+    // no link. This must be checked both when the link is SENT (email.verificationRequest
+    // is set, account.type === 'email') and when it is REDEEMED (no `email` argument,
+    // but account.type is still 'email') — @auth/core only sets `email` on the send
+    // path, so gating on that flag alone lets a since-removed user's still-valid
+    // (up to 24h) link keep working. Checking account.type covers both paths with
+    // one condition. The credentials path authenticates by its own means and is
+    // not subject to this allow-list.
+    async signIn({ user, account }) {
+      if (account?.type === 'email') {
+        return user.email ? !!(await getUserByEmail(user.email)) : false;
       }
       return true;
     },
@@ -88,9 +98,8 @@ export const authConfig: NextAuthConfig = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = String(token.sub ?? session.user.id);
-        (session.user as { role?: string }).role = token.role as string | undefined;
-        (session.user as { organizationId?: number | null }).organizationId =
-          (token.organizationId as number | null) ?? null;
+        session.user.role = token.role;
+        session.user.organizationId = token.organizationId ?? null;
       }
       return session;
     },

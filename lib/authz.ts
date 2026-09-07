@@ -1,6 +1,6 @@
 import { auth } from './auth';
 import { ROLES } from './types';
-import type { Role, SessionUser } from './types';
+import type { SessionUser } from './types';
 import { canEditOrganization, NotAuthorizedError } from './authz-rules';
 
 // Re-exported so every existing and future caller of this module keeps
@@ -31,8 +31,8 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     return null;
   }
 
-  const role = (user as { role?: Role }).role;
-  const organizationId = (user as { organizationId?: number | string | null }).organizationId;
+  const role = user.role;
+  const organizationId = user.organizationId;
 
   return {
     id: user.id,
