@@ -3,6 +3,9 @@ import Credentials from 'next-auth/providers/credentials';
 import Resend from 'next-auth/providers/resend';
 import Nodemailer from 'next-auth/providers/nodemailer';
 import bcrypt from 'bcryptjs';
+import { createTransport } from 'nodemailer';
+import { buildMagicLinkEmail } from './magic-link-email';
+import { getUnit } from './unit-db';
 import { getUserByUsername, getUserByEmail, getAppUserById } from './users-db';
 import { postgresAdapter } from './auth-adapter';
 
@@ -12,6 +15,21 @@ import { postgresAdapter } from './auth-adapter';
 // stays as the fallback so the live site keeps working until Gmail is set up.
 // With neither configured the option is not offered and password sign-in keeps
 // working.
+async function unitDisplayName(): Promise<string> {
+  try {
+    const unit = await getUnit();
+    const name = unit.name.trim();
+    if (!name) {
+      return '';
+    }
+    return `${unit.unitType === 'ward' ? 'Ala' : 'Ramo'} ${name}`;
+  } catch {
+    // A failed lookup must not block someone from signing in: the e-mail falls
+    // back to a neutral name.
+    return '';
+  }
+}
+
 function emailProvider() {
   const gmailUser = process.env.AUTH_GMAIL_USER;
   const gmailPassword = process.env.AUTH_GMAIL_APP_PASSWORD;
@@ -24,6 +42,23 @@ function emailProvider() {
         auth: { user: gmailUser, pass: gmailPassword },
       },
       from: process.env.AUTH_EMAIL_FROM ?? gmailUser,
+      async sendVerificationRequest({ identifier, url, provider }) {
+        const unitName = await unitDisplayName();
+        const { subject, text, html } = buildMagicLinkEmail({ url, unitName });
+        const result = await createTransport(provider.server).sendMail({
+          to: identifier,
+          // The ward's name as the sender's display name, so the inbox shows
+          // who is writing instead of a bare Gmail address.
+          from: process.env.AUTH_EMAIL_FROM ?? { name: unitName, address: gmailUser },
+          subject,
+          text,
+          html,
+        });
+        const failed = [...(result.rejected ?? []), ...(result.pending ?? [])];
+        if (failed.length) {
+          throw new Error(`Magic-link e-mail could not be sent to ${failed.join(', ')}`);
+        }
+      },
     });
   }
   if (process.env.AUTH_RESEND_KEY) {
