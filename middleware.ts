@@ -10,6 +10,10 @@ export default auth((req) => {
 });
 
 export const config = {
+  // lib/auth.ts pulls in nodemailer (magic links over Gmail), which needs
+  // Node's stream module. The default edge runtime cannot load it and every
+  // protected route answered 500, so the middleware runs on Node instead.
+  runtime: 'nodejs',
   matcher: [
     '/meetings/new',
     '/meetings/:id/edit',
