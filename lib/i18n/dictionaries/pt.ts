@@ -339,6 +339,20 @@ export const pt: Dictionary = {
 
   'header.unnamedUnit': 'Nossa unidade',
 
+  'speakers.title': 'Discursantes',
+  'speakers.intro': 'Todos que já discursaram na reunião sacramental, começando por quem discursou há mais tempo. Quem só tem discurso marcado aparece no final.',
+  'speakers.rosterNote': 'Quem nunca discursou não aparece, porque o site não tem uma lista de membros da ala.',
+  'speakers.search': 'Buscar por nome',
+  'speakers.name': 'Nome',
+  'speakers.times': 'Vezes',
+  'speakers.last': 'Último discurso',
+  'speakers.next': 'Próximo',
+  'speakers.thisWeek': 'esta semana',
+  'speakers.weeksAgoOne': 'há 1 semana',
+  'speakers.weeksAgo': 'há {count} semanas',
+  'speakers.empty': 'Nenhum discursante registrado ainda.',
+  'speakers.noMatch': 'Ninguém corresponde à busca.',
+
   'forbidden.title': 'Você não tem permissão',
   'forbidden.body':
     'Sua conta não tem acesso a esta parte do site. Se você acha que isso é um engano, peça ao bispado para alterar as permissões da sua conta.',

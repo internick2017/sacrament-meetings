@@ -337,6 +337,20 @@ export const en = {
 
   'header.unnamedUnit': 'Our unit',
 
+  'speakers.title': 'Speakers',
+  'speakers.intro': 'Everyone who has spoken in sacrament meeting, starting with whoever spoke longest ago. People who are only scheduled come last.',
+  'speakers.rosterNote': 'People who have never spoken are not listed, because the site has no member roster.',
+  'speakers.search': 'Search by name',
+  'speakers.name': 'Name',
+  'speakers.times': 'Times',
+  'speakers.last': 'Last talk',
+  'speakers.next': 'Next',
+  'speakers.thisWeek': 'this week',
+  'speakers.weeksAgoOne': '1 week ago',
+  'speakers.weeksAgo': '{count} weeks ago',
+  'speakers.empty': 'No speakers recorded yet.',
+  'speakers.noMatch': 'No one matches that search.',
+
   'forbidden.title': 'You do not have permission',
   'forbidden.body':
     'Your account does not have access to this part of the site. If you think this is a mistake, ask the bishopric to change your account permissions.',

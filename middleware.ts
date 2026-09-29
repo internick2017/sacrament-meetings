@@ -20,6 +20,7 @@ export const config = {
     '/unit',
     '/callings',
     '/users',
+    '/speakers',
     '/photos',
     '/profile',
     '/activities/new',
