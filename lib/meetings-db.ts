@@ -13,17 +13,17 @@ interface MeetingRow {
   id: number;
   date: string; // forced to 'YYYY-MM-DD' text by to_char() in the SELECT
   meeting_type: SacramentMeeting['meetingType'];
-  presiding: string;
-  conducting: string;
+  presiding: string | null;
+  conducting: string | null;
   announcements: string[] | null;
   opening_hymn: SacramentMeeting['openingHymn'];
-  opening_prayer: string;
+  opening_prayer: string | null;
   ward_business: SacramentMeeting['wardBusiness'] | null;
   stake_business: boolean;
   sacrament_hymn: SacramentMeeting['sacramentHymn'];
   speakers: SacramentMeeting['program'] | null;
   closing_hymn: SacramentMeeting['closingHymn'];
-  closing_prayer: string;
+  closing_prayer: string | null;
 }
 
 // Translate one snake_case DB row into the camelCase shape the UI expects.
@@ -160,6 +160,12 @@ export async function getCurrentMeeting(): Promise<SacramentMeeting | undefined>
 // (the database assigns the id on insert).
 export type MeetingInput = Omit<SacramentMeeting, 'id'>;
 
+// An undecided hymn must reach Postgres as SQL NULL: JSON.stringify(null) would
+// store the JSON value null instead, which IS NULL does not match.
+function jsonOrNull(value: unknown): string | null {
+  return value === null ? null : JSON.stringify(value);
+}
+
 // The 13 column values, in the same order every mutation uses. JSONB columns
 // (the hymns, ward_business, speakers) are stringified and cast ::jsonb in the
 // SQL; announcements is a real text[] so it goes as a JS array cast ::text[].
@@ -170,13 +176,13 @@ function columnValues(m: MeetingInput): unknown[] {
     m.presiding,
     m.conducting,
     m.announcements ?? [],
-    JSON.stringify(m.openingHymn),
+    jsonOrNull(m.openingHymn),
     m.openingPrayer,
     JSON.stringify(m.wardBusiness ?? []),
     m.stakeBusiness,
-    JSON.stringify(m.sacramentHymn),
+    jsonOrNull(m.sacramentHymn),
     JSON.stringify(m.program ?? []),
-    JSON.stringify(m.closingHymn),
+    jsonOrNull(m.closingHymn),
     m.closingPrayer,
   ];
 }

@@ -30,12 +30,14 @@ export const en = {
   'meeting.closingPrayer': 'Closing Prayer',
   'meeting.presiding': 'Presiding',
   'meeting.conducting': 'Conducting',
+  'meeting.toBeDecided': 'To be decided',
   'meeting.print': 'Print Program',
   'meeting.speaker': 'Speaker',
   'meeting.musicalNumber': 'Musical Number',
   'meeting.notFoundTitle': 'Meeting not found',
   'meeting.metaDescription':
     '{type} on {date}, presided by {presiding} and conducted by {conducting}.',
+  'meeting.metaDescriptionShort': '{type} on {date}.',
 
   'meetingType.testimony': 'Fast & Testimony Meeting',
   'meetingType.regular': 'Regular Sacrament Meeting',
@@ -84,6 +86,8 @@ export const en = {
   'form.cancel': 'Cancel',
   'form.date': 'Date',
   'form.meetingType': 'Meeting type',
+  'form.optionalHint':
+    'Only the date and the meeting type are required. Everything else can be left blank and filled in later.',
   'form.presiding': 'Presiding',
   'form.conducting': 'Conducting',
   'form.openingHymn': 'Opening hymn',
@@ -109,17 +113,14 @@ export const en = {
   'error.notFoundBody':
     'We could not find a meeting with that id. It may have been deleted.',
 
-  'validation.required.presiding': 'Presiding is required.',
-  'validation.required.conducting': 'Conducting is required.',
   'validation.required.openingHymnTitle': 'The opening hymn title is required.',
   'validation.required.sacramentHymnTitle': 'The sacrament hymn title is required.',
   'validation.required.closingHymnTitle': 'The closing hymn title is required.',
-  'validation.required.openingPrayer': 'The opening prayer is required.',
-  'validation.required.closingPrayer': 'The closing prayer is required.',
   'validation.date': 'Choose a valid date.',
   'validation.hymnInt': 'Hymn number must be a whole number.',
   'validation.hymnMin': 'Enter a hymn number.',
   'validation.hymnMax': 'That hymn number looks too large.',
+  'validation.hymnNumberNeeded': 'Add the hymn number too, or clear the title.',
   'validation.fixFields': 'Please fix the highlighted fields.',
   'validation.duplicateDate':
     'A meeting already exists on this date. Choose a different date.',

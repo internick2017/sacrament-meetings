@@ -32,12 +32,14 @@ export const es: Dictionary = {
   'meeting.closingPrayer': 'Última oración',
   'meeting.presiding': 'Preside',
   'meeting.conducting': 'Dirige',
+  'meeting.toBeDecided': 'Por definir',
   'meeting.print': 'Imprimir programa',
   'meeting.speaker': 'Orador',
   'meeting.musicalNumber': 'Número musical',
   'meeting.notFoundTitle': 'Reunión no encontrada',
   'meeting.metaDescription':
     '{type} del {date}, presidida por {presiding} y dirigida por {conducting}.',
+  'meeting.metaDescriptionShort': '{type} del {date}.',
 
   'meetingType.testimony': 'Reunión de ayuno y testimonios',
   'meetingType.regular': 'Reunión sacramental regular',
@@ -86,6 +88,8 @@ export const es: Dictionary = {
   'form.cancel': 'Cancelar',
   'form.date': 'Fecha',
   'form.meetingType': 'Tipo de reunión',
+  'form.optionalHint':
+    'Solo la fecha y el tipo de reunión son obligatorios. Todo lo demás puede quedar en blanco y completarse después.',
   'form.presiding': 'Preside',
   'form.conducting': 'Dirige',
   'form.openingHymn': 'Himno de apertura',
@@ -111,17 +115,14 @@ export const es: Dictionary = {
   'error.notFoundBody':
     'No encontramos una reunión con ese identificador. Puede que haya sido eliminada.',
 
-  'validation.required.presiding': 'Debes indicar quién preside.',
-  'validation.required.conducting': 'Debes indicar quién dirige.',
   'validation.required.openingHymnTitle': 'El título del himno de apertura es obligatorio.',
   'validation.required.sacramentHymnTitle': 'El título del himno sacramental es obligatorio.',
   'validation.required.closingHymnTitle': 'El título del himno de clausura es obligatorio.',
-  'validation.required.openingPrayer': 'La primera oración es obligatoria.',
-  'validation.required.closingPrayer': 'La última oración es obligatoria.',
   'validation.date': 'Elige una fecha válida.',
   'validation.hymnInt': 'El número del himno debe ser un número entero.',
   'validation.hymnMin': 'Ingresa el número del himno.',
   'validation.hymnMax': 'Ese número de himno parece demasiado grande.',
+  'validation.hymnNumberNeeded': 'Agrega también el número del himno o borra el título.',
   'validation.fixFields': 'Por favor corrige los campos marcados.',
   'validation.duplicateDate':
     'Ya existe una reunión en esa fecha. Elige una fecha diferente.',

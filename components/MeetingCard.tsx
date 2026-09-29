@@ -30,9 +30,11 @@ export default async function MeetingCard({
         {t(MEETING_TYPE_KEY[meeting.meetingType])}
       </p>
       <h2 className="text-lg font-semibold">{formattedDate}</h2>
-      <p className="text-sm text-slate-600">
-        {t('meeting.presiding')}: {meeting.presiding}
-      </p>
+      {meeting.presiding && (
+        <p className="text-sm text-slate-600">
+          {t('meeting.presiding')}: {meeting.presiding}
+        </p>
+      )}
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <Link href={`/meetings/${meeting.id}`} className="text-slate-800 underline">
           {t('list.viewDetails')}

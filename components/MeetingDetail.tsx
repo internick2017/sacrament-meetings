@@ -1,4 +1,4 @@
-import type { SacramentMeeting } from '@/lib/types';
+import type { Hymn, SacramentMeeting } from '@/lib/types';
 import { formatMeetingDate } from '@/lib/i18n';
 import { localizeHymn } from '@/lib/hymns';
 import { getLocale, getT } from '@/lib/i18n/server';
@@ -9,10 +9,19 @@ export default async function MeetingDetail({ meeting }: { meeting: SacramentMee
   const [locale, t] = await Promise.all([getLocale(), getT()]);
   const formattedDate = formatMeetingDate(meeting.date, locale);
 
+  // A field the presidency has not decided yet reads as a muted placeholder, so
+  // a partial program still prints with every slot in place.
+  const toBeDecided = <span className="italic text-slate-500">{t('meeting.toBeDecided')}</span>;
+  const orPending = (value: string | null) => value ?? toBeDecided;
+
   // Hymn titles and numbers come from the hymnbook of the active language.
-  const openingHymn = localizeHymn(meeting.openingHymn, locale);
-  const sacramentHymn = localizeHymn(meeting.sacramentHymn, locale);
-  const closingHymn = localizeHymn(meeting.closingHymn, locale);
+  const hymnText = (hymn: Hymn | null) => {
+    if (!hymn) {
+      return toBeDecided;
+    }
+    const localized = localizeHymn(hymn, locale);
+    return `#${localized.number} - ${localized.title}`;
+  };
 
   return (
     <article className="space-y-4">
@@ -28,9 +37,9 @@ export default async function MeetingDetail({ meeting }: { meeting: SacramentMee
 
       <dl className="grid grid-cols-2 gap-2 text-sm">
         <dt className="font-semibold">{t('meeting.presiding')}</dt>
-        <dd>{meeting.presiding}</dd>
+        <dd>{orPending(meeting.presiding)}</dd>
         <dt className="font-semibold">{t('meeting.conducting')}</dt>
-        <dd>{meeting.conducting}</dd>
+        <dd>{orPending(meeting.conducting)}</dd>
       </dl>
 
       {meeting.announcements && meeting.announcements.length > 0 && (
@@ -46,12 +55,12 @@ export default async function MeetingDetail({ meeting }: { meeting: SacramentMee
 
       <section>
         <h2 className="font-semibold">{t('meeting.openingHymn')}</h2>
-        <p>#{openingHymn.number} - {openingHymn.title}</p>
+        <p>{hymnText(meeting.openingHymn)}</p>
       </section>
 
       <section>
         <h2 className="font-semibold">{t('meeting.openingPrayer')}</h2>
-        <p>{meeting.openingPrayer}</p>
+        <p>{orPending(meeting.openingPrayer)}</p>
       </section>
 
       {meeting.wardBusiness.length > 0 && (
@@ -71,7 +80,7 @@ export default async function MeetingDetail({ meeting }: { meeting: SacramentMee
 
       <section>
         <h2 className="font-semibold">{t('meeting.sacramentHymn')}</h2>
-        <p>#{sacramentHymn.number} - {sacramentHymn.title}</p>
+        <p>{hymnText(meeting.sacramentHymn)}</p>
       </section>
 
       {meeting.program.length > 0 && (
@@ -96,12 +105,12 @@ export default async function MeetingDetail({ meeting }: { meeting: SacramentMee
 
       <section>
         <h2 className="font-semibold">{t('meeting.closingHymn')}</h2>
-        <p>#{closingHymn.number} - {closingHymn.title}</p>
+        <p>{hymnText(meeting.closingHymn)}</p>
       </section>
 
       <section>
         <h2 className="font-semibold">{t('meeting.closingPrayer')}</h2>
-        <p>{meeting.closingPrayer}</p>
+        <p>{orPending(meeting.closingPrayer)}</p>
       </section>
     </article>
   );

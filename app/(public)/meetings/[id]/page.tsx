@@ -26,14 +26,15 @@ export async function generateMetadata({
   const typeLabel = t(MEETING_TYPE_KEY[meeting.meetingType]);
   const formattedDate = formatMeetingDate(meeting.date, locale);
 
+  const { presiding, conducting } = meeting;
+  const description =
+    presiding && conducting
+      ? t('meeting.metaDescription', { type: typeLabel, date: formattedDate, presiding, conducting })
+      : t('meeting.metaDescriptionShort', { type: typeLabel, date: formattedDate });
+
   return {
     title: `${typeLabel} - ${formattedDate}`,
-    description: t('meeting.metaDescription', {
-      type: typeLabel,
-      date: formattedDate,
-      presiding: meeting.presiding,
-      conducting: meeting.conducting,
-    }),
+    description,
   };
 }
 

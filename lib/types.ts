@@ -17,17 +17,18 @@ export interface SacramentMeeting {
   id: number;
   date: string; // ISO date string: 'YYYY-MM-DD'
   meetingType: MeetingType;
-  presiding: string;
-  conducting: string;
+  // null means "not decided yet": programs are filled in over several weeks.
+  presiding: string | null;
+  conducting: string | null;
   announcements?: string[];
-  openingHymn: Hymn;
-  openingPrayer: string;
+  openingHymn: Hymn | null;
+  openingPrayer: string | null;
   wardBusiness: WardBusinessItem[];
   stakeBusiness: boolean;
-  sacramentHymn: Hymn;
+  sacramentHymn: Hymn | null;
   program: ProgramItem[];
-  closingHymn: Hymn;
-  closingPrayer: string;
+  closingHymn: Hymn | null;
+  closingPrayer: string | null;
 }
 
 export type UnitType = 'ward' | 'branch';
