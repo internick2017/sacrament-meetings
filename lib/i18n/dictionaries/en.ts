@@ -3,9 +3,17 @@
 export const en = {
   'nav.home': 'Home',
   'nav.meetings': 'Meetings',
-  'nav.current': "This Week's Meeting",
+  'nav.current': 'This week',
   'nav.signIn': 'Sign in',
   'nav.profile': 'My profile',
+  'nav.admin': 'Administration',
+  'nav.menu': 'Menu',
+  'nav.speakers': 'Speakers',
+  'nav.callings': 'Callings',
+  'nav.announcements': 'Announcements',
+  'nav.photos': 'Photos',
+  'nav.users': 'Users',
+  'nav.unit': 'Unit',
 
   'locale.label': 'Language',
 

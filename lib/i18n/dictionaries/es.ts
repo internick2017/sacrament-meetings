@@ -5,9 +5,17 @@ import type { Dictionary } from './en';
 export const es: Dictionary = {
   'nav.home': 'Inicio',
   'nav.meetings': 'Reuniones',
-  'nav.current': 'Reunión de esta semana',
+  'nav.current': 'Esta semana',
   'nav.signIn': 'Iniciar sesión',
   'nav.profile': 'Mi perfil',
+  'nav.admin': 'Administración',
+  'nav.menu': 'Menú',
+  'nav.speakers': 'Discursantes',
+  'nav.callings': 'Llamamientos',
+  'nav.announcements': 'Anuncios',
+  'nav.photos': 'Fotos',
+  'nav.users': 'Usuarios',
+  'nav.unit': 'Unidad',
 
   'locale.label': 'Idioma',
 
