@@ -58,7 +58,7 @@ export default function SpeakerTable({ rows, today }: { rows: SpeakerSummary[]; 
             </thead>
             <tbody className="divide-y divide-slate-200">
               {visible.map((row) => (
-                <tr key={foldName(row.name)}>
+                <tr key={row.key}>
                   <th scope="row" className="px-3 py-2 font-medium">{row.name}</th>
                   <td className="px-3 py-2 text-right tabular-nums">{row.timesSpoken}</td>
                   <td className="px-3 py-2">

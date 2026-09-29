@@ -1,4 +1,5 @@
 import type { ProgramItem } from './types';
+import { matchMember, type Member } from './member-match';
 
 export interface MeetingProgram {
   id: number;
@@ -12,6 +13,10 @@ export interface MeetingRef {
 }
 
 export interface SpeakerSummary {
+  key: string;
+  // Null when the name matched nobody on the roster: a visitor or a spelling
+  // to fix.
+  memberId: number | null;
   name: string;
   timesSpoken: number;
   lastSpoke: MeetingRef | null;
@@ -43,14 +48,22 @@ export function foldName(raw: string): string {
 
 const byName = new Intl.Collator('pt', { sensitivity: 'base' });
 
+export interface SpeakersReport {
+  rows: SpeakerSummary[];
+  neverSpoke: Member[];
+  unmatched: SpeakerSummary[];
+}
+
 export function summarizeSpeakers(
   meetings: MeetingProgram[],
+  members: Member[],
   today: string
-): SpeakerSummary[] {
+): SpeakersReport {
   const chronological = [...meetings].sort(
     (a, b) => a.date.localeCompare(b.date) || a.id - b.id
   );
   const people = new Map<string, SpeakerSummary>();
+  const matches = new Map<string, Member | null>();
 
   for (const meeting of chronological) {
     const ref = { date: meeting.date, meetingId: meeting.id };
@@ -58,19 +71,25 @@ export function summarizeSpeakers(
 
     for (const item of meeting.program) {
       if (item.type !== 'speaker') continue;
-      const name = stripRole(item.name);
-      const key = foldName(item.name);
-      if (!key || seenHere.has(key)) continue;
+      const folded = foldName(item.name);
+      if (!folded) continue;
+
+      if (!matches.has(folded)) matches.set(folded, matchMember(item.name, members));
+      const member = matches.get(folded) ?? null;
+      const key = member ? `member:${member.id}` : `name:${folded}`;
+      if (seenHere.has(key)) continue;
       seenHere.add(key);
 
       const row = people.get(key) ?? {
-        name,
+        key,
+        memberId: member?.id ?? null,
+        name: '',
         timesSpoken: 0,
         lastSpoke: null,
         nextScheduled: null,
       };
       // Iterating in date order, so the last write is the latest spelling.
-      row.name = name;
+      row.name = member?.fullName ?? stripRole(item.name);
       if (meeting.date <= today) {
         row.timesSpoken += 1;
         row.lastSpoke = ref;
@@ -81,7 +100,7 @@ export function summarizeSpeakers(
     }
   }
 
-  return [...people.values()].sort((a, b) => {
+  const rows = [...people.values()].sort((a, b) => {
     if (a.lastSpoke && b.lastSpoke) {
       const byDate = a.lastSpoke.date.localeCompare(b.lastSpoke.date);
       if (byDate !== 0) return byDate;
@@ -90,6 +109,18 @@ export function summarizeSpeakers(
     }
     return byName.compare(a.name, b.name);
   });
+
+  // Someone only scheduled is already invited, so they are not "never spoke".
+  const listed = new Set(rows.map((row) => row.memberId));
+  const neverSpoke = members
+    .filter((member) => !listed.has(member.id))
+    .sort((a, b) => byName.compare(a.fullName, b.fullName));
+
+  const unmatched = rows
+    .filter((row) => row.memberId === null)
+    .sort((a, b) => byName.compare(a.name, b.name));
+
+  return { rows, neverSpoke, unmatched };
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
