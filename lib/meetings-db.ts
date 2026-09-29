@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import { sql } from './db';
 import type { SacramentMeeting } from './types';
+import type { MeetingProgram } from './speakers';
 
 // The meetings list shows this many meetings per page.
 export const PAGE_SIZE = 5;
@@ -152,6 +153,16 @@ export async function getCurrentMeeting(): Promise<SacramentMeeting | undefined>
     `SELECT ${SELECT_COLUMNS} FROM meetings ORDER BY date ASC LIMIT 1`
   )) as MeetingRow[];
   return upcoming[0] ? mapRow(upcoming[0]) : undefined;
+}
+
+// Every meeting's date and program, oldest first, for the speakers summary.
+export async function getSpeakerAppearances(): Promise<MeetingProgram[]> {
+  const rows = (await sql.query(
+    `SELECT id, to_char(date, 'YYYY-MM-DD') AS date, speakers
+       FROM meetings
+      ORDER BY date ASC, id ASC`
+  )) as Pick<MeetingRow, 'id' | 'date' | 'speakers'>[];
+  return rows.map((row) => ({ id: row.id, date: row.date, program: row.speakers ?? [] }));
 }
 
 // --- Mutations (Week 04) --------------------------------------------------
