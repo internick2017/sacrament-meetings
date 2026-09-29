@@ -1,27 +1,47 @@
 import NextAuth, { type NextAuthConfig } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import Resend from 'next-auth/providers/resend';
+import Nodemailer from 'next-auth/providers/nodemailer';
 import bcrypt from 'bcryptjs';
 import { getUserByUsername, getUserByEmail, getAppUserById } from './users-db';
 import { postgresAdapter } from './auth-adapter';
 
-// The Resend provider is only registered when its key is present. Nick has not
-// created the Resend account yet, and a site that refuses to start because an
-// optional key is missing would be a step backwards: password sign-in has to
-// keep working either way.
-const resendProviders = process.env.AUTH_RESEND_KEY
-  ? [
-      Resend({
-        apiKey: process.env.AUTH_RESEND_KEY,
-        from: process.env.AUTH_EMAIL_FROM ?? 'onboarding@resend.dev',
-      }),
-    ]
-  : [];
+// Magic links go out through the ward's own Gmail account when it is
+// configured: Resend only delivers to verified domains, and the ward has none,
+// so with Resend alone a link can only ever reach the account owner. Resend
+// stays as the fallback so the live site keeps working until Gmail is set up.
+// With neither configured the option is not offered and password sign-in keeps
+// working.
+function emailProvider() {
+  const gmailUser = process.env.AUTH_GMAIL_USER;
+  const gmailPassword = process.env.AUTH_GMAIL_APP_PASSWORD;
+  if (gmailUser && gmailPassword) {
+    return Nodemailer({
+      server: {
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        auth: { user: gmailUser, pass: gmailPassword },
+      },
+      from: process.env.AUTH_EMAIL_FROM ?? gmailUser,
+    });
+  }
+  if (process.env.AUTH_RESEND_KEY) {
+    return Resend({
+      apiKey: process.env.AUTH_RESEND_KEY,
+      from: process.env.AUTH_EMAIL_FROM ?? 'onboarding@resend.dev',
+    });
+  }
+  return null;
+}
 
-// Whether magic-link sign-in is actually available, for the login form to
-// decide whether to show that option. Server-side only: never expose the key
-// itself, only this boolean, to the client.
-export const magicLinkEnabled = Boolean(process.env.AUTH_RESEND_KEY);
+const magicLinkProvider = emailProvider();
+
+// The provider id signIn() must be called with, or null when magic links are
+// off. Server-side only: the login form receives just the boolean below.
+export const magicLinkProviderId: string | null = magicLinkProvider?.id ?? null;
+
+export const magicLinkEnabled = magicLinkProviderId !== null;
 
 // Exported (rather than kept inline in the NextAuth() call) so the jwt/session
 // callbacks can be exercised directly by tests, without going through next-auth
@@ -63,7 +83,7 @@ export const authConfig: NextAuthConfig = {
         return { id: String(user.id), name: user.username };
       },
     }),
-    ...resendProviders,
+    ...(magicLinkProvider ? [magicLinkProvider] : []),
   ],
   pages: {
     signIn: '/login',

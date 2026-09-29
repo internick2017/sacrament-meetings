@@ -1,7 +1,7 @@
 'use server';
 
 import { AuthError } from 'next-auth';
-import { signIn, signOut } from './auth';
+import { signIn, signOut, magicLinkProviderId } from './auth';
 import { getT } from './i18n/server';
 import { hasRecentVerificationToken } from './users-db';
 import { safeCallbackUrl } from './safe-redirect';
@@ -56,9 +56,9 @@ export async function requestMagicLinkAction(
   // the recipient's inbox. Refusing to start the flow at all is the only
   // place this can actually work. The response below is unconditional and
   // identical to the accepted path, so a throttled request reveals nothing.
-  if (!(await hasRecentVerificationToken(email))) {
+  if (magicLinkProviderId && !(await hasRecentVerificationToken(email))) {
     try {
-      await signIn('resend', { email, redirect: false });
+      await signIn(magicLinkProviderId, { email, redirect: false });
     } catch (error) {
       if (!(error instanceof AuthError)) {
         throw error;

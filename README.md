@@ -32,8 +32,10 @@ Create a `.env.local` file with:
 | -------------- | -------------------------------------------------- |
 | `DATABASE_URL` | Neon Postgres connection string                    |
 | `AUTH_SECRET`  | Secret used by NextAuth to sign the session cookie |
-| `AUTH_RESEND_KEY` | API key for Resend. **Optional**: without it the magic-link option is not offered and password sign-in keeps working. |
-| `AUTH_EMAIL_FROM` | Sender address for magic links. |
+| `AUTH_GMAIL_USER` | Gmail address that sends magic links. Used together with `AUTH_GMAIL_APP_PASSWORD`, and preferred over Resend when both are set. |
+| `AUTH_GMAIL_APP_PASSWORD` | A Google "app password" for that account (needs 2-Step Verification). Never the account's normal password. |
+| `AUTH_RESEND_KEY` | API key for Resend, the fallback sender. Resend only delivers to verified domains. **Optional**: with no sender configured the magic-link option is not offered and password sign-in keeps working. |
+| `AUTH_EMAIL_FROM` | Sender address for magic links. Defaults to the Gmail account when Gmail is used. |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob credential for activity cover images. **Optional**: without it the cover image field is not offered and activities save normally with no cover. |
 
 `AUTH_SECRET` can be generated with `yarn dlx auth secret`.
