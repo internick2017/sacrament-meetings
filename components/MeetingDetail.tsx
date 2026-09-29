@@ -90,7 +90,8 @@ export default async function MeetingDetail({ meeting }: { meeting: SacramentMee
             {meeting.program.map((item, index) =>
               item.type === 'speaker' ? (
                 <li key={index}>
-                  {t('meeting.speaker')}: {item.name} - {item.topic}
+                  {t('meeting.speaker')}: {item.name}
+                  {item.topic ? ` - ${item.topic}` : ''}
                 </li>
               ) : (
                 <li key={index}>
