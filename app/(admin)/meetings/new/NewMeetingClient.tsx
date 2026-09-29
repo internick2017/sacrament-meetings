@@ -7,7 +7,7 @@ import { useT } from '@/lib/i18n/client';
 
 const initialState: MeetingFormState = {};
 
-export default function NewMeetingClient() {
+export default function NewMeetingClient({ memberNames }: { memberNames: string[] }) {
   const t = useT();
   const [state, formAction, isPending] = useActionState(createMeeting, initialState);
 
@@ -19,6 +19,7 @@ export default function NewMeetingClient() {
         state={state}
         isPending={isPending}
         submitLabel="form.createSubmit"
+        memberNames={memberNames}
       />
     </div>
   );

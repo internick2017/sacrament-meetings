@@ -7,7 +7,13 @@ import type { SacramentMeeting } from '@/lib/types';
 
 const initialState: MeetingFormState = {};
 
-export default function EditMeetingForm({ meeting }: { meeting: SacramentMeeting }) {
+export default function EditMeetingForm({
+  meeting,
+  memberNames,
+}: {
+  meeting: SacramentMeeting;
+  memberNames: string[];
+}) {
   // Bind the meeting id as the first argument so the action signature matches
   // useActionState's (prevState, formData).
   const updateWithId = updateMeeting.bind(null, meeting.id);
@@ -20,6 +26,7 @@ export default function EditMeetingForm({ meeting }: { meeting: SacramentMeeting
       isPending={isPending}
       submitLabel="form.editSubmit"
       defaultMeeting={meeting}
+      memberNames={memberNames}
     />
   );
 }

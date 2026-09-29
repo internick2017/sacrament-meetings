@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/authz';
+import { listMembers } from '@/lib/members-db';
 import NewMeetingClient from './NewMeetingClient';
 import NotAllowed from '@/components/NotAllowed';
 
@@ -19,5 +20,6 @@ export default async function NewMeetingPage() {
     return <NotAllowed />;
   }
 
-  return <NewMeetingClient />;
+  const members = await listMembers();
+  return <NewMeetingClient memberNames={members.map((member) => member.fullName)} />;
 }

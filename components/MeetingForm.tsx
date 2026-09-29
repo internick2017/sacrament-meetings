@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import type { ProgramItem, SacramentMeeting } from '@/lib/types';
 import type { MeetingFormState } from '@/lib/actions';
 import type { MeetingFormValues } from '@/lib/meetings-schema';
 import { useT } from '@/lib/i18n/client';
 import type { DictionaryKey } from '@/lib/i18n';
+import { appendSpeakerLine } from '@/lib/speaker-line';
+import SpeakerPicker from './SpeakerPicker';
 
 interface MeetingFormProps {
   // The formAction returned by useActionState in the parent client component.
@@ -15,6 +17,8 @@ interface MeetingFormProps {
   submitLabel: DictionaryKey;
   // Present when editing: pre-fills every field.
   defaultMeeting?: SacramentMeeting;
+  // The ward roster, offered as suggestions when adding a speaker.
+  memberNames: string[];
 }
 
 const MEETING_TYPE_OPTIONS: {
@@ -71,8 +75,10 @@ export default function MeetingForm({
   isPending,
   submitLabel,
   defaultMeeting,
+  memberNames,
 }: MeetingFormProps) {
   const t = useT();
+  const speakersRef = useRef<HTMLTextAreaElement>(null);
   const errors = state.errors ?? {};
 
   // Same remount-by-key pattern as EventForm.tsx: React reuses uncontrolled
@@ -214,11 +220,18 @@ export default function MeetingForm({
 
       <div>
         <label htmlFor="speakers" className="mb-1 block text-sm font-semibold">{t('form.speakers')}</label>
-        <textarea id="speakers" name="speakers" rows={4} defaultValue={v.speakers} className={inputClass} />
+        <textarea ref={speakersRef} id="speakers" name="speakers" rows={4} defaultValue={v.speakers} className={inputClass} />
         <p className="mt-1 text-xs text-slate-500">
           {t('form.speakersHintPrefix')} <code>Name | Topic</code>. {t('form.speakersHintMusical')}{' '}
           <code>M: Performer | Title</code>.
         </p>
+        <SpeakerPicker
+          memberNames={memberNames}
+          onAdd={(name, topic) => {
+            const textarea = speakersRef.current;
+            if (textarea) textarea.value = appendSpeakerLine(textarea.value, name, topic);
+          }}
+        />
       </div>
 
       <div className="flex items-center gap-3">
