@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      # The tests mock the database and never connect. lib/db.ts only needs a
+      # well-formed address at import time, so no real secret belongs here.
+      DATABASE_URL: postgresql://ci:ci@db.invalid/ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn typecheck
+      - run: yarn lint
+      - run: yarn test
