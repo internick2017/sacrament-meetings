@@ -46,20 +46,24 @@ export default async function SpeakersPage() {
       </div>
 
       {hasRoster ? (
-        <section aria-labelledby="never-spoke-heading" className="space-y-2">
-          <h2 id="never-spoke-heading" className="text-lg font-semibold">
-            {t('speakers.neverSpoke.title', { count: neverSpoke.length })}
-          </h2>
+        // Collapsed by default: with a full roster this list runs to well over a
+        // hundred names and would push the table far down a phone screen.
+        <details className="rounded border border-slate-200 p-4">
+          <summary className="cursor-pointer">
+            <h2 className="inline text-lg font-semibold">
+              {t('speakers.neverSpoke.title', { count: neverSpoke.length })}
+            </h2>
+          </summary>
           {neverSpoke.length === 0 ? (
-            <p className="text-sm text-slate-500">{t('speakers.neverSpoke.none')}</p>
+            <p className="mt-3 text-sm text-slate-500">{t('speakers.neverSpoke.none')}</p>
           ) : (
-            <ul className="columns-1 gap-6 text-sm sm:columns-2 lg:columns-3">
+            <ul className="mt-3 columns-1 gap-6 text-sm sm:columns-2 lg:columns-3">
               {neverSpoke.map((member) => (
                 <li key={member.id} className="break-inside-avoid py-0.5">{member.fullName}</li>
               ))}
             </ul>
           )}
-        </section>
+        </details>
       ) : (
         <p className="max-w-2xl rounded bg-amber-50 px-3 py-2 text-sm text-amber-900">
           {t('speakers.roster.empty')}
