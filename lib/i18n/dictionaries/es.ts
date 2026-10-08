@@ -122,6 +122,8 @@ export const es: Dictionary = {
   'form.speakers': 'Oradores y números musicales',
   'form.speakersHintPrefix': 'Uno por línea. Orador:',
   'form.speakersHintMusical': 'Número musical:',
+  'form.speakersHintSpeakerFormat': 'Nombre | Tema',
+  'form.speakersHintMusicalFormat': 'M: Intérprete | Título',
   'form.speakerPicker.name': 'Agregar orador',
   'form.speakerPicker.namePlaceholder': 'Escribe un nombre de la lista de miembros',
   'form.speakerPicker.topic': 'Tema (opcional)',

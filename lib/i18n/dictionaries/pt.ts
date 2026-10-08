@@ -122,6 +122,8 @@ export const pt: Dictionary = {
   'form.speakers': 'Discursantes e números musicais',
   'form.speakersHintPrefix': 'Um por linha. Discursante:',
   'form.speakersHintMusical': 'Número musical:',
+  'form.speakersHintSpeakerFormat': 'Nome | Tema',
+  'form.speakersHintMusicalFormat': 'M: Intérprete | Título',
   'form.speakerPicker.name': 'Adicionar discursante',
   'form.speakerPicker.namePlaceholder': 'Digite um nome da lista de membros',
   'form.speakerPicker.topic': 'Tema (opcional)',

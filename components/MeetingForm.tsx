@@ -222,8 +222,8 @@ export default function MeetingForm({
         <label htmlFor="speakers" className="mb-1 block text-sm font-semibold">{t('form.speakers')}</label>
         <textarea ref={speakersRef} id="speakers" name="speakers" rows={4} defaultValue={v.speakers} className={inputClass} />
         <p className="mt-1 text-xs text-slate-500">
-          {t('form.speakersHintPrefix')} <code>Name | Topic</code>. {t('form.speakersHintMusical')}{' '}
-          <code>M: Performer | Title</code>.
+          {t('form.speakersHintPrefix')} <code>{t('form.speakersHintSpeakerFormat')}</code>.{' '}
+          {t('form.speakersHintMusical')} <code>{t('form.speakersHintMusicalFormat')}</code>.
         </p>
         <SpeakerPicker
           memberNames={memberNames}

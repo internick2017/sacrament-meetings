@@ -120,6 +120,8 @@ export const en = {
   'form.speakers': 'Speakers & musical numbers',
   'form.speakersHintPrefix': 'One per line. Speaker:',
   'form.speakersHintMusical': 'Musical number:',
+  'form.speakersHintSpeakerFormat': 'Name | Topic',
+  'form.speakersHintMusicalFormat': 'M: Performer | Title',
   'form.speakerPicker.name': 'Add a speaker',
   'form.speakerPicker.namePlaceholder': 'Type a name from the member list',
   'form.speakerPicker.topic': 'Topic (optional)',
