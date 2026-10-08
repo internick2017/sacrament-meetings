@@ -1,8 +1,9 @@
 // Applies every pending migration in db/migrations, in order.
 //
-//   yarn migrate
+//   yarn migrate        the development branch (.env.local)
+//   yarn migrate:prod   the production database (.env.prod-db)
 //
-// Reads DATABASE_URL from .env.local via node --env-file (see package.json).
+// Reads DATABASE_URL from the env file node --env-file loads (see package.json).
 // Safe to run repeatedly: migrations already recorded in schema_migrations are
 // skipped.
 
@@ -15,9 +16,13 @@ import { pendingMigrations, splitStatements } from './pending.mjs';
 const MIGRATIONS_DIR = join(dirname(fileURLToPath(import.meta.url)), 'migrations');
 
 if (!process.env.DATABASE_URL) {
-  console.error('DATABASE_URL is not set. Is .env.local present?');
+  console.error('DATABASE_URL is not set. Is the env file for this script present?');
   process.exit(1);
 }
+
+// Development and production are two branches of the same Neon project, so the
+// host is the only thing that tells them apart. Say which one this is.
+console.log(`Database: ${new URL(process.env.DATABASE_URL).hostname}`);
 
 const sql = neon(process.env.DATABASE_URL);
 
