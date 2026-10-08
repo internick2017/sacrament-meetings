@@ -90,7 +90,8 @@ export const en = {
   'meeting.history.created': 'Created by {who}',
   'meeting.history.updated': 'Edited by {who}',
   'meeting.history.deleted': 'Deleted by {who}',
-  'meeting.history.unknownUser': 'an account that no longer exists',
+  'meeting.history.deletedTitle': 'Deleted meetings ({count})',
+  'meeting.history.unknownUser': 'an unidentified account',
   'meeting.history.empty': 'No changes recorded yet.',
 
   'form.createTitle': 'Create a Meeting',

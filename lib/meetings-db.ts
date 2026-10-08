@@ -212,10 +212,12 @@ export interface MeetingChange {
 // Appended to a mutation whose first CTE is named `changed` and returns the
 // meeting's id and date. Because the history row is written by the same
 // statement, a meeting can never change without it, and a failed change (a
-// duplicate date, say) leaves no history behind. `userParam` is the
-// placeholder holding the acting user's id; the action comes from a closed
-// union, never from a request.
-function recordChange(action: MeetingChangeAction, userParam: string): string {
+// duplicate date, say) leaves no history behind. The acting user's id must be
+// the LAST query parameter, so its placeholder is derived from the parameter
+// count instead of being a number kept in sync by hand. The action comes from
+// a closed union, never from a request.
+function recordChange(action: MeetingChangeAction, params: unknown[]): string {
+  const userParam = `$${params.length}`;
   return `, recorded AS (
        INSERT INTO meeting_changes (meeting_id, meeting_date, action, changed_by, changed_by_label)
        SELECT id, date, '${action}', ${userParam}::int,
@@ -231,6 +233,7 @@ export async function addMeeting(
   input: MeetingInput,
   changedBy: number | null
 ): Promise<number> {
+  const params = [...columnValues(input), changedBy];
   const rows = (await sql.query(
     `WITH changed AS (
        INSERT INTO meetings
@@ -242,8 +245,8 @@ export async function addMeeting(
           $6::jsonb, $7, $8::jsonb, $9::boolean,
           $10::jsonb, $11::jsonb, $12::jsonb, $13)
        RETURNING id, date
-     )${recordChange('created', '$14')}`,
-    [...columnValues(input), changedBy]
+     )${recordChange('created', params)}`,
+    params
   )) as { id: number }[];
   return rows[0].id;
 }
@@ -255,6 +258,7 @@ export async function updateMeeting(
   input: MeetingInput,
   changedBy: number | null
 ): Promise<boolean> {
+  const params = [...columnValues(input), id, changedBy];
   const rows = (await sql.query(
     `WITH changed AS (
        UPDATE meetings SET
@@ -265,8 +269,8 @@ export async function updateMeeting(
           closing_hymn = $12::jsonb, closing_prayer = $13
         WHERE id = $14
         RETURNING id, date
-     )${recordChange('updated', '$15')}`,
-    [...columnValues(input), id, changedBy]
+     )${recordChange('updated', params)}`,
+    params
   )) as { id: number }[];
   return rows.length > 0;
 }
@@ -276,11 +280,12 @@ export async function deleteMeeting(
   id: number,
   changedBy: number | null
 ): Promise<boolean> {
+  const params = [id, changedBy];
   const rows = (await sql.query(
     `WITH changed AS (
        DELETE FROM meetings WHERE id = $1 RETURNING id, date
-     )${recordChange('deleted', '$2')}`,
-    [id, changedBy]
+     )${recordChange('deleted', params)}`,
+    params
   )) as { id: number }[];
   return rows.length > 0;
 }
@@ -304,5 +309,37 @@ export async function getMeetingChanges(meetingId: number): Promise<MeetingChang
     action: row.action,
     changedBy: row.changed_by_label,
     changedAt: new Date(row.changed_at).toISOString(),
+  }));
+}
+
+// A meeting that no longer exists. Its date is the copy kept in the history,
+// since the meetings row itself is gone.
+export interface DeletedMeeting {
+  id: number;
+  meetingDate: string;
+  deletedBy: string | null;
+  deletedAt: string;
+}
+
+// The most recently deleted meetings, newest first. Admin-only: the caller
+// gates access.
+export async function getDeletedMeetings(): Promise<DeletedMeeting[]> {
+  const rows = (await sql.query(
+    `SELECT id, to_char(meeting_date, 'YYYY-MM-DD') AS meeting_date, changed_by_label, changed_at
+       FROM meeting_changes
+      WHERE action = 'deleted'
+      ORDER BY changed_at DESC, id DESC
+      LIMIT 50`
+  )) as {
+    id: number;
+    meeting_date: string;
+    changed_by_label: string | null;
+    changed_at: Date | string;
+  }[];
+  return rows.map((row) => ({
+    id: row.id,
+    meetingDate: row.meeting_date,
+    deletedBy: row.changed_by_label,
+    deletedAt: new Date(row.changed_at).toISOString(),
   }));
 }

@@ -92,7 +92,8 @@ export const pt: Dictionary = {
   'meeting.history.created': 'Criada por {who}',
   'meeting.history.updated': 'Editada por {who}',
   'meeting.history.deleted': 'Excluída por {who}',
-  'meeting.history.unknownUser': 'uma conta que não existe mais',
+  'meeting.history.deletedTitle': 'Reuniões excluídas ({count})',
+  'meeting.history.unknownUser': 'uma conta não identificada',
   'meeting.history.empty': 'Nenhuma alteração registrada ainda.',
 
   'form.createTitle': 'Criar uma reunião',

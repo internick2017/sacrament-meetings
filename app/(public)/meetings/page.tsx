@@ -2,7 +2,8 @@ import Link from 'next/link';
 import MeetingCard from '@/components/MeetingCard';
 import MeetingSearch from '@/components/MeetingSearch';
 import Pagination from '@/components/Pagination';
-import { getMeetings, countMeetings, PAGE_SIZE } from '@/lib/meetings-db';
+import DeletedMeetings from '@/components/DeletedMeetings';
+import { getMeetings, countMeetings, getDeletedMeetings, PAGE_SIZE } from '@/lib/meetings-db';
 import { getSessionUser } from '@/lib/authz';
 import { getT } from '@/lib/i18n/server';
 
@@ -25,6 +26,8 @@ export default async function MeetingsPage({
   ]);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const isAdmin = user?.role === 'admin';
+  // Read only for an admin: this page is public, and the list names accounts.
+  const deleted = isAdmin ? await getDeletedMeetings() : [];
 
   return (
     <div>
@@ -53,6 +56,8 @@ export default async function MeetingsPage({
       )}
 
       <Pagination totalPages={totalPages} />
+
+      <DeletedMeetings deleted={deleted} />
     </div>
   );
 }
