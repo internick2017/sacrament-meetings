@@ -10,6 +10,8 @@ import {
 } from './meetings-db';
 import { meetingFormSchema, meetingFormValues, type MeetingFormValues } from './meetings-schema';
 import { requireAdmin, NotAuthorizedError } from './authz';
+import { userIdOf } from './authz-rules';
+import type { SessionUser } from './types';
 import { getT } from './i18n/server';
 import type { Translator } from './i18n';
 
@@ -49,8 +51,9 @@ export async function createMeeting(
   formData: FormData
 ): Promise<MeetingFormState> {
   const t = await getT();
+  let user: SessionUser;
   try {
-    await requireAdmin();
+    user = await requireAdmin();
   } catch (error) {
     if (error instanceof NotAuthorizedError) {
       return { message: t('admin.notAllowed') };
@@ -71,7 +74,7 @@ export async function createMeeting(
   // Validation errors are returned above; only unexpected database failures are
   // caught here and re-thrown so the meetings error boundary can handle them.
   try {
-    await dbAddMeeting(parsed.data);
+    await dbAddMeeting(parsed.data, userIdOf(user));
   } catch (error) {
     if (isDuplicateDateError(error)) {
       return { ...duplicateDateState(t), values };
@@ -90,8 +93,9 @@ export async function updateMeeting(
   formData: FormData
 ): Promise<MeetingFormState> {
   const t = await getT();
+  let user: SessionUser;
   try {
-    await requireAdmin();
+    user = await requireAdmin();
   } catch (error) {
     if (error instanceof NotAuthorizedError) {
       return { message: t('admin.notAllowed') };
@@ -111,7 +115,7 @@ export async function updateMeeting(
 
   let updated = false;
   try {
-    updated = await dbUpdateMeeting(id, parsed.data);
+    updated = await dbUpdateMeeting(id, parsed.data, userIdOf(user));
   } catch (error) {
     if (isDuplicateDateError(error)) {
       return { ...duplicateDateState(t), values };
@@ -130,8 +134,9 @@ export async function updateMeeting(
 }
 
 export async function deleteMeeting(formData: FormData): Promise<void> {
+  let user: SessionUser;
   try {
-    await requireAdmin();
+    user = await requireAdmin();
   } catch (error) {
     if (error instanceof NotAuthorizedError) {
       return;
@@ -146,7 +151,7 @@ export async function deleteMeeting(formData: FormData): Promise<void> {
   }
 
   try {
-    await dbDeleteMeeting(id);
+    await dbDeleteMeeting(id, userIdOf(user));
   } catch (error) {
     console.error('deleteMeeting failed:', error);
     throw new Error(t('validation.deleteFailed'));

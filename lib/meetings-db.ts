@@ -198,19 +198,52 @@ function columnValues(m: MeetingInput): unknown[] {
   ];
 }
 
-// Insert a new meeting and return its generated id.
-export async function addMeeting(input: MeetingInput): Promise<number> {
+export type MeetingChangeAction = 'created' | 'updated' | 'deleted';
+
+// One line of a meeting's history. `changedBy` is the e-mail (or username) the
+// account had at the time, or null when the change could not be attributed.
+export interface MeetingChange {
+  id: number;
+  action: MeetingChangeAction;
+  changedBy: string | null;
+  changedAt: string;
+}
+
+// Appended to a mutation whose first CTE is named `changed` and returns the
+// meeting's id and date. Because the history row is written by the same
+// statement, a meeting can never change without it, and a failed change (a
+// duplicate date, say) leaves no history behind. `userParam` is the
+// placeholder holding the acting user's id; the action comes from a closed
+// union, never from a request.
+function recordChange(action: MeetingChangeAction, userParam: string): string {
+  return `, recorded AS (
+       INSERT INTO meeting_changes (meeting_id, meeting_date, action, changed_by, changed_by_label)
+       SELECT id, date, '${action}', ${userParam}::int,
+              (SELECT COALESCE(email, username) FROM users WHERE id = ${userParam}::int)
+         FROM changed
+     )
+     SELECT id FROM changed`;
+}
+
+// Insert a new meeting and return its generated id. `changedBy` is the id of
+// the signed-in user, or null if the session carried no usable id.
+export async function addMeeting(
+  input: MeetingInput,
+  changedBy: number | null
+): Promise<number> {
   const rows = (await sql.query(
-    `INSERT INTO meetings
-       (date, meeting_type, presiding, conducting, announcements,
-        opening_hymn, opening_prayer, ward_business, stake_business,
-        sacrament_hymn, speakers, closing_hymn, closing_prayer)
-     VALUES
-       ($1::date, $2, $3, $4, $5::text[],
-        $6::jsonb, $7, $8::jsonb, $9::boolean,
-        $10::jsonb, $11::jsonb, $12::jsonb, $13)
-     RETURNING id`,
-    columnValues(input)
+    `WITH changed AS (
+       INSERT INTO meetings
+         (date, meeting_type, presiding, conducting, announcements,
+          opening_hymn, opening_prayer, ward_business, stake_business,
+          sacrament_hymn, speakers, closing_hymn, closing_prayer)
+       VALUES
+         ($1::date, $2, $3, $4, $5::text[],
+          $6::jsonb, $7, $8::jsonb, $9::boolean,
+          $10::jsonb, $11::jsonb, $12::jsonb, $13)
+       RETURNING id, date
+     )${recordChange('created', '$14')}`,
+    [...columnValues(input), changedBy]
   )) as { id: number }[];
   return rows[0].id;
 }
@@ -219,27 +252,57 @@ export async function addMeeting(input: MeetingInput): Promise<number> {
 // that id (so the caller can surface a "not found" instead of a silent no-op).
 export async function updateMeeting(
   id: number,
-  input: MeetingInput
+  input: MeetingInput,
+  changedBy: number | null
 ): Promise<boolean> {
   const rows = (await sql.query(
-    `UPDATE meetings SET
-        date = $1::date, meeting_type = $2, presiding = $3, conducting = $4,
-        announcements = $5::text[], opening_hymn = $6::jsonb, opening_prayer = $7,
-        ward_business = $8::jsonb, stake_business = $9::boolean,
-        sacrament_hymn = $10::jsonb, speakers = $11::jsonb,
-        closing_hymn = $12::jsonb, closing_prayer = $13
-      WHERE id = $14
-      RETURNING id`,
-    [...columnValues(input), id]
+    `WITH changed AS (
+       UPDATE meetings SET
+          date = $1::date, meeting_type = $2, presiding = $3, conducting = $4,
+          announcements = $5::text[], opening_hymn = $6::jsonb, opening_prayer = $7,
+          ward_business = $8::jsonb, stake_business = $9::boolean,
+          sacrament_hymn = $10::jsonb, speakers = $11::jsonb,
+          closing_hymn = $12::jsonb, closing_prayer = $13
+        WHERE id = $14
+        RETURNING id, date
+     )${recordChange('updated', '$15')}`,
+    [...columnValues(input), id, changedBy]
   )) as { id: number }[];
   return rows.length > 0;
 }
 
 // Delete a meeting by id. Returns false if no row matched.
-export async function deleteMeeting(id: number): Promise<boolean> {
+export async function deleteMeeting(
+  id: number,
+  changedBy: number | null
+): Promise<boolean> {
   const rows = (await sql.query(
-    `DELETE FROM meetings WHERE id = $1 RETURNING id`,
-    [id]
+    `WITH changed AS (
+       DELETE FROM meetings WHERE id = $1 RETURNING id, date
+     )${recordChange('deleted', '$2')}`,
+    [id, changedBy]
   )) as { id: number }[];
   return rows.length > 0;
+}
+
+// A meeting's history, newest first. Admin-only: the caller gates access.
+export async function getMeetingChanges(meetingId: number): Promise<MeetingChange[]> {
+  const rows = (await sql.query(
+    `SELECT id, action, changed_by_label, changed_at
+       FROM meeting_changes
+      WHERE meeting_id = $1
+      ORDER BY changed_at DESC, id DESC`,
+    [meetingId]
+  )) as {
+    id: number;
+    action: MeetingChangeAction;
+    changed_by_label: string | null;
+    changed_at: Date | string;
+  }[];
+  return rows.map((row) => ({
+    id: row.id,
+    action: row.action,
+    changedBy: row.changed_by_label,
+    changedAt: new Date(row.changed_at).toISOString(),
+  }));
 }

@@ -88,6 +88,13 @@ export const pt: Dictionary = {
   'admin.signedInAs': 'conectado como {name}',
   'admin.signOut': 'Sair',
 
+  'meeting.history.title': 'Histórico de alterações',
+  'meeting.history.created': 'Criada por {who}',
+  'meeting.history.updated': 'Editada por {who}',
+  'meeting.history.deleted': 'Excluída por {who}',
+  'meeting.history.unknownUser': 'uma conta que não existe mais',
+  'meeting.history.empty': 'Nenhuma alteração registrada ainda.',
+
   'form.createTitle': 'Criar uma reunião',
   'form.editTitle': 'Editar reunião',
   'form.createSubmit': 'Criar reunião',

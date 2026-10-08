@@ -86,6 +86,13 @@ export const en = {
   'admin.signedInAs': 'signed in as {name}',
   'admin.signOut': 'Sign out',
 
+  'meeting.history.title': 'Change history',
+  'meeting.history.created': 'Created by {who}',
+  'meeting.history.updated': 'Edited by {who}',
+  'meeting.history.deleted': 'Deleted by {who}',
+  'meeting.history.unknownUser': 'an account that no longer exists',
+  'meeting.history.empty': 'No changes recorded yet.',
+
   'form.createTitle': 'Create a Meeting',
   'form.editTitle': 'Edit Meeting',
   'form.createSubmit': 'Create meeting',
