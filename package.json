@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "migrate": "node --env-file=.env.local db/migrate.mjs",
-    "migrate:prod": "node --env-file=.env.prod-db db/migrate.mjs"
+    "migrate:prod": "node --env-file=.env.prod-db db/migrate.mjs",
+    "backup": "node --env-file=.env.prod-db db/backup.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
