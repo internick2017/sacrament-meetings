@@ -41,3 +41,16 @@ export function canEditOrganization(
     user.organizationId === organizationId
   );
 }
+
+// The signed-in user's database id, for columns that record who did something
+// (created_by, changed_by). `user.id` is a string from the session, and
+// Number() on a malformed or missing id would silently yield NaN, so a bad
+// session value falls back to null (unattributed) instead of corrupting the
+// row.
+export function userIdOf(user: { id: string } | null): number | null {
+  if (!user) {
+    return null;
+  }
+  const id = Number(user.id);
+  return Number.isInteger(id) ? id : null;
+}

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireLeaderOf, NotAuthorizedError, getSessionUser } from './authz';
+import { userIdOf } from './authz-rules';
 import { getT } from './i18n/server';
 import { announcementFormSchema } from './announcements-schema';
 import {
@@ -40,18 +41,6 @@ function rawValuesFromForm(formData: FormData): AnnouncementFormState['values'] 
     // match the database column's own default rather than assuming public.
     audience: String(formData.get('audience') ?? 'private'),
   };
-}
-
-// `user.id` is a string from the session; Number(user.id) on a malformed or
-// missing id would silently insert NaN into created_by. Guard it so a bad
-// session value falls back to null (unattributed) instead of corrupting the
-// row.
-function createdByFromUser(user: { id: string } | null): number | null {
-  if (!user) {
-    return null;
-  }
-  const id = Number(user.id);
-  return Number.isInteger(id) ? id : null;
 }
 
 export async function addAnnouncementAction(
@@ -105,7 +94,7 @@ export async function addAnnouncementAction(
       endsOn: parsed.data.endsOn,
       audience: parsed.data.audience,
     },
-    createdByFromUser(user)
+    userIdOf(user)
   );
 
   // The home page also renders announcements (see AnnouncementList usage in
