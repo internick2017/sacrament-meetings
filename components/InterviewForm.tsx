@@ -75,6 +75,9 @@ function InterviewFormInner({
   const member = members.find((candidate) => String(candidate.id) === memberId) ?? null;
   const [phone, setPhone] = useState(member?.phone ?? '');
 
+  // Tithing is per family, through its head; anyone else only gets an
+  // individual interview (the server refuses it too).
+  const tithingBlocked = !rescheduleId && member !== null && !member.isHead;
   const tithing = kind === 'tithing';
   const effectiveInterviewer = tithing ? 'nick' : interviewer;
 
@@ -96,9 +99,9 @@ function InterviewFormInner({
 
   function fieldError(name: string) {
     return (
-      <p id={`${name}-error`} aria-live="polite" className="min-h-5 text-sm text-red-600">
+      <span id={`${name}-error`} aria-live="polite" className="block min-h-5 text-sm text-red-600">
         {state.errors?.[name]?.[0]}
-      </p>
+      </span>
     );
   }
 
@@ -153,7 +156,7 @@ function InterviewFormInner({
       {rescheduleId && <input type="hidden" name="id" value={rescheduleId} />}
 
       {state.message && (
-        <p role="alert" aria-live="polite" className="rounded bg-slate-100 px-3 py-2 text-sm">
+        <p role="alert" className="rounded bg-slate-100 px-3 py-2 text-sm">
           {state.message}
         </p>
       )}
@@ -178,6 +181,7 @@ function InterviewFormInner({
                 const next = members.find((candidate) => String(candidate.id) === event.target.value);
                 setMemberId(event.target.value);
                 setPhone(next?.phone ?? '');
+                if (next && !next.isHead) setKind('individual');
               }}
               aria-describedby="memberId-error"
               required
@@ -204,12 +208,19 @@ function InterviewFormInner({
                     name="kind"
                     value={option}
                     checked={kind === option}
+                    disabled={option === 'tithing' && tithingBlocked}
+                    aria-describedby={option === 'tithing' && tithingBlocked ? 'kind-hint' : undefined}
                     onChange={() => setKind(option)}
                   />
                   {t(`interviews.kind.${option}`)}
                 </label>
               ))}
             </div>
+            {tithingBlocked && (
+              <span id="kind-hint" className="block text-sm text-slate-500">
+                {t('interviews.form.tithingNeedsHead')}
+              </span>
+            )}
             {fieldError('kind')}
           </fieldset>
         </>
@@ -225,7 +236,7 @@ function InterviewFormInner({
           value={effectiveInterviewer}
           disabled={tithing}
           onChange={(event) => setInterviewer(event.target.value as Interview['interviewer'])}
-          aria-describedby="interviewer-hint interviewer-error"
+          aria-describedby={tithing ? 'interviewer-hint interviewer-error' : 'interviewer-error'}
           className={`${INPUT} disabled:bg-slate-100`}
         >
           {INTERVIEWERS.map((option) => (

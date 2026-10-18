@@ -473,4 +473,6 @@ export const es: Dictionary = {
   'interviews.whatsapp.copy': 'Copiar mensaje',
   'interviews.whatsapp.copied': 'Copiado',
   'interviews.whatsapp.noPhone': 'Sin teléfono válido: copia el mensaje y envíalo a mano.',
+  'validation.interview.tithingNeedsHead': 'La entrevista de diezmo es solo para el cabeza de familia.',
+  'interviews.form.tithingNeedsHead': 'Este miembro no es cabeza de familia, así que solo puede tener una entrevista individual.',
 };

@@ -471,6 +471,8 @@ export const en = {
   'interviews.whatsapp.copy': 'Copy message',
   'interviews.whatsapp.copied': 'Copied',
   'interviews.whatsapp.noPhone': 'No valid phone: copy the message and send it by hand.',
+  'validation.interview.tithingNeedsHead': 'The tithing interview is only for the head of family.',
+  'interviews.form.tithingNeedsHead': 'This member is not a head of family, so only an individual interview is possible.',
 } as const;
 
 export type DictionaryKey = keyof typeof en;

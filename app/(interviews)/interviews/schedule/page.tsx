@@ -74,12 +74,13 @@ export default async function ScheduleInterviewPage({ searchParams }: { searchPa
     const memberId = positiveInt(first(params.member));
     const member = members.find((candidate) => candidate.id === memberId) ?? null;
     const kindParam = first(params.kind);
-    // A head of family is usually called for tithing; anyone else individually.
+    // Tithing is only for a head of family, so ?kind=tithing is ignored for
+    // anyone else; a head defaults to tithing unless asked otherwise.
     const kind =
-      kindParam === 'tithing' || kindParam === 'individual'
-        ? kindParam
-        : member && !member.isHead
-          ? 'individual'
+      member && !member.isHead
+        ? 'individual'
+        : kindParam === 'tithing' || kindParam === 'individual'
+          ? kindParam
           : 'tithing';
     initial = {
       memberId: member?.id ?? null,

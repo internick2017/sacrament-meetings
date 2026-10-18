@@ -150,6 +150,12 @@ export async function scheduleInterviewAction(
     const message = t('validation.interview.memberNotFound');
     return { message, errors: { memberId: [message] }, values };
   }
+  // A tithing interview is per family, through its head: for anyone else it
+  // would appear on no list of the board.
+  if (data.kind === 'tithing' && !row.member.isHead) {
+    const message = t('validation.interview.tithingNeedsHead');
+    return { message, errors: { kind: [message] }, values };
+  }
   if (
     data.kind === 'tithing' &&
     row.interviews.some((other) => other.kind === 'tithing' && other.status === 'scheduled')

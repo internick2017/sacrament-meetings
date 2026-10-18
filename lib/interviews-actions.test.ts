@@ -229,6 +229,39 @@ describe('scheduleInterviewAction', () => {
     await expect(scheduleInterviewAction({}, form(scheduleFields))).rejects.toThrow('boom');
   });
 
+  it('rejects a tithing interview for a member who is not a head of family', async () => {
+    mockBoard.mockResolvedValue([
+      { member: { id: 12, fullName: 'Ana Lima', phone: null, isHead: false }, interviews: [] },
+    ]);
+
+    const state = await scheduleInterviewAction({}, form(scheduleFields));
+
+    expect(state.saved).toBeUndefined();
+    expect(state.errors?.kind).toEqual(['validation.interview.tithingNeedsHead']);
+    expect(mockInsert).not.toHaveBeenCalled();
+  });
+
+  it('allows a tithing interview for a head of family', async () => {
+    const state = await scheduleInterviewAction({}, form(scheduleFields));
+
+    expect(state.saved).toBe(true);
+    expect(mockInsert).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows an individual interview for a member who is not a head of family', async () => {
+    mockBoard.mockResolvedValue([
+      { member: { id: 12, fullName: 'Ana Lima', phone: null, isHead: false }, interviews: [] },
+    ]);
+
+    const state = await scheduleInterviewAction(
+      {},
+      form({ ...scheduleFields, kind: 'individual', interviewer: 'rafael' })
+    );
+
+    expect(state.saved).toBe(true);
+    expect(mockInsert).toHaveBeenCalledTimes(1);
+  });
+
   it('rejects a member that is not on the roster', async () => {
     mockBoard.mockResolvedValue([]);
 
