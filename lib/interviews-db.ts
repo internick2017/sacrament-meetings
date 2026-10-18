@@ -131,8 +131,18 @@ export async function insertInterview(data: NewInterview, createdBy: number | nu
   return rows[0].id;
 }
 
-export async function setInterviewStatus(id: number, status: InterviewStatus): Promise<void> {
-  await sql.query(`UPDATE interviews SET status = $1 WHERE id = $2`, [status, id]);
+// Closes an interview. Only a row that is still `scheduled` changes, so a
+// stale screen can never turn a done or cancelled interview into something
+// else. Returns false when nothing matched.
+export async function setInterviewStatus(
+  id: number,
+  status: Extract<InterviewStatus, 'done' | 'cancelled'>
+): Promise<boolean> {
+  const rows = (await sql.query(
+    `UPDATE interviews SET status = $1 WHERE id = $2 AND status = 'scheduled' RETURNING id`,
+    [status, id]
+  )) as { id: number }[];
+  return rows.length > 0;
 }
 
 export async function setMemberPhone(memberId: number, phone: string | null): Promise<void> {
@@ -159,20 +169,35 @@ export async function getInterview(id: number): Promise<Interview | undefined> {
 }
 
 // Moving an interview keeps its history: the old row becomes `rescheduled`
-// and a new `scheduled` row is inserted, both in one transaction so a failed
-// insert never leaves the family without its active interview. The update
-// only matches a row that is still scheduled; the action checks that first.
+// and a new `scheduled` row is inserted. It is ONE statement: the insert only
+// runs if the update actually moved a row that was still scheduled, so two
+// simultaneous reschedules of the same interview cannot both insert. Returns
+// the new id, or null when the old row was no longer scheduled.
 export async function rescheduleInterview(
   oldId: number,
   data: NewInterview,
   createdBy: number | null
-): Promise<number> {
-  const [, inserted] = (await sql.transaction([
-    sql.query(
-      `UPDATE interviews SET status = 'rescheduled' WHERE id = $1 AND status = 'scheduled'`,
-      [oldId]
-    ),
-    sql.query(INSERT_INTERVIEW, insertParams(data, createdBy)),
-  ])) as [unknown, { id: number }[]];
-  return inserted[0].id;
+): Promise<number | null> {
+  const rows = (await sql.query(
+    `WITH moved AS (
+       UPDATE interviews SET status = 'rescheduled'
+        WHERE id = $1 AND status = 'scheduled'
+        RETURNING id
+     )
+     INSERT INTO interviews
+       (member_id, kind, interviewer, starts_at, duration_minutes, mode, online_link, status, created_by)
+     SELECT $2, $3, $4, $5::timestamptz, $6, $7, $8, 'scheduled', $9
+      WHERE EXISTS (SELECT 1 FROM moved)
+     RETURNING id`,
+    [oldId, ...insertParams(data, createdBy)]
+  )) as { id: number }[];
+  return rows[0]?.id ?? null;
+}
+
+// Postgres unique violation on the one-active-tithing index (migration 015):
+// a second scheduled tithing interview for the same family.
+export function isActiveTithingConflict(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  const { code, constraint } = error as { code?: unknown; constraint?: unknown };
+  return code === '23505' && constraint === 'interviews_one_active_tithing_idx';
 }

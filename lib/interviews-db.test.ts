@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 vi.mock('./db', () => ({
   sql: {
     query: vi.fn().mockResolvedValue([]),
-    transaction: vi.fn().mockResolvedValue([[], [{ id: 77 }]]),
+    transaction: vi.fn(),
   },
 }));
 
@@ -19,6 +19,7 @@ import {
   listScheduledFor,
   getInterview,
   rescheduleInterview,
+  isActiveTithingConflict,
 } from './interviews-db';
 
 const mockQuery = vi.mocked(sql.query);
@@ -146,12 +147,22 @@ describe('setInterviewStatus / setMemberPhone', () => {
     vi.clearAllMocks();
   });
 
-  it('updates the status by id', async () => {
-    await setInterviewStatus(5, 'done');
+  it('updates the status only of a row that is still scheduled', async () => {
+    mockQuery.mockResolvedValueOnce([{ id: 5 }]);
+
+    expect(await setInterviewStatus(5, 'done')).toBe(true);
 
     const [query, params] = mockQuery.mock.calls[0];
     expect(query).toContain('UPDATE interviews SET status = $1');
+    expect(query).toContain(`AND status = 'scheduled'`);
+    expect(query).toContain('RETURNING id');
     expect(params).toEqual(['done', 5]);
+  });
+
+  it('returns false when no scheduled row matched', async () => {
+    mockQuery.mockResolvedValueOnce([]);
+
+    expect(await setInterviewStatus(5, 'cancelled')).toBe(false);
   });
 
   it('sets or clears a member phone', async () => {
@@ -196,20 +207,46 @@ describe('rescheduleInterview', () => {
     vi.clearAllMocks();
   });
 
-  it('marks the old row rescheduled and inserts the new one in a single transaction', async () => {
+  it('moves the old row and inserts the new one in ONE statement guarded by the move', async () => {
+    mockQuery.mockResolvedValueOnce([{ id: 77 }]);
+
     const id = await rescheduleInterview(5, newInterview, 3);
 
     expect(id).toBe(77);
-    expect(mockTransaction).toHaveBeenCalledTimes(1);
-    expect(mockTransaction.mock.calls[0][0]).toHaveLength(2);
+    expect(mockQuery).toHaveBeenCalledTimes(1);
+    expect(mockTransaction).not.toHaveBeenCalled();
+    const [query, params] = mockQuery.mock.calls[0];
+    expect(query).toMatch(/WITH moved AS \(\s*UPDATE interviews SET status = 'rescheduled'/);
+    expect(query).toContain(`WHERE id = $1 AND status = 'scheduled'`);
+    expect(query).toContain('INSERT INTO interviews');
+    expect(query).toContain('WHERE EXISTS (SELECT 1 FROM moved)');
+    expect(params).toEqual([
+      5,
+      1,
+      'individual',
+      'jared',
+      '2026-10-25T17:00:00.000Z',
+      45,
+      'online',
+      'https://meet.google.com/abc',
+      3,
+    ]);
+  });
 
-    const [updateQuery, updateParams] = mockQuery.mock.calls[0];
-    expect(updateQuery).toContain(`SET status = 'rescheduled'`);
-    expect(updateQuery).toContain(`status = 'scheduled'`);
-    expect(updateParams).toEqual([5]);
+  it('returns null when the old row was no longer scheduled (nothing inserted)', async () => {
+    mockQuery.mockResolvedValueOnce([]);
 
-    const [insertQuery, insertParams] = mockQuery.mock.calls[1];
-    expect(insertQuery).toContain('INSERT INTO interviews');
-    expect(insertParams?.[0]).toBe(1);
+    expect(await rescheduleInterview(5, newInterview, 3)).toBeNull();
+  });
+});
+
+describe('isActiveTithingConflict', () => {
+  it('recognises only a unique violation on the one-active-tithing index', () => {
+    const index = 'interviews_one_active_tithing_idx';
+    expect(isActiveTithingConflict({ code: '23505', constraint: index })).toBe(true);
+    expect(isActiveTithingConflict({ code: '23505', constraint: 'members_full_name_lower_idx' })).toBe(false);
+    expect(isActiveTithingConflict({ code: '23503', constraint: index })).toBe(false);
+    expect(isActiveTithingConflict(new Error('x'))).toBe(false);
+    expect(isActiveTithingConflict(null)).toBe(false);
   });
 });

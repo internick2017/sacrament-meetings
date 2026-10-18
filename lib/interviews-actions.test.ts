@@ -4,7 +4,11 @@ vi.mock('./authz', async () => {
   const { NotAuthorizedError } = await import('./authz-rules');
   return { requireInterviewAccess: vi.fn(), NotAuthorizedError };
 });
-vi.mock('./interviews-db', () => ({
+// The real isActiveTithingConflict is kept (it is a pure error check); the
+// db client itself is mocked so importing the module needs no database.
+vi.mock('./db', () => ({ sql: {} }));
+vi.mock('./interviews-db', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./interviews-db')>()),
   listInterviewBoard: vi.fn(),
   insertInterview: vi.fn(),
   setInterviewStatus: vi.fn(),
@@ -94,7 +98,16 @@ beforeEach(() => {
   mockInsert.mockResolvedValue(99);
   mockReschedule.mockResolvedValue(100);
   mockGet.mockResolvedValue(interview());
+  mockSetStatus.mockResolvedValue(true);
 });
+
+// What the Neon driver throws when the one-active-tithing index refuses a row.
+function activeTithingViolation() {
+  return Object.assign(new Error('duplicate key value violates unique constraint'), {
+    code: '23505',
+    constraint: 'interviews_one_active_tithing_idx',
+  });
+}
 
 describe('every interview action refuses a role without interview access', () => {
   const cases: [string, (fd: FormData) => Promise<{ message?: string }>][] = [
@@ -198,6 +211,24 @@ describe('scheduleInterviewAction', () => {
     expect(state.saved).toBe(true);
   });
 
+  it('maps a unique violation from a racing save to the tithing-already-scheduled message', async () => {
+    mockInsert.mockRejectedValue(activeTithingViolation());
+
+    const state = await scheduleInterviewAction({}, form({ ...scheduleFields, phone: '46999998888' }));
+
+    expect(state.saved).toBeUndefined();
+    expect(state.errors?.memberId).toEqual(['validation.interview.tithingAlreadyScheduled']);
+    expect(mockSetPhone).not.toHaveBeenCalled();
+  });
+
+  it('rethrows any other database error', async () => {
+    mockInsert.mockRejectedValue(
+      Object.assign(new Error('boom'), { code: '23505', constraint: 'other_idx' })
+    );
+
+    await expect(scheduleInterviewAction({}, form(scheduleFields))).rejects.toThrow('boom');
+  });
+
   it('rejects a member that is not on the roster', async () => {
     mockBoard.mockResolvedValue([]);
 
@@ -269,6 +300,25 @@ describe('rescheduleInterviewAction', () => {
     expect(state.conflicts).toEqual([]);
   });
 
+  it('reports not-scheduled, not success, when the row was closed meanwhile (0 rows moved)', async () => {
+    mockReschedule.mockResolvedValue(null);
+
+    const state = await rescheduleInterviewAction({}, form({ ...rescheduleFields, phone: '46999998888' }));
+
+    expect(state.message).toBe('interviews.notScheduled');
+    expect(state.saved).toBeUndefined();
+    expect(mockSetPhone).not.toHaveBeenCalled();
+  });
+
+  it('maps a unique violation to the tithing-already-scheduled message', async () => {
+    mockReschedule.mockRejectedValue(activeTithingViolation());
+
+    const state = await rescheduleInterviewAction({}, form(rescheduleFields));
+
+    expect(state.errors?.memberId).toEqual(['validation.interview.tithingAlreadyScheduled']);
+    expect(state.saved).toBeUndefined();
+  });
+
   it('only reschedules an interview that is still scheduled', async () => {
     mockGet.mockResolvedValue(interview({ status: 'done' }));
 
@@ -294,22 +344,21 @@ describe('markInterviewDoneAction / cancelInterviewAction', () => {
     expect(state.saved).toBe(true);
   });
 
-  for (const status of ['done', 'rescheduled', 'cancelled'] as const) {
-    it(`does not cancel an interview that is ${status}`, async () => {
-      mockGet.mockResolvedValue(interview({ status }));
+  it('reports not-scheduled when the guarded update matched no row (already closed)', async () => {
+    mockSetStatus.mockResolvedValue(false);
 
-      const state = await cancelInterviewAction({}, form({ id: '5' }));
+    const cancelled = await cancelInterviewAction({}, form({ id: '5' }));
+    const done = await markInterviewDoneAction({}, form({ id: '5' }));
 
-      expect(state.message).toBe('interviews.notScheduled');
-      expect(mockSetStatus).not.toHaveBeenCalled();
-    });
-  }
+    expect(cancelled).toEqual({ message: 'interviews.notScheduled' });
+    expect(done).toEqual({ message: 'interviews.notScheduled' });
+  });
 
   it('rejects a missing or invalid id', async () => {
     const state = await cancelInterviewAction({}, form({ id: 'abc' }));
 
     expect(state.message).toBe('validation.interview.invalidId');
-    expect(mockGet).not.toHaveBeenCalled();
+    expect(mockSetStatus).not.toHaveBeenCalled();
   });
 });
 

@@ -19,6 +19,7 @@ import {
   listScheduledFor,
   getInterview,
   rescheduleInterview,
+  isActiveTithingConflict,
   type NewInterview,
 } from './interviews-db';
 import type { SessionUser } from './types';
@@ -160,7 +161,17 @@ export async function scheduleInterviewAction(
   const interview = await toNewInterview(data);
   const conflicts = findConflicts(interview, await listScheduledFor(interview.interviewer));
 
-  await insertInterview(interview, userIdOf(user));
+  try {
+    await insertInterview(interview, userIdOf(user));
+  } catch (error) {
+    // The check above is the friendly path; the unique index (migration 015)
+    // is what stops two saves that raced past it.
+    if (isActiveTithingConflict(error)) {
+      const message = t('validation.interview.tithingAlreadyScheduled');
+      return { message, errors: { memberId: [message] }, values };
+    }
+    throw error;
+  }
   await maybeSavePhone(data.memberId, data.phone);
 
   revalidatePath(INTERVIEWS_PATH);
@@ -208,14 +219,28 @@ export async function rescheduleInterviewAction(
   const interview = await toNewInterview(parsed.data);
   const conflicts = findConflicts(interview, await listScheduledFor(interview.interviewer), old.id);
 
-  await rescheduleInterview(old.id, interview, userIdOf(user));
+  let newId: number | null;
+  try {
+    newId = await rescheduleInterview(old.id, interview, userIdOf(user));
+  } catch (error) {
+    if (isActiveTithingConflict(error)) {
+      const message = t('validation.interview.tithingAlreadyScheduled');
+      return { message, errors: { memberId: [message] }, values };
+    }
+    throw error;
+  }
+  // Null: someone closed or moved the interview after it was read above.
+  if (newId === null) {
+    return { message: t('interviews.notScheduled'), values };
+  }
   await maybeSavePhone(parsed.data.memberId, parsed.data.phone);
 
   revalidatePath(INTERVIEWS_PATH);
   return savedState(t, conflicts, 'interviews.rescheduled');
 }
 
-// Done and cancelled are both reached only from `scheduled`.
+// Done and cancelled are both reached only from `scheduled`; the guarded
+// UPDATE in setInterviewStatus is what enforces it.
 async function closeScheduled(
   formData: FormData,
   status: Extract<InterviewStatus, 'done' | 'cancelled'>
@@ -231,12 +256,9 @@ async function closeScheduled(
     return { message: t('validation.interview.invalidId') };
   }
 
-  const interview = await getInterview(id);
-  if (!interview || interview.status !== 'scheduled') {
+  if (!(await setInterviewStatus(id, status))) {
     return { message: t('interviews.notScheduled') };
   }
-
-  await setInterviewStatus(id, status);
   revalidatePath(INTERVIEWS_PATH);
   return {
     saved: true,
