@@ -387,6 +387,27 @@ export const en = {
   'validation.photo.invalidId': 'Invalid photo id.',
   'validation.photo.invalidType': 'Choose a JPEG, PNG, or WebP image.',
   'validation.photo.tooLarge': 'That image is too large.',
+
+  'validation.interview.member': 'Choose a member from the list.',
+  'validation.interview.kind': 'Choose the interview type.',
+  'validation.interview.interviewer': 'Choose who will hold the interview.',
+  'validation.interview.tithingOnlyNick': 'Tithing declaration interviews are only held by Bishop Nick Granados.',
+  'validation.interview.startsAt': 'Enter a valid date and time.',
+  'validation.interview.duration': 'The duration must be a whole number of minutes between 1 and 240.',
+  'validation.interview.mode': 'Choose in person or online.',
+  'validation.interview.onlineLinkRequired': 'An online interview needs the meeting link.',
+  'validation.interview.phone': 'Enter a Brazilian phone number with area code, e.g. (46) 99999-8888.',
+  'validation.interview.memberNotFound': 'That member is not on the roster.',
+  'validation.interview.tithingAlreadyScheduled': 'This family already has a tithing interview scheduled.',
+  'validation.interview.invalidId': 'Invalid interview id.',
+  'interviews.saved': 'Interview saved.',
+  'interviews.rescheduled': 'Interview rescheduled.',
+  'interviews.savedWithConflicts': 'Interview saved, but it overlaps another interview with the same person.',
+  'interviews.markedDone': 'Interview marked as done.',
+  'interviews.cancelled': 'Interview cancelled.',
+  'interviews.notScheduled': 'This interview is no longer scheduled.',
+  'interviews.phoneSaved': 'Phone saved.',
+  'interviews.phoneCleared': 'Phone removed.',
 } as const;
 
 export type DictionaryKey = keyof typeof en;
