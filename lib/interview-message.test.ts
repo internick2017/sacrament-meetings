@@ -24,6 +24,19 @@ describe('normalizePhone', () => {
     expect(normalizePhone('123456789')).toBeNull();
     expect(normalizePhone('12345678901234')).toBeNull();
   });
+  it('strips a leading trunk zero before measuring', () => {
+    expect(normalizePhone('046 3523-4567')).toBe('554635234567');
+    expect(normalizePhone('(046) 99123-4567')).toBe('5546991234567');
+  });
+  it('ignores a plus sign in the middle of the string', () => {
+    expect(normalizePhone('46+99123-4567')).toBe('5546991234567');
+  });
+  it('still prefixes a 10-digit number whose DDD is 55', () => {
+    expect(normalizePhone('55 3523-4567')).toBe('555535234567');
+  });
+  it('returns null for 13 digits not starting with 55', () => {
+    expect(normalizePhone('1234567890123')).toBeNull();
+  });
   it('returns null for 12/13 digits not starting with 55', () => {
     expect(normalizePhone('441234567890')).toBeNull();
   });
@@ -78,6 +91,18 @@ describe('interviewMessage', () => {
     ).toContain('na segunda-feira, 26 de outubro, às 19:00');
   });
 
+  it('pins the day boundary: 01:00Z on the 26th is Sunday 25th 22:00 in Sao Paulo', () => {
+    expect(
+      interviewMessage({
+        ...base,
+        startsAt: '2026-10-26T01:00:00.000Z',
+        name: 'Silva',
+        kind: 'tithing',
+        mode: 'in_person',
+      }),
+    ).toContain('no domingo, 25 de outubro, às 22:00');
+  });
+
   it('pins the zone: 17:00Z is 14:00 in Sao Paulo', () => {
     expect(
       interviewMessage({ ...base, name: 'Silva', kind: 'tithing', mode: 'in_person' }),
@@ -90,6 +115,10 @@ describe('whatsappUrl', () => {
     expect(whatsappUrl('(46) 99123-4567', 'Olá, tudo bem?')).toBe(
       `https://wa.me/5546991234567?text=${encodeURIComponent('Olá, tudo bem?')}`,
     );
+  });
+  it('percent-encodes & and newlines in the text', () => {
+    const url = whatsappUrl('46991234567', 'a&b\nc');
+    expect(url).toBe('https://wa.me/5546991234567?text=a%26b%0Ac');
   });
   it('returns null without a valid phone', () => {
     expect(whatsappUrl(null, 'x')).toBeNull();
