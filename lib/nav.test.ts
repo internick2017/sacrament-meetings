@@ -29,9 +29,24 @@ describe('navFor', () => {
 
   it('gives an admin every admin page, speakers included', () => {
     expect(hrefs(navFor('admin').admin).sort()).toEqual(
-      ['/announcements', '/callings', '/photos', '/speakers', '/unit', '/users'].sort()
+      ['/announcements', '/callings', '/interviews', '/photos', '/speakers', '/unit', '/users'].sort()
     );
     expect(hrefs(navFor('admin').account)).toEqual(['/profile']);
+  });
+});
+
+describe('navFor secretary', () => {
+  it('gives a secretary only the interviews page and the profile', () => {
+    const nav = navFor('secretary');
+    expect(hrefs(nav.admin)).toEqual(['/interviews']);
+    expect(hrefs(nav.account)).toEqual(['/profile']);
+    expect(hrefs(nav.public)).toEqual(hrefs(navFor('member').public));
+  });
+
+  it('never shows interviews to a leader or a member', () => {
+    expect(hrefs(navFor('leader').admin)).not.toContain('/interviews');
+    expect(hrefs(navFor('member').admin)).not.toContain('/interviews');
+    expect(hrefs(navFor(null).admin)).not.toContain('/interviews');
   });
 });
 

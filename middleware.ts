@@ -21,6 +21,8 @@ export const config = {
     '/callings',
     '/users',
     '/speakers',
+    '/interviews',
+    '/interviews/:path*',
     '/photos',
     '/profile',
     '/activities/new',

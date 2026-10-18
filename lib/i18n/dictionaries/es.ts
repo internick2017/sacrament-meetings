@@ -10,6 +10,7 @@ export const es: Dictionary = {
   'nav.profile': 'Mi perfil',
   'nav.admin': 'Administración',
   'nav.menu': 'Menú',
+  'nav.interviews': 'Entrevistas',
   'nav.speakers': 'Discursantes',
   'nav.callings': 'Llamamientos',
   'nav.announcements': 'Anuncios',
@@ -235,6 +236,7 @@ export const es: Dictionary = {
   'validation.displayOrderMin': 'El orden no puede ser negativo.',
 
   'role.admin': 'Administrador',
+  'role.secretary': 'Secretario',
   'role.leader': 'Líder de organización',
   'role.member': 'Miembro',
 

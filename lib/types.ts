@@ -147,7 +147,7 @@ export interface EventPhoto {
   approved: boolean;
 }
 
-export const ROLES = ['admin', 'leader', 'member'] as const;
+export const ROLES = ['admin', 'secretary', 'leader', 'member'] as const;
 
 export type Role = (typeof ROLES)[number];
 

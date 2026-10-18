@@ -10,7 +10,7 @@ vi.mock('./auth', () => ({
 }));
 
 import { auth } from './auth';
-import { requireAdmin, requireLeaderOf, NotAuthorizedError } from './authz';
+import { requireAdmin, requireInterviewAccess, requireLeaderOf, NotAuthorizedError } from './authz';
 
 // `auth` is overloaded (it also serves as Next.js middleware), and
 // vi.mocked() picks the NextMiddleware overload, which does not accept a
@@ -52,6 +52,36 @@ describe('requireAdmin', () => {
 
   it('throws NotAuthorizedError for an anonymous visitor', async () => {
     mockAuth.mockResolvedValue(null);
+    await expect(requireAdmin()).rejects.toBeInstanceOf(NotAuthorizedError);
+  });
+});
+
+describe('requireInterviewAccess', () => {
+  beforeEach(() => {
+    mockAuth.mockReset();
+  });
+
+  it.each(['admin', 'secretary'])('passes for %s', async (role) => {
+    mockAuth.mockResolvedValue(sessionFor(role, null));
+    const user = await requireInterviewAccess();
+    expect(user.role).toBe(role);
+  });
+
+  it.each(['leader', 'member'])('throws NotAuthorizedError for %s', async (role) => {
+    mockAuth.mockResolvedValue(sessionFor(role, 30));
+    await expect(requireInterviewAccess()).rejects.toBeInstanceOf(NotAuthorizedError);
+  });
+
+  it('throws NotAuthorizedError for an anonymous visitor', async () => {
+    mockAuth.mockResolvedValue(null);
+    await expect(requireInterviewAccess()).rejects.toBeInstanceOf(NotAuthorizedError);
+  });
+});
+
+describe('requireAdmin and secretary', () => {
+  it('does not let a secretary through requireAdmin', async () => {
+    mockAuth.mockReset();
+    mockAuth.mockResolvedValue(sessionFor('secretary', null));
     await expect(requireAdmin()).rejects.toBeInstanceOf(NotAuthorizedError);
   });
 });

@@ -8,6 +8,7 @@ export const en = {
   'nav.profile': 'My profile',
   'nav.admin': 'Administration',
   'nav.menu': 'Menu',
+  'nav.interviews': 'Interviews',
   'nav.speakers': 'Speakers',
   'nav.callings': 'Callings',
   'nav.announcements': 'Announcements',
@@ -233,6 +234,7 @@ export const en = {
   'validation.displayOrderMin': 'The order cannot be negative.',
 
   'role.admin': 'Administrator',
+  'role.secretary': 'Secretary',
   'role.leader': 'Organization leader',
   'role.member': 'Member',
 

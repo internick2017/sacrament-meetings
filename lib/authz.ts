@@ -57,6 +57,15 @@ export async function requireAdmin(): Promise<SessionUser> {
   return user;
 }
 
+// Interviews are the secretary's job; an admin can do everything they can.
+export async function requireInterviewAccess(): Promise<SessionUser> {
+  const user = await getSessionUser();
+  if (!user || (user.role !== 'admin' && user.role !== 'secretary')) {
+    throw new NotAuthorizedError();
+  }
+  return user;
+}
+
 // Passes for an admin, or for the leader of exactly this organization.
 // `organizationId` may arrive as a number, a numeric string (route params and
 // form fields are always strings), or null; anything else is rejected.

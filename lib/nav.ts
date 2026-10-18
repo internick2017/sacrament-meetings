@@ -12,7 +12,7 @@ export interface NavItem {
   visibleTo: readonly Viewer[];
 }
 
-const EVERYONE: readonly Viewer[] = ['anonymous', 'member', 'leader', 'admin'];
+const EVERYONE: readonly Viewer[] = ['anonymous', 'member', 'secretary', 'leader', 'admin'];
 
 // Hiding an item is cosmetic only: the middleware, the (admin) layout and the
 // Server Actions are what actually protect each route.
@@ -24,6 +24,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { href: '/activities', label: 'nav.activities', section: 'public', visibleTo: EVERYONE },
 
   { href: '/speakers', label: 'nav.speakers', section: 'admin', visibleTo: ['admin'] },
+  { href: '/interviews', label: 'nav.interviews', section: 'admin', visibleTo: ['admin', 'secretary'] },
   { href: '/callings', label: 'nav.callings', section: 'admin', visibleTo: ['admin', 'leader'] },
   { href: '/announcements', label: 'nav.announcements', section: 'admin', visibleTo: ['admin', 'leader'] },
   { href: '/photos', label: 'nav.photos', section: 'admin', visibleTo: ['admin'] },
@@ -31,7 +32,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { href: '/unit', label: 'nav.unit', section: 'admin', visibleTo: ['admin'] },
 
   // Any signed-in role: profile photos belong to whoever is signed in.
-  { href: '/profile', label: 'nav.profile', section: 'account', visibleTo: ['member', 'leader', 'admin'] },
+  { href: '/profile', label: 'nav.profile', section: 'account', visibleTo: ['member', 'secretary', 'leader', 'admin'] },
   { href: '/login', label: 'nav.signIn', section: 'account', visibleTo: ['anonymous'] },
 ];
 
