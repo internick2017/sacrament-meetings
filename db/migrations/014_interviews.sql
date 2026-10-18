@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS interviews (
   duration_minutes integer NOT NULL DEFAULT 30 CHECK (duration_minutes > 0),
   mode             text NOT NULL CHECK (mode IN ('in_person', 'online')),
   online_link      text,
-  status           text NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'done', 'cancelled')),
+  status           text NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'done', 'rescheduled', 'cancelled')),
   created_by       integer REFERENCES users(id) ON DELETE SET NULL,
   created_at       timestamptz DEFAULT now(),
   -- Tithing interviews are only ever done by Nick; the database refuses
