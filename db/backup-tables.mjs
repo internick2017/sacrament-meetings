@@ -6,6 +6,7 @@ export const BACKUP_TABLES = [
   'people',
   'users',
   'members',
+  'interviews',
   'meetings',
   'meeting_changes',
   'callings',
