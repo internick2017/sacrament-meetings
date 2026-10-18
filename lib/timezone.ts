@@ -126,3 +126,34 @@ export function todayInTimeZone(timeZone: string): string {
     day: '2-digit',
   }).format(new Date());
 }
+
+// Renders a stored ISO instant as the 'YYYY-MM-DDTHH:mm' value a
+// datetime-local input expects, in the congregation's own timezone (the same
+// one formatEventDateTime uses to display it) rather than the server's or
+// the visitor's. The read-side counterpart of zonedLocalToInstant.
+//
+// An unrecognized IANA zone (one saved before unit-schema.ts validated it)
+// must never throw and 500 an edit page: it falls back to the runtime's own
+// timezone, same as formatEventDateTime does on the public pages.
+export function toDatetimeLocalValue(isoString: string, timeZone: string): string {
+  const format = (zone: string | undefined) =>
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: zone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).formatToParts(new Date(isoString));
+
+  let parts;
+  try {
+    parts = format(timeZone);
+  } catch {
+    parts = format(undefined);
+  }
+
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? '00';
+  return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`;
+}

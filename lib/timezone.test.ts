@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { zonedLocalToInstant, todayInTimeZone } from './timezone';
+import { zonedLocalToInstant, todayInTimeZone, toDatetimeLocalValue } from './timezone';
 
 // America/Sao_Paulo is this project's default unit timezone (see
 // EMPTY_UNIT in lib/unit-db.ts) and is UTC-3 with no DST since 2019, so it
@@ -17,7 +17,7 @@ describe('zonedLocalToInstant', () => {
     const timeZone = 'America/Sao_Paulo';
     const instant = zonedLocalToInstant(local, timeZone);
 
-    // Mirrors toDatetimeLocalValue in app/(admin)/activities/[id]/edit/page.tsx.
+    // Same rendering as toDatetimeLocalValue (tested directly below).
     const parts = new Intl.DateTimeFormat('en-CA', {
       timeZone,
       year: 'numeric',
@@ -137,5 +137,20 @@ describe('todayInTimeZone', () => {
 
   it('returns the local calendar day in a zone east of UTC', () => {
     expect(todayInTimeZone('Asia/Tokyo')).toBe('2026-10-16');
+  });
+});
+
+describe('toDatetimeLocalValue', () => {
+  it('renders an instant as datetime-local wall time in the given zone', () => {
+    expect(toDatetimeLocalValue('2026-10-02T22:00:00.000Z', 'America/Sao_Paulo')).toBe('2026-10-02T19:00');
+  });
+
+  it('round-trips with zonedLocalToInstant', () => {
+    const local = '2026-12-31T23:30';
+    expect(toDatetimeLocalValue(zonedLocalToInstant(local, 'Asia/Tokyo'), 'Asia/Tokyo')).toBe(local);
+  });
+
+  it('does not throw on an unknown zone', () => {
+    expect(() => toDatetimeLocalValue('2026-10-02T22:00:00.000Z', 'Not/AZone')).not.toThrow();
   });
 });
