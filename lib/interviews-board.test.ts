@@ -113,3 +113,29 @@ describe('buildBoard', () => {
     expect(buildBoard(rows, 'none', '').noHeads).toBe(false);
   });
 });
+
+describe('buildBoard individual agenda order', () => {
+  it('lists scheduled interviews first (soonest first), then done ones (newest first)', () => {
+    const agenda = [
+      row(20, 'Bia Rocha', false, [
+        { kind: 'individual', status: 'done', startsAt: '2026-09-01T13:00:00.000Z' },
+        { kind: 'individual', status: 'scheduled', startsAt: '2026-11-05T13:00:00.000Z' },
+      ]),
+      row(21, 'Caio Reis', false, [
+        { kind: 'individual', status: 'done', startsAt: '2026-10-10T13:00:00.000Z' },
+        { kind: 'individual', status: 'scheduled', startsAt: '2026-10-28T13:00:00.000Z' },
+      ]),
+    ];
+
+    const order = buildBoard(agenda, 'individual', '').individual.map(
+      ({ interview }) => `${interview.status} ${interview.startsAt.slice(0, 10)}`
+    );
+
+    expect(order).toEqual([
+      'scheduled 2026-10-28',
+      'scheduled 2026-11-05',
+      'done 2026-10-10',
+      'done 2026-09-01',
+    ]);
+  });
+});

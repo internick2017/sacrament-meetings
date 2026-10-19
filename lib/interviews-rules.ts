@@ -8,6 +8,10 @@ export const INTERVIEWERS = [
 ] as const;
 
 export type InterviewerKey = (typeof INTERVIEWERS)[number]['key'];
+
+export function interviewerName(key: InterviewerKey): string {
+  return INTERVIEWERS.find((interviewer) => interviewer.key === key)?.name ?? key;
+}
 export type InterviewKind = 'tithing' | 'individual';
 export type InterviewStatus = 'scheduled' | 'done' | 'rescheduled' | 'cancelled';
 export type InterviewMode = 'in_person' | 'online';

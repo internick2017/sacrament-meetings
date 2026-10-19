@@ -1,4 +1,4 @@
-import type { SessionUser } from './types';
+import type { Role, SessionUser } from './types';
 
 // Thrown when a signed-in user tries something their role does not allow. It is
 // a distinct class so a Server Action can catch it and show a message, instead
@@ -53,4 +53,10 @@ export function userIdOf(user: { id: string } | null): number | null {
   }
   const id = Number(user.id);
   return Number.isInteger(id) ? id : null;
+}
+
+// Interviews are the secretary's job; an admin can do everything they can. A
+// leader never gets in: the area shows who was called in and their phones.
+export function hasInterviewAccess(role: Role): boolean {
+  return role === 'admin' || role === 'secretary';
 }

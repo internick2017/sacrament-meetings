@@ -2,7 +2,7 @@ import { cache } from 'react';
 import { auth } from './auth';
 import { ROLES } from './types';
 import type { SessionUser } from './types';
-import { canEditOrganization, NotAuthorizedError } from './authz-rules';
+import { canEditOrganization, hasInterviewAccess, NotAuthorizedError } from './authz-rules';
 
 // Re-exported so every existing and future caller of this module keeps
 // working unchanged; the pure rule itself now lives in ./authz-rules so it
@@ -60,7 +60,7 @@ export async function requireAdmin(): Promise<SessionUser> {
 // Interviews are the secretary's job; an admin can do everything they can.
 export async function requireInterviewAccess(): Promise<SessionUser> {
   const user = await getSessionUser();
-  if (!user || (user.role !== 'admin' && user.role !== 'secretary')) {
+  if (!user || !hasInterviewAccess(user.role)) {
     throw new NotAuthorizedError();
   }
   return user;

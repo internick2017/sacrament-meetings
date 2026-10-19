@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/authz';
+import { hasInterviewAccess } from '@/lib/authz-rules';
 import { getT } from '@/lib/i18n/server';
 import { listInterviewBoard } from '@/lib/interviews-db';
 import { getUnit } from '@/lib/unit-db';
@@ -34,7 +35,7 @@ export default async function ScheduleInterviewPage({ searchParams }: { searchPa
   if (!sessionUser) {
     redirect('/login');
   }
-  if (sessionUser.role !== 'admin' && sessionUser.role !== 'secretary') {
+  if (!hasInterviewAccess(sessionUser.role)) {
     return <NotAllowed />;
   }
 

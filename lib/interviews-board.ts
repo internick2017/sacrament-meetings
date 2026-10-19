@@ -48,7 +48,8 @@ function toFamily(row: BoardRow): FamilyEntry {
 }
 
 // The individual agenda: what is pending or already held. Cancelled and
-// rescheduled rows are history that a newer row (or nothing) replaces.
+// rescheduled rows are history that a newer row (or nothing) replaces. What is
+// still to come leads, soonest first; the held ones follow, newest first.
 function individualEntries(rows: BoardRow[]): IndividualEntry[] {
   const entries: IndividualEntry[] = [];
   for (const row of rows) {
@@ -58,7 +59,10 @@ function individualEntries(rows: BoardRow[]): IndividualEntry[] {
       entries.push({ member: row.member, interview });
     }
   }
-  return entries.sort((a, b) => Date.parse(a.interview.startsAt) - Date.parse(b.interview.startsAt));
+  const scheduled = entries.filter((entry) => entry.interview.status === 'scheduled');
+  const done = entries.filter((entry) => entry.interview.status === 'done');
+  const at = (entry: IndividualEntry) => Date.parse(entry.interview.startsAt);
+  return [...scheduled.sort((a, b) => at(a) - at(b)), ...done.sort((a, b) => at(b) - at(a))];
 }
 
 // Rows arrive sorted by name (listInterviewBoard), and that order is kept.

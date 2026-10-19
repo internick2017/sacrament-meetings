@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { canEditOrganization } from './authz-rules';
+import { canEditOrganization, hasInterviewAccess } from './authz-rules';
 import type { SessionUser } from './types';
 
 const admin: SessionUser = { id: '1', role: 'admin', organizationId: null };
@@ -49,5 +49,17 @@ describe('canEditOrganization', () => {
   it('compares organizations strictly, never by coercion', () => {
     const weird = { id: '5', role: 'leader', organizationId: '30' } as unknown as SessionUser;
     expect(canEditOrganization(weird, 30)).toBe(false);
+  });
+});
+
+describe('hasInterviewAccess', () => {
+  it('lets an admin and a secretary in', () => {
+    expect(hasInterviewAccess('admin')).toBe(true);
+    expect(hasInterviewAccess('secretary')).toBe(true);
+  });
+
+  it('keeps a leader and a member out', () => {
+    expect(hasInterviewAccess('leader')).toBe(false);
+    expect(hasInterviewAccess('member')).toBe(false);
   });
 });

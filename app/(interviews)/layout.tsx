@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { getSessionUser } from '@/lib/authz';
+import { hasInterviewAccess } from '@/lib/authz-rules';
 import { signOutAction } from '@/lib/auth-actions';
 import { getT } from '@/lib/i18n/server';
 import NotAllowed from '@/components/NotAllowed';
@@ -14,7 +15,7 @@ export default async function InterviewsLayout({ children }: { children: React.R
   if (!user) {
     redirect('/login');
   }
-  if (user.role !== 'admin' && user.role !== 'secretary') {
+  if (!hasInterviewAccess(user.role)) {
     return <NotAllowed />;
   }
 

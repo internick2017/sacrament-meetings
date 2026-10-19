@@ -4,6 +4,7 @@ import {
   familyStatus,
   findConflicts,
   interviewerAllowedFor,
+  interviewerName,
   lastInterviewed,
   type Interview,
 } from './interviews-rules';
@@ -130,5 +131,13 @@ describe('lastInterviewed', () => {
         make({ status: 'cancelled', startsAt: '2026-11-05T14:00:00Z' }),
       ])
     ).toBe('2026-03-05T14:00:00Z');
+  });
+});
+
+describe('interviewerName', () => {
+  it('gives the full name of each interviewer', () => {
+    expect(interviewerName('nick')).toBe('Nick Granados');
+    expect(interviewerName('rafael')).toBe('Rafael Colmenares');
+    expect(interviewerName('jared')).toBe('Jared Aponte');
   });
 });

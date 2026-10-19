@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getLocale, getT } from '@/lib/i18n/server';
 import { formatEventDateTime, type Translator } from '@/lib/i18n';
 import { BOARD_FILTERS, type Board, type BoardFilter, type BoardMember } from '@/lib/interviews-board';
-import { INTERVIEWERS, type Interview } from '@/lib/interviews-rules';
+import { interviewerName, type Interview } from '@/lib/interviews-rules';
 import { interviewMessage } from '@/lib/interview-message';
 import InterviewRowActions from './InterviewRowActions';
 
@@ -10,18 +10,16 @@ const ACTION_LINK =
   'inline-block rounded bg-slate-800 px-3 py-1 text-sm font-semibold text-white hover:bg-slate-700';
 const CELL = 'px-3 py-2 align-top';
 
-function interviewerName(key: Interview['interviewer']): string {
-  return INTERVIEWERS.find((interviewer) => interviewer.key === key)?.name ?? key;
-}
-
 function filterHref(filter: BoardFilter, query: string): string {
   const params = new URLSearchParams({ filter });
   if (query) params.set('q', query);
   return `/interviews?${params.toString()}`;
 }
 
-// Server-rendered list. Only the row actions are client components, and the
-// phone reaches them as a prop, never as a link in this HTML.
+// Server-rendered list. Only the row actions are client components. The phone
+// reaches them as a prop: it is never put in a link here (the wa.me URL is
+// built in the browser), but its digits do travel in the RSC payload, which is
+// acceptable because only an admin or secretary can load this page.
 export default async function InterviewBoard({
   board,
   filter,

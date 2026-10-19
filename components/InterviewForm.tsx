@@ -9,7 +9,13 @@ import {
   scheduleInterviewAction,
   type InterviewFormState,
 } from '@/lib/interviews-actions';
-import { INTERVIEWERS, type Interview, type InterviewKind, type InterviewMode } from '@/lib/interviews-rules';
+import {
+  INTERVIEWERS,
+  interviewerName,
+  type Interview,
+  type InterviewKind,
+  type InterviewMode,
+} from '@/lib/interviews-rules';
 import { isValidLocalDateTime } from '@/lib/interviews-schema';
 import { interviewMessage } from '@/lib/interview-message';
 import { zonedLocalToInstant } from '@/lib/timezone';
@@ -95,8 +101,6 @@ function InterviewFormInner({
       : null;
 
   const nameOf = (id: number) => members.find((candidate) => candidate.id === id)?.fullName ?? '';
-  const interviewerName = (key: Interview['interviewer']) =>
-    INTERVIEWERS.find((candidate) => candidate.key === key)?.name ?? key;
 
   function fieldError(name: string) {
     return (
