@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { planImport } from './roster-import.mjs';
+import { isImportRows, planImport } from './roster-import.mjs';
 
 const members = [
   { id: 1, fullName: 'Alvarez Duran, Deivymar Valentina' },
@@ -78,5 +78,44 @@ describe('planImport', () => {
       members
     );
     expect(plan.matched.map((m) => m.phone)).toEqual([null, null, null]);
+  });
+
+  it('applies a unique partial match', () => {
+    const plan = planImport([{ name: 'Pedro Costa', phone: '46 99999-1234' }], members);
+    expect(plan.matched).toEqual([{ memberId: 5, phone: '46 99999-1234' }]);
+    expect(plan.unmatched).toEqual([]);
+  });
+
+  it('reports every match that is not an exact token-set match, names only', () => {
+    const plan = planImport(
+      [
+        { name: 'Pedro Costa', phone: '46 99999-1234' },
+        { name: 'JOAO CARLOS SILVA' },
+      ],
+      members
+    );
+    expect(plan.fuzzy).toEqual([{ input: 'Pedro Costa', member: 'Pedro Henrique Costa' }]);
+  });
+
+  it('has no fuzzy entries when every match is exact', () => {
+    const plan = planImport([{ name: 'Costa, Pedro Henrique' }], members);
+    expect(plan.fuzzy).toEqual([]);
+  });
+});
+
+describe('isImportRows', () => {
+  it('accepts names with a string phone or no phone', () => {
+    expect(isImportRows([{ name: 'Ana Souza', phone: '46 99999-1234' }, { name: 'Bruno Lima' }])).toBe(true);
+  });
+
+  it('rejects a phone that is present but not a string', () => {
+    expect(isImportRows([{ name: 'Ana Souza', phone: 46999991234 }])).toBe(false);
+    expect(isImportRows([{ name: 'Ana Souza', phone: null }])).toBe(false);
+  });
+
+  it('rejects anything that is not an array of named rows', () => {
+    expect(isImportRows({ name: 'Ana Souza' })).toBe(false);
+    expect(isImportRows([{ phone: '46 99999-1234' }])).toBe(false);
+    expect(isImportRows([null])).toBe(false);
   });
 });
