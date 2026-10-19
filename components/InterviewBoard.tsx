@@ -48,7 +48,9 @@ export default async function InterviewBoard({
       onlineLink: interview.onlineLink,
       interviewer: interview.interviewer,
     });
-    return <InterviewRowActions interviewId={interview.id} phone={member.phone} message={message} />;
+    return (
+      <InterviewRowActions interviewId={interview.id} memberId={member.id} phone={member.phone} message={message} />
+    );
   }
 
   return (

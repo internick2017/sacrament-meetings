@@ -412,6 +412,8 @@ export const en = {
   'interviews.notScheduled': 'This interview is no longer scheduled.',
   'interviews.phoneSaved': 'Phone saved.',
   'interviews.phoneCleared': 'Phone removed.',
+  'interviews.phone.save': 'Save phone',
+  'interviews.phone.hint': 'Leave it empty to remove the phone.',
   'interviews.title': 'Interviews',
   'interviews.area': 'Interviews area',
   'interviews.intro': 'Every family needs its tithing declaration interview. Schedule them here and send the message by WhatsApp from your own phone.',

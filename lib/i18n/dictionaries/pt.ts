@@ -414,6 +414,8 @@ export const pt: Dictionary = {
   'interviews.notScheduled': 'Esta entrevista não está mais agendada.',
   'interviews.phoneSaved': 'Telefone salvo.',
   'interviews.phoneCleared': 'Telefone removido.',
+  'interviews.phone.save': 'Salvar telefone',
+  'interviews.phone.hint': 'Deixe vazio para remover o telefone.',
   'interviews.title': 'Entrevistas',
   'interviews.area': 'Área de entrevistas',
   'interviews.intro': 'Cada família precisa da sua entrevista de declaração de dízimo. Agende aqui e envie a mensagem pelo WhatsApp do seu próprio telefone.',
