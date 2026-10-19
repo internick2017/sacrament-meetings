@@ -1,16 +1,7 @@
-import type { InterviewKind, InterviewMode } from './interviews-rules';
+import { INTERVIEWERS, type InterviewerKey, type InterviewKind, type InterviewMode } from './interviews-rules';
+import { normalizePhone } from './phone';
 
-/** Digits only; Brazilian numbers get the 55 prefix. Returns null if unusable. */
-export function normalizePhone(raw: string | null): string | null {
-  if (!raw) return null;
-  // Drop a single national trunk zero (e.g. "046 3523-4567") before measuring.
-  const digits = raw.replace(/\D/g, '').replace(/^0/, '');
-  if (digits.length === 10 || digits.length === 11) return `55${digits}`;
-  if ((digits.length === 12 || digits.length === 13) && digits.startsWith('55')) {
-    return digits;
-  }
-  return null;
-}
+export { normalizePhone };
 
 export type InterviewMessageInput = {
   name: string;
@@ -19,7 +10,16 @@ export type InterviewMessageInput = {
   timeZone: string;
   mode: InterviewMode;
   onlineLink: string | null;
+  interviewer: InterviewerKey;
 };
+
+// Nick is the bishop; the other interviewers are his counselors, named by
+// their first name.
+function interviewerTitle(key: InterviewerKey): string {
+  if (key === 'nick') return 'O Bispo';
+  const name = INTERVIEWERS.find((interviewer) => interviewer.key === key)?.name ?? key;
+  return `O Conselheiro ${name.split(' ')[0]}`;
+}
 
 export function interviewMessage(input: InterviewMessageInput): string {
   const date = new Date(input.startsAt);
@@ -38,9 +38,10 @@ export function interviewMessage(input: InterviewMessageInput): string {
 
   const tithing = input.kind === 'tithing';
   const greeting = tithing ? `Olá, Família ${input.name}!` : `Olá, ${input.name}!`;
+  const title = interviewerTitle(input.interviewer);
   const who = tithing
-    ? 'O Bispo os espera para a entrevista de dízimo'
-    : 'O Bispo o(a) espera para a entrevista';
+    ? `${title} os espera para a entrevista de dízimo`
+    : `${title} o(a) espera para a entrevista`;
   const where =
     input.mode === 'online' && input.onlineLink
       ? `por videochamada: ${input.onlineLink}`

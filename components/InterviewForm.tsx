@@ -90,6 +90,7 @@ function InterviewFormInner({
           timeZone,
           mode,
           onlineLink: mode === 'online' ? onlineLink.trim() || null : null,
+          interviewer: effectiveInterviewer,
         })
       : null;
 

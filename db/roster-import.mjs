@@ -1,8 +1,10 @@
 // Pure planning logic for db/import-heads.mjs: no database, no filesystem.
-// The matching rules live in lib/ (single source of truth); Node 24 loads those
-// .ts files directly because they have no imports of their own.
+// The matching rules live in lib/ (single source of truth). Node 24 loads
+// those .ts files directly only because they import nothing themselves: it
+// strips types but cannot resolve the extensionless imports lib/ uses. That
+// is why the phone rule lives in lib/phone.ts and not in interview-message.ts.
 import { matchMember } from '../lib/member-match.ts';
-import { normalizePhone } from '../lib/interview-message.ts';
+import { normalizePhone } from '../lib/phone.ts';
 
 // rows: [{ name, phone? }], members: [{ id, fullName }]
 // Returns { matched: [{ memberId, phone|null }], unmatched: [name], ambiguous: [name] }.

@@ -46,6 +46,7 @@ export default async function InterviewBoard({
       timeZone,
       mode: interview.mode,
       onlineLink: interview.onlineLink,
+      interviewer: interview.interviewer,
     });
     return <InterviewRowActions interviewId={interview.id} phone={member.phone} message={message} />;
   }

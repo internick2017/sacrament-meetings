@@ -47,6 +47,7 @@ describe('interviewMessage', () => {
     startsAt: '2026-10-25T17:00:00.000Z',
     timeZone: 'America/Sao_Paulo',
     onlineLink: null,
+    interviewer: 'nick' as const,
   };
 
   it('tithing in person addresses the family and mentions the chapel', () => {
@@ -101,6 +102,35 @@ describe('interviewMessage', () => {
         mode: 'in_person',
       }),
     ).toContain('no domingo, 25 de outubro, às 22:00');
+  });
+
+  it('names counselor Rafael when he holds the interview', () => {
+    expect(
+      interviewMessage({
+        ...base,
+        name: 'Maria Souza',
+        kind: 'individual',
+        mode: 'in_person',
+        interviewer: 'rafael',
+      }),
+    ).toBe(
+      'Olá, Maria Souza! O Conselheiro Rafael o(a) espera para a entrevista no domingo, 25 de outubro, às 14:00, na capela.',
+    );
+  });
+
+  it('names counselor Jared when he holds the interview', () => {
+    expect(
+      interviewMessage({
+        ...base,
+        name: 'Maria Souza',
+        kind: 'individual',
+        mode: 'online',
+        onlineLink: 'https://meet.example.com/abc',
+        interviewer: 'jared',
+      }),
+    ).toBe(
+      'Olá, Maria Souza! O Conselheiro Jared o(a) espera para a entrevista no domingo, 25 de outubro, às 14:00, por videochamada: https://meet.example.com/abc',
+    );
   });
 
   it('pins the zone: 17:00Z is 14:00 in Sao Paulo', () => {
