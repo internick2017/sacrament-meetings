@@ -21,6 +21,7 @@ export default function RosterForm({ names }: { names: string[] }) {
 
   const text = state.values?.names ?? names.join('\n');
   const error = state.errors?.names?.[0];
+  const removal = state.removal;
 
   return (
     <form key={formInstance} action={formAction} className="space-y-3">
@@ -36,6 +37,23 @@ export default function RosterForm({ names }: { names: string[] }) {
         >
           {state.message}
         </p>
+      )}
+      {removal && (
+        <div className="max-w-2xl space-y-2 rounded border border-red-200 px-3 py-2 text-sm">
+          <ul className="list-disc pl-5">
+            {removal.names.map((name) => (
+              <li key={name}>{name}</li>
+            ))}
+            {removal.count > removal.names.length && (
+              <li>{t('speakers.roster.removalMore', { count: removal.count - removal.names.length })}</li>
+            )}
+          </ul>
+          {/* Only offered after the server listed who would be deleted. */}
+          <label className="flex items-center gap-2 font-semibold text-red-700">
+            <input type="checkbox" name="confirmRemoval" />
+            {t('speakers.roster.confirmRemoval')}
+          </label>
+        </div>
       )}
       <div>
         <label htmlFor="roster-names" className="mb-1 block text-sm font-semibold">

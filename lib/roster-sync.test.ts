@@ -36,3 +36,29 @@ describe('diffRoster', () => {
     });
   });
 });
+
+describe('diffRoster keys members by their name tokens', () => {
+  const people = [
+    { id: 1, fullName: 'João Silva' },
+    { id: 2, fullName: 'Maria da Costa' },
+  ];
+
+  it('does not remove a member whose accents were fixed or dropped', () => {
+    expect(diffRoster(people, ['Joao Silva', 'Maria da Costa'])).toEqual({ toAdd: [], toRemoveIds: [] });
+  });
+
+  it('does not remove a member written as "Surname, Given"', () => {
+    expect(diffRoster(people, ['Silva, João', 'Costa, Maria'])).toEqual({ toAdd: [], toRemoveIds: [] });
+  });
+
+  it('does not add a new name twice when only the word order differs', () => {
+    expect(diffRoster(people, ['João Silva', 'Maria da Costa', 'Carla Dias', 'Dias, Carla'])).toEqual({
+      toAdd: ['Carla Dias'],
+      toRemoveIds: [],
+    });
+  });
+
+  it('still removes a member whose name tokens are no longer listed', () => {
+    expect(diffRoster(people, ['João Silva'])).toEqual({ toAdd: [], toRemoveIds: [2] });
+  });
+});

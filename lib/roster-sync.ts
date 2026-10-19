@@ -1,9 +1,13 @@
-import type { Member } from './member-match';
+import { nameTokens, type Member } from './member-match';
 
-// Same comparison as the members_full_name_lower_idx index: lowercased, with
-// the edges trimmed.
+// Two spellings of the same person must share a key, or saving the roster
+// would delete the member (and, by ON DELETE CASCADE, their interviews) and add
+// a "new" one. So the key is the sorted token set the name matcher uses:
+// accents, case, particles, a leading title and the "Surname, Given" order do
+// not change it. A name made only of a title falls back to its plain text.
 function key(name: string): string {
-  return name.trim().toLowerCase();
+  const tokens = nameTokens(name);
+  return tokens.length > 0 ? [...new Set(tokens)].sort().join(' ') : name.trim().toLowerCase();
 }
 
 // Saving the roster must not delete everybody and re-insert them: members now
