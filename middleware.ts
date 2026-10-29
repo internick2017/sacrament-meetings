@@ -25,6 +25,7 @@ export const config = {
     '/interviews/:path*',
     '/photos',
     '/profile',
+    '/guides',
     '/activities/new',
     '/activities/:id/edit',
     '/announcements',

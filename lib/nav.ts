@@ -30,6 +30,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { href: '/photos', label: 'nav.photos', section: 'admin', visibleTo: ['admin'] },
   { href: '/users', label: 'nav.users', section: 'admin', visibleTo: ['admin'] },
   { href: '/unit', label: 'nav.unit', section: 'admin', visibleTo: ['admin'] },
+  { href: '/guides', label: 'nav.guides', section: 'admin', visibleTo: ['admin', 'secretary', 'leader'] },
 
   // Any signed-in role: profile photos belong to whoever is signed in.
   { href: '/profile', label: 'nav.profile', section: 'account', visibleTo: ['member', 'secretary', 'leader', 'admin'] },

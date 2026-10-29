@@ -23,22 +23,22 @@ describe('navFor', () => {
     expect(hrefs(nav.account)).toEqual(['/profile']);
   });
 
-  it('gives a leader only callings and announcements', () => {
-    expect(hrefs(navFor('leader').admin)).toEqual(['/callings', '/announcements']);
+  it('gives a leader only callings, announcements and guides', () => {
+    expect(hrefs(navFor('leader').admin)).toEqual(['/callings', '/announcements', '/guides']);
   });
 
   it('gives an admin every admin page, speakers included', () => {
     expect(hrefs(navFor('admin').admin).sort()).toEqual(
-      ['/announcements', '/callings', '/interviews', '/photos', '/speakers', '/unit', '/users'].sort()
+      ['/announcements', '/callings', '/guides', '/interviews', '/photos', '/speakers', '/unit', '/users'].sort()
     );
     expect(hrefs(navFor('admin').account)).toEqual(['/profile']);
   });
 });
 
 describe('navFor secretary', () => {
-  it('gives a secretary only the interviews page and the profile', () => {
+  it('gives a secretary only interviews, guides and the profile', () => {
     const nav = navFor('secretary');
-    expect(hrefs(nav.admin)).toEqual(['/interviews']);
+    expect(hrefs(nav.admin)).toEqual(['/interviews', '/guides']);
     expect(hrefs(nav.account)).toEqual(['/profile']);
     expect(hrefs(nav.public)).toEqual(hrefs(navFor('member').public));
   });

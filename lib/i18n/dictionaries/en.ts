@@ -15,6 +15,7 @@ export const en = {
   'nav.photos': 'Photos',
   'nav.users': 'Users',
   'nav.unit': 'Unit',
+  'nav.guides': 'Guides',
 
   'locale.label': 'Language',
 
@@ -479,6 +480,8 @@ export const en = {
   'interviews.whatsapp.noPhone': 'No valid phone: copy the message and send it by hand.',
   'validation.interview.tithingNeedsHead': 'The tithing interview is only for the head of family.',
   'interviews.form.tithingNeedsHead': 'This member is not a head of family, so only an individual interview is possible.',
+  'guides.title': 'Guides for leaders and secretaries',
+  'guides.intro': 'Finance and records guides from the Area, in Portuguese. The spreadsheet lists all of them and is updated every month.',
 } as const;
 
 export type DictionaryKey = keyof typeof en;

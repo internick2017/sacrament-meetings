@@ -17,6 +17,7 @@ export const es: Dictionary = {
   'nav.photos': 'Fotos',
   'nav.users': 'Usuarios',
   'nav.unit': 'Unidad',
+  'nav.guides': 'Guías',
 
   'locale.label': 'Idioma',
 
@@ -481,4 +482,6 @@ export const es: Dictionary = {
   'interviews.whatsapp.noPhone': 'Sin teléfono válido: copia el mensaje y envíalo a mano.',
   'validation.interview.tithingNeedsHead': 'La entrevista de diezmo es solo para el cabeza de familia.',
   'interviews.form.tithingNeedsHead': 'Este miembro no es cabeza de familia, así que solo puede tener una entrevista individual.',
+  'guides.title': 'Guías para líderes y secretarios',
+  'guides.intro': 'Guías de finanzas y registros del Área, en portugués. La planilla las lista todas y se actualiza cada mes.',
 };
