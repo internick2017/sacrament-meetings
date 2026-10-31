@@ -21,6 +21,18 @@ function interviewerTitle(key: InterviewerKey): string {
   return `O Conselheiro ${name.split(' ')[0]}`;
 }
 
+const NAME_SUFFIXES = new Set(['filho', 'filha', 'neto', 'neta', 'sobrinho', 'sobrinha', 'junior', 'júnior', 'jr']);
+
+// The surname a family goes by: the last word of the full name, skipping a
+// generational suffix ("João Silva Filho" is the Silva family).
+function familyName(fullName: string): string {
+  const words = fullName.trim().split(/\s+/);
+  while (words.length > 1 && NAME_SUFFIXES.has(words[words.length - 1].replace('.', '').toLowerCase())) {
+    words.pop();
+  }
+  return words[words.length - 1];
+}
+
 export function interviewMessage(input: InterviewMessageInput): string {
   const date = new Date(input.startsAt);
   const day = new Intl.DateTimeFormat('pt-BR', {
@@ -37,7 +49,7 @@ export function interviewMessage(input: InterviewMessageInput): string {
   }).format(date);
 
   const tithing = input.kind === 'tithing';
-  const greeting = tithing ? `Olá, Família ${input.name}!` : `Olá, ${input.name}!`;
+  const greeting = tithing ? `Olá, Família ${familyName(input.name)}!` : `Olá, ${input.name}!`;
   const title = interviewerTitle(input.interviewer);
   const who = tithing
     ? `${title} os espera para a entrevista de dízimo`

@@ -58,6 +58,18 @@ describe('interviewMessage', () => {
     );
   });
 
+  it.each([
+    ['Luiz Guilherme Vilela Sena', 'Sena'],
+    ['João Silva Filho', 'Silva'],
+    ['Pedro Souza Júnior', 'Souza'],
+    ['Carlos Lima Jr.', 'Lima'],
+    ['Silva', 'Silva'],
+  ])('tithing greets %s as the family %s', (name, family) => {
+    expect(interviewMessage({ ...base, name, kind: 'tithing', mode: 'in_person' })).toContain(
+      `Olá, Família ${family}!`,
+    );
+  });
+
   it('individual in person addresses the person', () => {
     expect(
       interviewMessage({ ...base, name: 'Maria Souza', kind: 'individual', mode: 'in_person' }),

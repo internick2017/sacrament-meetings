@@ -276,11 +276,14 @@ describe('scheduleInterviewAction', () => {
     expect(mockSetPhone).toHaveBeenCalledWith(12, '(46) 99999-8888');
 
     mockSetPhone.mockClear();
-    await scheduleInterviewAction({}, form({ ...scheduleFields, phone: '123' }));
+    const unusable = await scheduleInterviewAction({}, form({ ...scheduleFields, phone: '123' }));
     expect(mockSetPhone).not.toHaveBeenCalled();
+    expect(unusable.saved).toBe(true);
+    expect(unusable.phoneWarning).toBe('interviews.phoneNotSaved');
 
-    await scheduleInterviewAction({}, form(scheduleFields));
+    const empty = await scheduleInterviewAction({}, form(scheduleFields));
     expect(mockSetPhone).not.toHaveBeenCalled();
+    expect(empty.phoneWarning).toBeUndefined();
   });
 });
 

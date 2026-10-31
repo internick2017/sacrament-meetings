@@ -46,6 +46,8 @@ export interface InterviewFormState {
   // Other scheduled interviews of the same interviewer that overlap the one
   // just saved. A warning, not a block: the interview IS saved.
   conflicts?: Interview[];
+  // Also a warning: the interview is saved, the typed phone is not.
+  phoneWarning?: string;
 }
 
 export interface InterviewActionState {
@@ -105,21 +107,27 @@ async function toNewInterview(data: InterviewFormData): Promise<NewInterview> {
 
 // The phone on the form is optional: only a number that can become a
 // WhatsApp link replaces the stored one; anything else leaves it untouched.
-async function maybeSavePhone(memberId: number, phone: string): Promise<void> {
-  if (phone !== '' && normalizePhone(phone) !== null) {
-    await setMemberPhone(memberId, phone);
-  }
+// Returns false when a typed phone was not saved. It warns instead of rejecting
+// the form: the field comes prefilled, and some stored numbers are unusable,
+// which must not stop the secretary from scheduling those members.
+async function maybeSavePhone(memberId: number, phone: string): Promise<boolean> {
+  if (phone === '') return true;
+  if (normalizePhone(phone) === null) return false;
+  await setMemberPhone(memberId, phone);
+  return true;
 }
 
 function savedState(
   t: Translator,
   conflicts: Interview[],
-  savedKey: 'interviews.saved' | 'interviews.rescheduled'
+  savedKey: 'interviews.saved' | 'interviews.rescheduled',
+  phoneSaved: boolean
 ): InterviewFormState {
   return {
     saved: true,
     message: conflicts.length > 0 ? t('interviews.savedWithConflicts') : t(savedKey),
     conflicts,
+    phoneWarning: phoneSaved ? undefined : t('interviews.phoneNotSaved'),
   };
 }
 
@@ -178,10 +186,10 @@ export async function scheduleInterviewAction(
     }
     throw error;
   }
-  await maybeSavePhone(data.memberId, data.phone);
+  const phoneSaved = await maybeSavePhone(data.memberId, data.phone);
 
   revalidatePath(INTERVIEWS_PATH);
-  return savedState(t, conflicts, 'interviews.saved');
+  return savedState(t, conflicts, 'interviews.saved', phoneSaved);
 }
 
 // Moves a scheduled interview: same member and kind, new time, mode, link
@@ -239,10 +247,10 @@ export async function rescheduleInterviewAction(
   if (newId === null) {
     return { message: t('interviews.notScheduled'), values };
   }
-  await maybeSavePhone(parsed.data.memberId, parsed.data.phone);
+  const phoneSaved = await maybeSavePhone(parsed.data.memberId, parsed.data.phone);
 
   revalidatePath(INTERVIEWS_PATH);
-  return savedState(t, conflicts, 'interviews.rescheduled');
+  return savedState(t, conflicts, 'interviews.rescheduled', phoneSaved);
 }
 
 // Done and cancelled are both reached only from `scheduled`; the guarded

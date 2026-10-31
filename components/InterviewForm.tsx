@@ -130,6 +130,11 @@ function InterviewFormInner({
             </ul>
           </div>
         )}
+        {state.phoneWarning && (
+          <p role="alert" className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            {state.phoneWarning}
+          </p>
+        )}
         {message && (
           <section aria-labelledby="saved-message-heading" className="space-y-2">
             <h2 id="saved-message-heading" className="font-semibold">
